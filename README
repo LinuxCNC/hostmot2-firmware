@@ -1,0 +1,28 @@
+hostmot2-firmware: build assorted hostmot2 FPGA firmwares automatically
+
+emc 2.4 will include over 30 FPGA firmware images.  This package
+includes the hostmot2 source files along with Makefiles and other
+scripts to automatically build all the desired variants of the
+firmwares.
+
+It requires the no-cost version of Xilinx ISE.  I have tested with ISE
+9.2.
+
+It also requires ghdl for building PIN files.  The PIN file format is
+intended to be human readable (not machine readable) so it is not a
+requirement that it exactly match the format of existing PIN files.
+
+To build all bitfiles and pinfiles:
+    . ~/Xilinx92i/config.sh  # depends on ISE version and install path
+    make -j4                 # -j setting depens on RAM and # CPU cores
+On my system (quad core AMD Phenom 9600) building the full set of
+firmwares took about an hour of wall time with the -j4 setting shown
+above.
+
+This package will probably be rolled into emc2 after it matures, but for
+now it stands alone to make distributing it easier.
+
+
+TODO:
+ * basic test of firmware images
+   * I have hardware to test 5i20, 7i43-400 only

@@ -1,0 +1,191 @@
+library IEEE;
+use std.textio.all;
+use IEEE.std_logic_1164.all;  -- defines std_logic types
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_TEXTIO.ALL;
+
+use work.IDROMConst.all;
+use work.PIN_@PIN@.all;
+use work.@CARD@.all;
+
+entity pinmaker_@PIN@ is
+
+function Conn(idx: integer) return string is
+    variable pp : integer;
+begin
+    pp := idx / 24;
+    if(BoardNameHigh = BoardName4i65) then
+        if(pp = 0) then return "P1"; end if;
+        if(pp = 1) then return "P3"; end if;
+        if(pp = 2) then return "P4"; end if;
+    end if;
+    if(BoardNameHigh = BoardName4i68) then
+        if(pp = 0) then return "P1"; end if;
+        if(pp = 1) then return "P2"; end if;
+        if(pp = 2) then return "P4"; end if;
+    end if;
+    if(BoardNameHigh = BoardName5i20) then
+        if(pp = 0) then return "P2"; end if;
+        if(pp = 1) then return "P3"; end if;
+        if(pp = 2) then return "P4"; end if;
+    end if;
+    if(BoardNameHigh = BoardName5i22) then
+        if(pp = 0) then return "P2"; end if;
+        if(pp = 1) then return "P3"; end if;
+        if(pp = 2) then return "P4"; end if;
+        if(pp = 3) then return "P5"; end if;
+    end if;
+    if(BoardNameHigh = BoardName5i23) then
+        if(pp = 0) then return "P2"; end if;
+        if(pp = 1) then return "P3"; end if;
+        if(pp = 2) then return "P4"; end if;
+    end if;
+    if(BoardNameHigh = BoardName7i43) then
+        if(pp = 0) then return "P4"; end if;
+        if(pp = 1) then return "P3"; end if;
+    end if;
+    return "???";
+end function;
+ 
+function Clock(idx : std_logic_vector(7 downto 0)) return integer is
+    variable m: integer;
+begin
+    if(idx = ClockHighTag) then m := ClockHigh;
+    else m := ClockLow;
+    end if;
+    return (m + 500000)/1000000;
+end;
+
+function TagToName(tag : std_logic_vector(7 downto 0)) return string is
+begin
+    if(tag = IRQTag)	    then return "IRQ"; end if;
+    if(tag = WatchDogTag)   then return "Watchdog"; end if;
+    if(tag = IOPortTag)	    then return "IOPort"; end if;
+    if(tag = QCountTag)	    then return "Encoder"; end if;
+    if(tag = StepGenTag)    then return "StepGen"; end if;
+    if(tag = PWMTag)	    then return "PWMGen"; end if;
+    if(tag = SPITag)	    then return "SPI"; end if;
+    if(tag = SSSITag)	    then return "SSSI"; end if;
+    if(tag = UARTTTag)	    then return "UARTT"; end if;
+    if(tag = AddrXTag)	    then return "AddrX"; end if;
+    if(tag = MuxedQCountSelTag) then return "MuxedQCountSel"; end if;
+    if(tag = BSPITag)	    then return "BSPI"; end if;
+    if(tag = DBSPITag)	    then return "DBSPI"; end if;
+    if(tag = DPLLTag)	    then return "DPLL"; end if;
+    if(tag = MuxedQCountMIMTag) then return "MuxedQCountMIM"; end if;
+    if(tag = TPPWMTag)	    then return "TPPWM"; end if;
+    if(tag = LEDTag)	    then return "LED"; end if;
+    return "unknown";
+end;
+
+function GetPinDesc(i: integer) return PinDescRecord is
+    variable pr : PinDescRecord;
+    variable pv : std_logic_vector(31 downto 0);
+begin
+    pv := PinDesc(i);
+    pr.SecPin := pv(7 downto 0);
+    pr.SecFunc := pv(15 downto 8);
+    pr.SecInst := pv(23 downto 16);
+    pr.PriFunc := pv(31 downto 24);
+    return pr;
+end function;
+
+function Funct(tag: std_logic_vector(7 downto 0);
+               pin: std_logic_vector(7 downto 0)) return string is
+begin
+    if(tag = QCountTag) then
+        if(pin = QCountQAPin)         then return "Phase A (in)";
+        elsif(pin = QCountQBPin)      then return "Phase B (in)";
+        elsif(pin = QCountIdxPin)     then return "Index (in)";
+        elsif(pin = QCountIdxMaskPin) then return "IndexMask (in)";
+        elsif(pin = QCountProbePin)   then return "Probe (in)"; end if;
+    elsif(tag = StepGenTag) then
+        if(pin = StepGenStepPin)      then return "Step (out)";
+        elsif(pin = StepGenStepPin)   then return "Dir (out)";
+        elsif(pin >= StepGenTable2Pin and pin <=StepGenTable7Pin)
+                                      then return "StepTable (out)"; end if;
+    elsif(tag = PWMTag) then
+        if(pin = PWMAOutPin)          then return "PWM/Up (out)";
+        elsif(pin = PWMBDirPin)       then return "Dir/Down (out)";
+        elsif(pin = PWMCEnaPin)       then return "Enable (out)"; end if;
+    end if;
+    return "???";
+end function;
+
+end pinmaker_@PIN@;
+
+architecture bbb of pinmaker_@PIN@ is
+    file output_file : TEXT open write_mode is in "/dev/stdout";
+begin
+    process
+        variable so: line;
+        variable i: integer;
+        variable mr : ModuleRecord;
+        variable pr : PinDescRecord;
+    begin
+	write(so, string'("Modules in configuration:"));
+	writeline(output_file, so);
+
+	write(so,
+            string'("  #         Tag  Ver  Clock  Cnt Regs Stride Mult Base"));
+	writeline(output_file, so);
+
+        for i in 0 to MaxModules-1 loop
+            mr := ModuleId(i);
+	    if(mr.GTag = NullTag) then
+		exit;
+	    end if;
+	
+	    write(so, ' ', RIGHT, 1);
+            write(so, i, RIGHT, 2);
+            write(so, TagToName(mr.GTag), RIGHT, 12);
+            write(so, ' ', RIGHT, 1);
+            write(so, conv_integer(mr.Version), RIGHT, 4);
+            write(so, ' ', RIGHT, 1);
+            write(so, Clock(mr.Clock), RIGHT, 3);
+            write(so, string'("MHz"), RIGHT, 3);
+            write(so, ' ', RIGHT, 1);
+            write(so, conv_integer(mr.NumInstances), RIGHT, 4);
+            write(so, ' ', RIGHT, 1);
+            write(so, conv_integer(mr.NumRegisters), RIGHT, 4);
+            write(so, ' ', RIGHT, 1);
+            write(so, conv_integer(mr.Strides), RIGHT, 6);
+            write(so, ' ', RIGHT, 1);
+            write(so, conv_integer(signed(mr.MultRegs)), RIGHT, 4);
+            write(so, ' ', RIGHT, 1);
+            write(so, string'("0x"));
+            hwrite(so, mr.BaseAddr, RIGHT, 4);
+            writeline(output_file, so);
+        end loop;
+	writeline(output_file, so);
+
+        write(so, string'("PIN   IO# Module   Chan Func"));
+	writeline(output_file, so);
+
+	for i in 0 to IOWidth-1 loop
+            pr := GetPinDesc(i);
+            write(so, Conn(i));
+            write(so, string'("-"));
+            write(so, conv_integer(i)/24*2+1, LEFT, 2);
+            write(so, ' ', RIGHT, 1);
+            write(so, i, RIGHT, 3);
+	    if(pr.SecFunc /= NullTag) then
+                write(so, ' ', RIGHT, 1);
+                write(so, TagToName(pr.SecFunc), LEFT, 8);
+                write(so, ' ', RIGHT, 1);
+                if((pr.SecInst and x"80") /= 0) then
+                    write(so, string'("ALL "));
+                else
+                    write(so, conv_integer(pr.SecInst), RIGHT, 4);
+                end if;
+                write(so, ' ', RIGHT, 1);
+                write(so, Funct(pr.SecFunc, pr.SecPin), RIGHT, 4);
+            end if;
+            writeline(output_file, so);
+	end loop;
+
+	wait;
+    end process;
+end bbb;
+
