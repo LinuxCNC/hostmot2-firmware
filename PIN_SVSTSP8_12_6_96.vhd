@@ -207,6 +207,9 @@ package PIN_SVSTSP8_12_6_96 is
 		IOPortTag & x"05" & SPITag & x"82",       -- I/O 93
 		IOPortTag & x"05" & SPITag & x"83",       -- I/O 94
 		IOPortTag & x"05" & SPITag & x"04",       -- I/O 95
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

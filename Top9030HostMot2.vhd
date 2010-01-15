@@ -87,9 +87,9 @@ use work.i20card.all;					-- needs 5i20.ucf and SP2 200K 208 pin
 
 -------------------- select (or add) one pinout ---------------------------------
 --use work.PIN_SVST8_4IM2_72.all;
---use work.PIN_SVST8_4_72.all;
+use work.PIN_SVST8_4_72.all;
 --use work.PIN_SVST8_4P_72.all;
-use work.PIN_SVST8_3P_72.all;
+--use work.PIN_SVST8_3P_72.all;
 --use work.PIN_SVST2_4_7I47_72.all;
 --use work.PIN_SVST2_8_72.all;
 --use work.PIN_SV12_72.all;

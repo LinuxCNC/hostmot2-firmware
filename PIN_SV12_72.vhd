@@ -181,6 +181,9 @@ package PIN_SV12_72 is
 		IOPortTag & x"0A" & PWMTag & x"82",       -- I/O 69
 		IOPortTag & x"0B" & PWMTag & x"83",       -- I/O 70
 		IOPortTag & x"0A" & PWMTag & x"83",       -- I/O 71
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

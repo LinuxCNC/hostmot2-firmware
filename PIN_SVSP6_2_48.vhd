@@ -156,6 +156,9 @@ package PIN_SVSP6_2_48 is
 		IOPortTag & x"01" & BSPITag & BSPIFramePin,  -- I/O 45
 		IOPortTag & x"01" & BSPITag & BSPICS0Pin,  	-- I/O 46
 		IOPortTag & x"01" & BSPITag & BSPICS1Pin,  	-- I/O 47
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 					
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

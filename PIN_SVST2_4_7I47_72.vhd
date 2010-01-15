@@ -183,6 +183,8 @@ package PIN_SVST2_4_7I47_72 is
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 70
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 71
 
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

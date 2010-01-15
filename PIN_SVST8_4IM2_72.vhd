@@ -181,6 +181,9 @@ package PIN_SVST8_4IM2_72 is
 		IOPortTag & x"02" & StepGenTag & StepGenDirPin,			-- I/O 69
 		IOPortTag & x"03" & StepGenTag & StepGenStepPin,		-- I/O 70
 		IOPortTag & x"03" & StepGenTag & StepGenDirPin,			-- I/O 71
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

@@ -3,7 +3,7 @@ use IEEE.std_logic_1164.all;
 use IEEE.std_logic_UNSIGNED.ALL;
 use IEEE.std_logic_ARITH.ALL;
 --
--- Copyright (C) 2007, Peter C. Wallace, Mesa Electronics
+-- Copyright (C) 2009, Peter C. Wallace, Mesa Electronics
 -- http://www.mesanet.com
 --
 -- This program is is licensed under a disjunctive dual license giving you
@@ -91,6 +91,7 @@ package IDROMConst is
 	constant BoardName5I23 : std_logic_vector(31 downto 0) := x"33324935";		-- 5I23
 	constant BoardName7I43 : std_logic_vector(31 downto 0) := x"33344937";		-- 7I43
 	constant BoardName7I60 : std_logic_vector(31 downto 0) := x"30364937";		-- 7I60
+	constant BoardName3X20 : std_logic_vector(31 downto 0) := x"30325833";		-- 3X20
 	
 	constant IDROMOffset : std_logic_vector(31 downto 0) := x"0000"&IDROMAddr&x"00"; -- note need to change if pitch changed
 	constant IDROMWEnAddr : std_logic_vector(7 downto 0) := x"08";
@@ -224,6 +225,7 @@ package IDROMConst is
 	constant ClockLow43: integer :=  50000000;	-- 7I43 low speed clock
 	constant ClockLow43U: integer := 33333333;	-- 7I43U low speed clock
 	constant ClockLow68: integer :=  48000000;	-- 4I68 low speed clock
+	constant ClockLowx20: integer :=  50000000;	-- 3X20 low speed clock
 	
 	constant ClockHigh20: integer    := 100000000;	-- 5I20/4I65 high speed clock
 	constant ClockHigh22: integer    := 96000000;	-- 5I22/5I23 high speed clock
@@ -231,6 +233,7 @@ package IDROMConst is
 	constant ClockHigh43: integer    := 100000000;	-- 7I43 high speed clock
 	constant ClockHigh43U: integer   := 100000000;	-- 7I43U high speed clock
 	constant ClockHigh68: integer    := 96000000;	-- 4I68 high speed clock
+	constant ClockHighx20: integer   := 100000000;	-- 3X20 high speed clock
 	
 	constant ClockLowTag: std_logic_vector(7 downto 0) := x"01";
 
@@ -250,7 +253,7 @@ package IDROMConst is
 		constant QCountQBPin : std_logic_vector(7 downto 0) := x"02";
 		constant QCountIdxPin : std_logic_vector(7 downto 0) := x"03";
 		constant QCountIdxMaskPin : std_logic_vector(7 downto 0) := x"04";
-		constant QCountProbePin : std_logic_vector(7 downto 0) := x"45";
+		constant QCountProbePin : std_logic_vector(7 downto 0) := x"05";
 
 	constant	StepGenTag : std_logic_vector(7 downto 0) := x"05";
 		constant	StepGenStepPin : std_logic_vector(7 downto 0) := x"81";
@@ -291,7 +294,7 @@ package IDROMConst is
 		constant MuxedQCountQBPin : std_logic_vector(7 downto 0) := x"02";
 		constant MuxedQCountIdxPin : std_logic_vector(7 downto 0) := x"03";
 		constant MuxedQCountIdxMaskPin : std_logic_vector(7 downto 0) := x"04";
-		constant MuxedQCountProbePin : std_logic_vector(7 downto 0) := x"45";
+		constant MuxedQCountProbePin : std_logic_vector(7 downto 0) := x"05";
 
 	constant MuxedQCountSelTag: std_logic_vector(7 downto 0) := x"0D";
 		constant MuxedQCountSel0Pin : std_logic_vector(7 downto 0) := x"81";
@@ -330,6 +333,7 @@ package IDROMConst is
 		constant DPLLFOutPin : std_logic_vector(7 downto 0) := x"83";
 		constant DPLLPostOutPin : std_logic_vector(7 downto 0) := x"84";
 		constant DPLLSyncTogPin : std_logic_vector(7 downto 0) := x"85";
+	
 
 -- these are a muxed index mask varient of the muxed q counter
 -- since they will never co-exist with the non muxed index mask varient
@@ -356,13 +360,14 @@ package IDROMConst is
 		
 	
 	constant LEDTag : std_logic_vector(7 downto 0) := x"80";
-	
+
+	constant GlobalChan: std_logic_vector(7 downto 0) := x"80";	
 	
 	constant emptypin : std_logic_vector(31 downto 0) := x"00000000";
 	constant empty : std_logic_vector(31 downto 0) := x"00000000";
 	constant PadT : std_logic_vector(7 downto 0) := x"00";
 	constant MaxModules : integer := 32;			-- maximum number of module types 
-	constant MaxPins : integer := 128;				-- maximum number of I/O pins (may change to 144 with 3X20)
+	constant MaxPins : integer := 144;				-- maximum number of I/O pins (may change to 144 with 3X20)
 
 -- would be better to change all the pindescs to records
 -- but that requires reversing the byte order of the constant

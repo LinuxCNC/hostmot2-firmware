@@ -183,6 +183,9 @@ package PIN_SVUA8_8_72 is
 		IOPortTag & x"06" & UARTTTag & UTDrvEnPin,        		-- I/O 69
 		IOPortTag & x"07" & UARTTTag & UTDataPin,      			-- I/O 70
 		IOPortTag & x"07" & UARTTTag & UTDrvEnPin,        		-- I/O 71
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

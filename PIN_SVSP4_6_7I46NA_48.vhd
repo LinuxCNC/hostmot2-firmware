@@ -155,6 +155,9 @@ package PIN_SVSP4_6_7I46NA_48 is
 		IOPortTag & x"05" & SPITag & SPIOutPin,   	-- I/O 45
 		IOPortTag & x"05" & SPITag & SPIClkPin,   	-- I/O 46
 		IOPortTag & x"05" & SPITag & SPIInPin,   		-- I/O 47
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

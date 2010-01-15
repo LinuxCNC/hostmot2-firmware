@@ -181,6 +181,9 @@ package PIN_SVSP8_6_7I46_72 is
 		IOPortTag & x"05" & SPITag & SPIOutPin,   	-- I/O 69
 		IOPortTag & x"05" & SPITag & SPIClkPin,   	-- I/O 70
 		IOPortTag & x"05" & SPITag & SPIInPin,   		-- I/O 71
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

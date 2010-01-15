@@ -91,9 +91,9 @@ use work.i43_200card.all; 	-- needs 7i43u.ucf and SP3 200K 144 pin
 -- as the LB Protocol has its own address system 
 --use work.PIN_SVST4_4NA_48.all;
 --use work.PIN_SVSP4_6_7I46NA_48.all;
-use work.PIN_SVST4_6NA_48.all;
+--use work.PIN_SVST4_6NA_48.all;
 --use work.PIN_SVST4_12NA_48.all;
---use work.PIN_SV8NA.all;
+use work.PIN_SV8NA.all;
 
 
 ----------------------------------------------------------------------
@@ -132,6 +132,7 @@ entity TopUSBHostMot2 is -- for 7I43 in USB mode
 				USB_TXE : in std_logic;
 				USB_RXF : in std_logic;
 				RECONFIG : out std_logic;
+				HRECONFIG : out std_logic;
 				PARACONFIG : out std_logic;
 				SPICLK : out std_logic;
 				SPIIN : in std_logic;
@@ -629,6 +630,7 @@ ahostmot2: entity HostMot2
 			end if;
 		end if;		
 		RECONFIG <= not ReConfigreg;
+		HRECONFIG <= not ReConfigreg; -- for 7I43H
 	end process doreconfig;
 	
 	HM2InterfaceShim: process (procclk,hm2interfaceclock)

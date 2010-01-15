@@ -84,7 +84,12 @@ use work.PinExists.all;
 --use work.i22_1000card.all;		-- needs 5i22.ucf and SP3 1000K 320 pin
 --use work.i22_1500card.all;		-- needs 5i22.ucf and SP3 1500K 320 pin
 --use work.i68card.all;				-- needs 4i68.ucf and SP3 400K 208 pin
-use work.i23card.all;				-- needs 5i23.ucf and SP3 400K 208 pin
+--use work.i23card.all;				-- needs 5i23.ucf and SP3 400K 208 pin
+use work.x20_1000card.all;			-- needs 7I68.ucf and SP3 1000K 456 pin
+--use work.x20_1500card.all;		-- needs 7I68.ucf and SP3 1500K 456 pin
+--use work.x20_2000card.all;		-- needs 7I68.ucf and SP3 2000K 456 pin. Note: ISE only
+
+
 -----------------------------------------------------------------------
 
 
@@ -103,7 +108,7 @@ use work.i23card.all;				-- needs 5i23.ucf and SP3 400K 208 pin
 --use work.PIN_2X7I65_72.all;
 --use work.PIN_SV12IM_2X7I48_72.all;
 --use work.PIN_SVUA8_4_72.all;
-use work.PIN_JDOSA_BLUE_72.all;
+--use work.PIN_JDOSA_BLUE_72.all;
 --use work.PIN_JDOSA_YELLOW_72.all;
 
 -- 96 I/O pinouts for 5I22:
@@ -112,23 +117,27 @@ use work.PIN_JDOSA_BLUE_72.all;
 --use work.PIN_SVST8_24_96.all;
 --use work.PIN_SVSTSP8_12_6_96.all;
 
+-- 144 I/O pinouts for 3X20
+-- use work.PIN_SV24_144.all;
+use work.PIN_SVST16_24_144.all;
+
 ------------------------------------------------------------------------
 
 
 -- dont change anything below unless you know what you are doing -------	
 
-entity Top9054HostMot2 is  -- for 5I22, 5I23 and 4I68 PCI9054 based cards
-  	generic
+entity Top9054HostMot2 is  -- for 5I22, 5I23, 4I68 PCI9054 based cards
+  	generic						-- and 3X20 PEX8311 (PCI9056) based cards
 	(  	
 		ThePinDesc: PinDescType := PinDesc;
 		TheModuleID: ModuleIDType := ModuleID;
 		PWMRefWidth: integer := 13;		-- PWM resolution is PWMRefWidth-1 bits, MSB is for symmetrical mode 
-		IDROMType: integer := 2;		
+		IDROMType: integer := 3;		
 		UseStepGenPrescaler : boolean := true;
 		UseIRQLogic: boolean := true;
 		UseWatchDog: boolean := true;
 		OffsetToModules: integer := 64;
-		OffsetToPinDesc: integer := 512;
+		OffsetToPinDesc: integer := 448;
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
 		InstStride0: integer := 4;
@@ -368,7 +377,7 @@ ahostmot2: entity HostMot2
 
 
 
-	Not4I68: if BoardNameHigh /= BoardName4I68 generate  
+	Not4I68or3X20: if (BoardNameHigh /= BoardName4I68) and (BoardNameHigh /= BoardName3X20) generate  
 		DoHandshake: process (HOLD)
 		begin
 			HOLDA <= HOLD;
@@ -386,6 +395,15 @@ ahostmot2: entity HostMot2
 			BTERM <= '1';
 		end process DoHandShake;
 	end generate;
+	
+	Is3X20: if (BoardNameHigh = BoardName3X20) generate	-- because 3X20 does not have DISABLECONF connected
+		DoHandshake: process (HOLD) -- 3X20 has no DISABLECONF
+		begin
+			HOLDA <= HOLD;
+			CCS <= '1';
+			BTERM <= '1';
+		end process DoHandShake;
+	end generate;	
 	
 end dataflow;
 
