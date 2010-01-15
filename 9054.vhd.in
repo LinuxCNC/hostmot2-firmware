@@ -93,18 +93,18 @@ use work.@PIN@.all;
 
 -- dont change anything below unless you know what you are doing -------	
 
-entity top is  -- for 5I22, 5I23 and 4I68 PCI9054 based cards
-  	generic
+entity top is  -- for 5I22, 5I23, 4I68 PCI9054 based cards
+  	generic						-- and 3X20 PEX8311 (PCI9056) based cards
 	(  	
 		ThePinDesc: PinDescType := PinDesc;
 		TheModuleID: ModuleIDType := ModuleID;
 		PWMRefWidth: integer := 13;		-- PWM resolution is PWMRefWidth-1 bits, MSB is for symmetrical mode 
-		IDROMType: integer := 2;		
+		IDROMType: integer := 3;		
 		UseStepGenPrescaler : boolean := true;
 		UseIRQLogic: boolean := true;
 		UseWatchDog: boolean := true;
 		OffsetToModules: integer := 64;
-		OffsetToPinDesc: integer := 512;
+		OffsetToPinDesc: integer := 448;
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
 		InstStride0: integer := 4;
@@ -344,7 +344,7 @@ ahostmot2: entity HostMot2
 
 
 
-	Not4I68: if BoardNameHigh /= BoardName4I68 generate  
+	Not4I68or3X20: if (BoardNameHigh /= BoardName4I68) and (BoardNameHigh /= BoardName3X20) generate  
 		DoHandshake: process (HOLD)
 		begin
 			HOLDA <= HOLD;
@@ -362,6 +362,15 @@ ahostmot2: entity HostMot2
 			BTERM <= '1';
 		end process DoHandShake;
 	end generate;
+	
+	Is3X20: if (BoardNameHigh = BoardName3X20) generate	-- because 3X20 does not have DISABLECONF connected
+		DoHandshake: process (HOLD) -- 3X20 has no DISABLECONF
+		begin
+			HOLDA <= HOLD;
+			CCS <= '1';
+			BTERM <= '1';
+		end process DoHandShake;
+	end generate;	
 	
 end dataflow;
 
