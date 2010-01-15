@@ -2,7 +2,7 @@ ifeq ($(shell which xst 2>/dev/null),)
 $(error 'xst' is not on your PATH.  Make sure that the Xilinx ISE is available)
 endif
 
-VERSION := 0.2
+VERSION := $(shell git describe --dirty)
 
 COMMON_VHDL := IDROMConst.vhd \
     atrans.vhd boutreg.vhd bufferedspi.vhd \
