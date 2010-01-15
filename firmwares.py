@@ -53,6 +53,8 @@ def gen(chip, fw):
         path[chip], fw, chip, pin(chip, fw))
 
 for line in open("firmwares.txt"):
+    line = line.strip()
+    if not line or line.startswith("#"): continue
     line = line.split()
     chip = line[0]
     for fw in line[1:]:
