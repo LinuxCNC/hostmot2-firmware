@@ -43,56 +43,15 @@ pinfiles: $(1).PIN
 hostmot2-$(2).zip: $(1).BIT $(1).PIN
 endef
 
+define CHIP_template
+zipfiles: hostmot2-$(1).zip
+hostmot2-$(1).zip:
+	rm -f $$@
+	python mkzip.py $$@ $$^
+	ln -f $$@ $${@:.zip=-$(VERSION).zip}
+endef
+
 -include firmwares.mk
 Makefile: firmwares.mk
 firmwares.mk: firmwares.py firmwares.txt
 	python firmwares.py > firmwares.mk
-
-zipfiles: hostmot2-i20.zip
-hostmot2-i20.zip: $(zipfiles_i20)
-	rm -f $@
-	python mkzip.py $@ $^
-	ln -f $@ ${@:.zip=-$(VERSION).zip}
-
-zipfiles: hostmot2-i22_1500.zip
-hostmot2-i22_1500.zip: $(zipfiles_i22_1500)
-	rm -f $@
-	python mkzip.py $@ fw hostmot2-firmware-$(version) $^
-	ln -f $@ ${@:.zip=-$(VERSION).zip}
-
-zipfiles: hostmot2-i22_1000.zip
-hostmot2-i22_1000.zip: $(zipfiles_i22_1000)
-	rm -f $@
-	python mkzip.py $@ fw hostmot2-firmware-$(version)/g $^
-
-zipfiles: hostmot2-i23.zip
-hostmot2-i23.zip: $(zipfiles_i23)
-	rm -f $@
-	python mkzip.py $@ fw hostmot2-firmware-$(version)/g $^
-	ln -f $@ ${@:.zip=-$(VERSION).zip}
-
-zipfiles: hostmot2-i43_200.zip
-hostmot2-i43_200.zip: $(zipfiles_i43_200)
-	rm -f $@
-	python mkzip.py $@ fw hostmot2-firmware-$(version)/g $^
-	ln -f $@ ${@:.zip=-$(VERSION).zip}
-
-zipfiles: hostmot2-i43_400.zip
-hostmot2-i43_400.zip: $(zipfiles_i43_400)
-	rm -f $@
-	python mkzip.py $@ fw hostmot2-firmware-$(version)/g $^
-	ln -f $@ ${@:.zip=-$(VERSION).zip}
-
-zipfiles: hostmot2-i65.zip
-hostmot2-i65.zip: $(zipfiles_i65)
-	rm -f $@
-	python mkzip.py $@ fw hostmot2-firmware-$(version)/g $^
-	ln -f $@ ${@:.zip=-$(VERSION).zip}
-
-zipfiles: hostmot2-i68.zip
-hostmot2-i68.zip: $(zipfiles_i68)
-	rm -f $@
-	python mkzip.py $@ fw hostmot2-firmware-$(version)/g $^
-	ln -f $@ ${@:.zip=-$(VERSION).zip}
-
-

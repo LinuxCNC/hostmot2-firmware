@@ -52,10 +52,16 @@ def gen(chip, fw):
     print "$(eval $(call FIRMWARE_template,fw/%s/%s,%s,%s))" % (
         path[chip], fw, chip, pin(chip, fw))
 
+all_chips = set()
 for line in open("firmwares.txt"):
     line = line.strip()
     if not line or line.startswith("#"): continue
     line = line.split()
     chip = line[0]
+    all_chips.add(chip)
     for fw in line[1:]:
         gen(chip, fw)
+
+for chip in sorted(all_chips):
+    print "$(info $(call CHIP_template,%s))" % chip
+    print "$(eval $(call CHIP_template,%s))" % chip
