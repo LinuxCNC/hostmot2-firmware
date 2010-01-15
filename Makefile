@@ -23,6 +23,9 @@ TOP_i43_200 := epp
 TOP_i43_400 := epp
 TOP_i65 := 9030
 TOP_i68 := 9054
+TOP_x20_1000 := 9054
+TOP_x20_1500 := 9054
+TOP_x20_2000 := 9054
 
 .PHONY: default clean zipfiles bitfiles pinfiles
 default: zipfiles bitfiles pinfiles
