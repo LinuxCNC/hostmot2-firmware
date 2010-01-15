@@ -36,9 +36,9 @@ def sq(a):
 def run(*args):
     print >>sys.stderr, "#", " ".join([sq(a) for a in args])
     r = os.spawnvp(os.P_WAIT, args[0], args)
-    print >>sys.stderr, "# exited with", r, os.WEXITSTATUS(r)
+    print >>sys.stderr, "# exited with", r
     if r:
-        raise SystemExit, os.WEXITSTATUS(r)
+        raise SystemExit, r
 
 def p(*x): return os.path.join(d, *x)
 

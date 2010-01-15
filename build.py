@@ -119,9 +119,9 @@ def sq(a):
 def run(*args):
     print "#", " ".join([sq(a) for a in args])
     r = os.spawnvp(os.P_WAIT, args[0], args)
-    print "# exited with", r, os.WEXITSTATUS(r)
+    print "# exited with", r
     if r:
-        raise SystemExit, os.WEXITSTATUS(r)
+        raise SystemExit, r
 
 if 'XILINX' not in os.environ:
     usage("Xilinx environment not availble")
