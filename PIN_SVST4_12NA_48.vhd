@@ -156,6 +156,9 @@ package PIN_SVST4_12NA_48 is
 		IOPortTag & x"0A" & StepGenTag & x"82",   -- I/O 45
 		IOPortTag & x"0B" & StepGenTag & x"81",   -- I/O 46
 		IOPortTag & x"0B" & StepGenTag & x"82",   -- I/O 47
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

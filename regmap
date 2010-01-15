@@ -1,7 +1,7 @@
 HostMot2 Register map in offsets from 32 bit memory base address
 
 Note the following addresses are standard but driver should use IDROM info
-instead of this table.
+instead of this table as some configurations may not be mapped the same.
 
 Also, number of special functions (counters, PWMGens etc) is determined 
 by configuration.
@@ -573,7 +573,7 @@ When bit 5 is set, the PWMval register is not updated until the beginning of a
 PWM cycle, avoiding extra transitions in the output PWM waveform. This adds 
 an extra delay of 0 to PWMWidth/PWMClock (normal mode) or PWMWidth*2/PWMClock
 (Symmetrical mode) between when the host writes the PWMVal register and the 
-PWM output is updated. 
+PWM output is updated. This mode should be used with HBridges. 
 
 
 0x4100 PWM mode select register 0
@@ -613,11 +613,11 @@ PWM/PDM Notes:
    up/down, double buffered)
 
 2. Double buffering should be used where the PWM directly drives an HBridge. 
-   Double buffering prevents extra transitions on the PWM output doe to host 
-   updates  which waste power in switching losses. Double buffering should 
-   _not_ be used with PDM output! Double Buffering will add a 0 to 1/PWMRate 
-   delay in the PWM output if the host does not update the PWM generator
-   synchronously with the PWM rate..
+   Double buffering prevents extra transitions on the PWM output due to host 
+   updates, which waste power in switching losses and could cause malfunction 
+   on some HBridges. Double buffering should _not_ be used with PDM output! 
+   Double Buffering will add a 0 to 1/PWMRate  delay in the PWM output if the
+   host does not update the PWM generator synchronously with the PWM rate..
 
 
 Three Phase PWM generator
@@ -689,7 +689,9 @@ waves (NPWM being inverted from PWM) with high times of 25 uS. With the same
 settings but 1 uS of deadtime, the PWM and NPWM outputs would both have high 
 times of 23 uS (25 - (2X 1 uS), 1 uS per edge) 
 
-Simple SPI inteface
+Simple SPI inteface. The simple SPI interface is most suited for SPI devices
+with only one logical unit per SPI interface (like single channel ADCs, DACs or 
+SPI I/O ports)
 
 SPI SREG 32 bits (for data less than 32 bits data is right justified)
 
@@ -742,7 +744,13 @@ that supports up to 16 devices on a single SPI port. Each device
 can have different bit lengths (up to 32 bits), different data rates, 
 and a different code on the chip select bits. This information is 
 stored in the channel descriptor for each SPI peripheral connected 
-to a BSPI interface. 
+to a BSPI interface. The buffered SPI interface is most suited to use 
+with SPI devices that have multiple channels per interface (multiple 
+channel ADCs, DACs, or multiple devices sharing a SPI interface)
+The transmit buffering allows the host to write multiple channel data 
+without waiting for the SPI data transmission to complete. 
+The receive buffering allows the host to gather all the received SPI 
+data whenever convenient.
 
 SPI interface data register
 

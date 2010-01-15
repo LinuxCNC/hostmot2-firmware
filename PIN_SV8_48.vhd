@@ -157,6 +157,9 @@ package PIN_SV8_48 is
 		IOPortTag & x"06" & PWMTag & x"82",       -- I/O 45
 		IOPortTag & x"07" & PWMTag & x"83",       -- I/O 46
 		IOPortTag & x"06" & PWMTag & x"83",       -- I/O 47
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 					
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

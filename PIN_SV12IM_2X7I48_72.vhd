@@ -181,6 +181,9 @@ package PIN_SV12IM_2X7I48_72 is
 		IOPortTag & x"00" & NullTag & x"00",  								-- I/O 69
 		IOPortTag & x"00" & NullTag & x"00",  								-- I/O 70
 		IOPortTag & x"00" & NullTag & x"00",  								-- I/O 71
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

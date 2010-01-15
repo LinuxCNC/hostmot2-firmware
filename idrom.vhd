@@ -4,7 +4,7 @@ use IEEE.STD_LOGIC_1164.all;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --
--- Copyright (C) 2007, Peter C. Wallace, Mesa Electronics
+-- Copyright (C) 2009, Peter C. Wallace, Mesa Electronics
 -- http://www.mesanet.com
 --
 -- This program is is licensed under a disjunctive dual license giving you
@@ -255,12 +255,6 @@ end IDROM;
 			moduleid(31).Strides&moduleid(31).NumRegisters&moduleid(31).BaseAddr,
 			moduleid(31).MultRegs,
 
-
---			16 empty doublewords from 112 through 127 
---       may eventually delete this to allow 144 pin cards
-			empty,empty,empty,empty,empty,empty,empty,empty,
-			empty,empty,empty,empty,empty,empty,empty,empty,
---			pindesc starting at doubleword 128
 			
 			pindesc(0),pindesc(1),pindesc(2),pindesc(3),pindesc(4),pindesc(5),pindesc(6),pindesc(7),
 			pindesc(8),pindesc(9),pindesc(10),pindesc(11),pindesc(12),pindesc(13),pindesc(14),pindesc(15),
@@ -277,8 +271,10 @@ end IDROM;
 			pindesc(96),pindesc(97),pindesc(98),pindesc(99),pindesc(100),pindesc(101),pindesc(102),pindesc(103),
 			pindesc(104),pindesc(105),pindesc(106),pindesc(107),pindesc(108),pindesc(109),pindesc(110),pindesc(111),
 			pindesc(112),pindesc(113),pindesc(114),pindesc(115),pindesc(116),pindesc(117),pindesc(118),pindesc(119),
-			pindesc(120),pindesc(121),pindesc(122),pindesc(123),pindesc(124),pindesc(124),pindesc(126),pindesc(127)
-			
+			pindesc(120),pindesc(121),pindesc(122),pindesc(123),pindesc(124),pindesc(124),pindesc(126),pindesc(127),
+			pindesc(128),pindesc(129),pindesc(130),pindesc(131),pindesc(132),pindesc(133),pindesc(134),pindesc(135),
+			pindesc(136),pindesc(137),pindesc(138),pindesc(139),pindesc(140),pindesc(141),pindesc(142),pindesc(143)
+        				
    );
 
 

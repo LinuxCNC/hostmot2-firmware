@@ -156,6 +156,10 @@ package PIN_SVST4_4_48 is
 		IOPortTag & x"03" & StepGenTag & x"84",   -- I/O 45
 		IOPortTag & x"03" & StepGenTag & x"85",   -- I/O 46
 		IOPortTag & x"03" & StepGenTag & x"86",   -- I/O 47
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
+
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

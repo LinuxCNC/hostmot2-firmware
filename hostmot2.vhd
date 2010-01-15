@@ -1799,14 +1799,14 @@ architecture dataflow of HostMot2 is
 	PortDecode: process (A,Read,Write,PortSel, DDRSel, AltDataSrcSel, OpenDrainModeSel, OutputInvSel)
 	begin
 
-		LoadPortCMD <= OneOfNDecode(IOPorts,PortSel,Write,A(3 downto 2)); -- 4 max
-		ReadPortCMD <= OneOfNDecode(IOPorts,PortSel,Read,A(3 downto 2));
-		LoadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,Write,A(3 downto 2));
-		ReadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,Read,A(3 downto 2));
+		LoadPortCMD <= OneOfNDecode(IOPorts,PortSel,Write,A(4 downto 2)); -- 8 max
+		ReadPortCMD <= OneOfNDecode(IOPorts,PortSel,Read,A(4 downto 2));
+		LoadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,Write,A(4 downto 2));
+		ReadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,Read,A(4 downto 2));
 
-		LoadAltDataSrcCMD <= OneOfNDecode(IOPorts,AltDataSrcSel,Write,A(3 downto 2));
-		LoadOpenDrainModeCMD <= OneOfNDecode(IOPorts,OpenDrainModeSel,Write,A(3 downto 2));
-		LoadOutputInvCMD <= OneOfNDecode(IOPorts,OutputInvSel,Write,A(3 downto 2));
+		LoadAltDataSrcCMD <= OneOfNDecode(IOPorts,AltDataSrcSel,Write,A(4 downto 2));
+		LoadOpenDrainModeCMD <= OneOfNDecode(IOPorts,OpenDrainModeSel,Write,A(4 downto 2));
+		LoadOutputInvCMD <= OneOfNDecode(IOPorts,OutputInvSel,Write,A(4 downto 2));
 
 	end process PortDecode;
 

@@ -183,7 +183,9 @@ package PIN_ST12_72 is
 		IOPortTag & x"0B" & StepGenTag & x"84",      -- I/O 69
 		IOPortTag & x"0B" & StepGenTag & x"85",      -- I/O 70
 		IOPortTag & x"0B" & StepGenTag & x"86",      -- I/O 71
-		
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,		
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

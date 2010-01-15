@@ -207,6 +207,9 @@ package PIN_SV16_96 is
 		IOPortTag & x"0E" & PWMTag & x"82",       -- I/O 93
 		IOPortTag & x"0F" & PWMTag & x"83",       -- I/O 94
 		IOPortTag & x"0E" & PWMTag & x"83",       -- I/O 95
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 				
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,

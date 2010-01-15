@@ -207,6 +207,9 @@ package PIN_SVST8_24_96 is
 		IOPortTag & x"16" & StepGenTag & x"82",   -- I/O 93
 		IOPortTag & x"17" & StepGenTag & x"81",   -- I/O 94
 		IOPortTag & x"17" & StepGenTag & x"82",   -- I/O 95
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
