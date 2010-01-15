@@ -191,7 +191,7 @@ run("xst", "-ifn", "scr")
 run("ngdbuild", "-uc", "constraints.ucf", "work.ngc")
 
 # Mapping
-run("map", "work.ngd")
+run("map", "-r", "work.ngd")
 
 # Placing / routing
 run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
