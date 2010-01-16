@@ -30,6 +30,14 @@ TOP_x20_2000 := 9054
 .PHONY: default clean zipfiles bitfiles pinfiles
 default: zipfiles bitfiles pinfiles
 
+dist:
+ifeq ($(filter %-dirty,$(VERSION)),)
+	git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD \
+		| gzip -9 > hostmot2-firmware-$(VERSION).tar.gz 
+else
+	$(error Cannot make a distribution from a dirty tree)
+endif
+
 clean:
 	rm -rf fw
 # No whitespace is acceptable in args to FIRMWARE_template
