@@ -69,5 +69,4 @@ for line in open("firmwares.txt"):
         gen(chip, fw)
 
 for chip in sorted(all_chips):
-    print "$(info $(call CHIP_template,%s))" % chip
     print "$(eval $(call CHIP_template,%s))" % chip
