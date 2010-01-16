@@ -27,13 +27,14 @@ TOP_x20_1000 := 9054
 TOP_x20_1500 := 9054
 TOP_x20_2000 := 9054
 
-.PHONY: default clean zipfiles bitfiles pinfiles
-default: zipfiles bitfiles pinfiles
+.PHONY: dist default clean tarfiles bitfiles pinfiles
+default: tarfiles bitfiles pinfiles
 
 dist:
 ifeq ($(filter %-dirty,$(VERSION)),)
+	@mkdir -p dist
 	git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD \
-		| gzip -9 > hostmot2-firmware-$(VERSION).tar.gz 
+		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz 
 else
 	$(error Cannot make a distribution from a dirty tree)
 endif
@@ -51,15 +52,15 @@ $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in pin.py
 	mv $(1).PIN.tmp $(1).PIN
 bitfiles: $(1).BIT
 pinfiles: $(1).PIN
-hostmot2-$(2).zip: $(1).BIT $(1).PIN
+dist/hostmot2-firmware-bin-$(2)-$(VERSION).tar.gz: $(1).BIT $(1).PIN
 endef
 
 define CHIP_template
-zipfiles: hostmot2-$(1).zip
-hostmot2-$(1).zip:
-	rm -f $$@
-	python mkzip.py $$@ $$^
-	ln -f $$@ $${@:.zip=-$(VERSION).zip}
+tarfiles: dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
+dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz:
+	@mkdir -p $$(dir $$@)
+	@rm -f $$@
+	python mktar.py $$@ fw/ hostmot2-firmware-bin-$(1)-$(VERSION)/ $$^
 endef
 
 -include firmwares.mk
