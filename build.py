@@ -75,6 +75,13 @@ card2top = {
     'x20_2000': '9054',
 }
 
+# done - 6
+# enable outputs - 5
+# release write enable - 4
+bitgen_extra = {
+    'epp': ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4', '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait']
+}
+
 card2card = {
     'i20': '5i20',
     'i22_1000': '5i22',
@@ -206,7 +213,8 @@ run("map", "-r", "work.ngd")
 run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
 
 # Bitgen
-run("bitgen", "work.ncd", "work.bit", "work.pcf")
+bitgen_args = bitgen_extra.get(card2top[card], []) + ["work.ncd", "work.bit", "work.pcf"]
+run("bitgen", *bitgen_args) 
 
 shutil.copy("work.bit", outfile)
 
