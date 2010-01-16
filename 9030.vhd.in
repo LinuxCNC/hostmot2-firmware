@@ -97,12 +97,12 @@ entity top is -- for 5I20 and 4I65 PCI 9030 based cards
 		ThePinDesc: PinDescType := PinDesc;
 		TheModuleID: ModuleIDType := ModuleID;
 		PWMRefWidth: integer := 13;	-- PWM resolution is PWMRefWidth-1 bits 
-		IDROMType: integer := 2;		
+		IDROMType: integer := 3;		
 		UseStepGenPrescaler : boolean := true;
 		UseIRQLogic: boolean := true;
 		UseWatchDog: boolean := true;
 		OffsetToModules: integer := 64;
-		OffsetToPinDesc: integer := 512;
+		OffsetToPinDesc: integer := 448;
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
 		InstStride0: integer := 4;			-- instance stride 0 = 4 bytes = 1 x 32 bit
