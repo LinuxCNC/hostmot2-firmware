@@ -110,7 +110,7 @@ begin
         elsif(pin = QCountProbePin)   then return "Probe (in)"; end if;
     elsif(tag = StepGenTag) then
         if(pin = StepGenStepPin)      then return "Step (out)";
-        elsif(pin = StepGenStepPin)   then return "Dir (out)";
+        elsif(pin = StepGenDirPin)    then return "Dir (out)";
         elsif(pin >= StepGenTable2Pin and pin <=StepGenTable7Pin)
                                       then return "StepTable (out)"; end if;
     elsif(tag = PWMTag) then
