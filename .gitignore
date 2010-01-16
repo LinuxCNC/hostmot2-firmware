@@ -1,2 +1,4 @@
 firmwares.mk
 fw
+*.zip
+*.tar.gz
