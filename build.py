@@ -133,9 +133,9 @@ def sq(a):
     return "'" + a.replace("'", "'\\''") + "'"
 
 def run(*args):
-    print "#", " ".join([sq(a) for a in args])
+    print "#", " ".join([sq(a) for a in args]); sys.stdout.flush()
     r = os.spawnvp(os.P_WAIT, args[0], args)
-    print "# exited with", r
+    print "# exited with", r; sys.stdout.flush()
     if r:
         raise SystemExit, r
 
