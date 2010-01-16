@@ -175,7 +175,7 @@ begin
             pr := GetPinDesc(i);
             write(so, Conn(i));
             write(so, string'("-"));
-            write(so, conv_integer(i)/24*2+1, LEFT, 2);
+            write(so, conv_integer(i) mod 24*2+1, LEFT, 2);
             write(so, ' ', RIGHT, 1);
             write(so, i, RIGHT, 3);
 	    if(pr.SecFunc /= NullTag) then
