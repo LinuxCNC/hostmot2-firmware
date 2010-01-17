@@ -163,20 +163,22 @@ d = tempfile.mkdtemp(prefix='hm2')
 print "# tempdir", sq(d)
 atexit.register(shutil.rmtree, d)
 
+orgdir = os.getcwd()
+def s(*x): return os.path.join(orgdir, *x)
 def p(*x): return os.path.join(d, *x)
 
-for i in glob.glob("*.vhd"):  # assume spare vhdl files cause no trouble
-    shutil.copy(i, p(i))
-shutil.copy("%s.ucf" % card2card[card], p("constraints.ucf"))
+constraints = s("%s.ucf" % card2card[card])
 
 cardvhdl = card+"card"
 pinvhdl = "PIN_" + pin
-subst('%s.vhd.in' % card2top[card], p("top.vhd"), CARD=cardvhdl, PIN=pinvhdl);
+topfile_in = '%s.vhd.in' % card2top[card]
+topfile_out = os.path.splitext(outfile)[0] + ".vhd"
+subst(topfile_in, topfile_out, CARD=cardvhdl, PIN=pinvhdl);
 
-all_vhdl =  common_vhdl + [cardvhdl + '.vhd', pinvhdl + '.vhd', "top.vhd"]
+all_vhdl = common_vhdl + [cardvhdl + '.vhd', pinvhdl + '.vhd', topfile_out]
+all_vhdl = [s(f) for f in all_vhdl]
 
 # Run everything from the temporary directory
-orgdir = os.getcwd()
 os.chdir(d)
 
 # Build directories
@@ -204,7 +206,7 @@ prjf.close()
 run("xst", "-ifn", "scr")
 
 # ngdbuild
-run("ngdbuild", "-uc", "constraints.ucf", "work.ngc")
+run("ngdbuild", "-uc", constraints, "work.ngc")
 
 # Mapping
 run("map", "-r", "work.ngd")
