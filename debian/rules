@@ -1,0 +1,37 @@
+#!/usr/bin/make -f
+
+check-xst:
+ifeq ($(shell which xst 2>/dev/null),)
+	@echo '`xst'\'' is not on your path'
+	@echo 'Make sure that Xilinx ISE 9.2 is available (source .../Xilinx92i/settings.sh))'
+	@false
+endif
+
+check-root:
+	dh_testroot
+
+build: check-xst
+	$(MAKE)
+
+install: build
+	rm -rf debian/tmp
+	mkdir -p debian/tmp/lib/firmware/hm2
+	(cd fw; find -name "*.BIT" -or -name "*.PIN" | cpio -o) \
+		| (cd debian/tmp/lib/firmware/hm2; cpio -i --make-directories)
+
+binary: binary-indep
+binary-indep: check-root install
+	dh_movefiles
+	dh_installchangelogs
+	dh_installdocs
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+clean:
+	dh_clean
+	rm -r fw firmwares.mk
+
+.PHONY: check-xst check-root build binary binary-indep clean
+# vim:sw=8:sts=8:ts=8:noet

@@ -1,0 +1,90 @@
+#!/usr/bin/python
+# coding=utf-8
+#    build hostmot2 firmwares
+#    Copyright © 2009 Jeff Epler <jepler@unpythonic.net>
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import os
+
+name = {
+    'i20': 'Mesa 5i20',
+    'i22': 'Mesa 5i22',
+    'i23': 'Mesa 5i23',
+    'i43': 'Mesa 7i43',
+    'i65': 'Mesa 4i65',
+    'i68': 'Mesa 4i68',
+    'x20': 'Mesa 3x20',
+}
+
+path = {
+    'i20': '5i20',
+    'i22': '5i22',
+    'i23': '5i23',
+    'i43': '7i43',
+    'i65': '4i65',
+    'i68': '4i68',
+    'x20': '3x20',
+}
+
+all_chips = []
+for line in open("firmwares.txt"):
+    line = line.strip()
+    if not line or line.startswith("#"): continue
+    line = line.split()
+    chip = line[0]
+    chip = chip.split("_")[0]
+    if chip not in all_chips: all_chips.append(chip)
+
+for chip in all_chips:
+    p = path[chip]
+    f = open("debian/hostmot2-firmware-%s.files" % p, "w")
+    f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
+    f.write("/lib/firmware/hm2/%s/*.PIN\n" % p)
+
+f = open("debian/control", "w")
+f.write("""\
+Source: hostmot2-firmware
+Section: misc
+Priority: extra
+Maintainer: Jeff Epler <jepler@unpythonic.net>
+
+Package: hostmot2-firmware-all
+Provides: emc2-firmware
+Replaces: emc2-firmware
+Conflicts: emc2-firmware
+Architecture: all
+Recommends: %s
+Description: Meta-package to install all hostmot2 firmwares
+ This is an empty package that depends on all the separately packaged
+ firmware images used by EMC2.  If your configuration does not need
+ any firmware, you can safely remove this package.  If you know which
+ specific hostmot2-firmware-* package you need, you can remove this package
+ and install just the one you need.
+
+""" % ", ".join("hostmot2-firmware-%s" % path[chip] for chip in all_chips))
+
+for chip in all_chips:
+    f.write("""\
+Package: hostmot2-firmware-%(chip)s
+Replaces: emc2-firmware-mesa-%(chip)s-hostmot2
+Conflicts: emc2-firmware-mesa-%(chip)s-hostmot2, emc2 (<< 2.4.0)
+Architecture: all
+Enhances: emc2 (>= 2.4.0~)
+Description: HostMot2 firmware images for %(chipname)s
+  This package contains HostMot2 firmware images for the %(chipname)s
+  "Anything I/O" board.  If you don't use a %(chipname)s you can safely
+  remove this package.
+
+""" % {'chip': path[chip], 'chipname': name[chip]})
