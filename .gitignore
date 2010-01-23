@@ -1,3 +1,7 @@
-firmwares.mk
-fw
-dist
+/firmwares.mk
+/fw
+/dist
+/debian/control
+/debian/*.files
+/debian/files
+/debian/hostmot2-firmware-*
