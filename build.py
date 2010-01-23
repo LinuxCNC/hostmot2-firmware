@@ -81,6 +81,7 @@ card2top = {
 bitgen_extra = {
     'epp': ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4', '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait'],
     '9054': ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4', '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait'],
+    '9030': ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4', '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait'],
 }
 
 card2card = {
@@ -140,6 +141,9 @@ def run(*args):
     if r:
         raise SystemExit, r
 
+def mkdir(a):
+    if not os.path.isdir(a): os.mkdir(a)
+
 if 'XILINX' not in os.environ:
     usage("Xilinx environment not availble")
 
@@ -160,9 +164,9 @@ if len(sys.argv) == 4:
 else:
     outfile = os.path.join(orgdir, "%s_%s.BIT"% (card2card[card], pin))
 
-d = tempfile.mkdtemp(prefix='hm2')
-print "# tempdir", sq(d)
-atexit.register(shutil.rmtree, d)
+d = os.path.splitext(outfile)[0] + "_work"
+print "# workdir", sq(d)
+if not os.path.isdir(d): os.makedirs(d)
 
 orgdir = os.getcwd()
 def s(*x): return os.path.join(orgdir, *x)
@@ -183,8 +187,8 @@ all_vhdl = [s(f) for f in all_vhdl]
 os.chdir(d)
 
 # Build directories
-os.mkdir("tmp_syn")
-os.mkdir("work_syn")
+mkdir("tmp_syn")
+mkdir("work_syn")
 
 # Build vscr, vprj
 open("scr", "w").write("""
@@ -217,7 +221,7 @@ run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
 
 # Bitgen
 bitgen_args = bitgen_extra.get(card2top[card], []) + ["work.ncd", "work.bit", "work.pcf"]
-run("bitgen", *bitgen_args) 
+run("bitgen", "-w", *bitgen_args) 
 
 shutil.copy("work.bit", outfile)
 
