@@ -6,7 +6,8 @@ scripts to automatically build all the desired variants of the
 firmwares.
 
 It requires the no-cost version of Xilinx ISE.  I have tested with ISE
-9.2.
+9.2.  This version supports all FPGAs on Mesa cards with the exception
+of the 3x20-2M.
 
 It also requires ghdl for building PIN files.  The PIN file format is
 intended to be human readable (not machine readable) so it is not a
