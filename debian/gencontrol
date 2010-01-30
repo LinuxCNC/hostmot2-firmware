@@ -20,22 +20,28 @@ import os
 
 name = {
     'i20': 'Mesa 5i20',
-    'i22': 'Mesa 5i22',
+    'i22_1000': 'Mesa 5i22-1',
+    'i22_1500': 'Mesa 5i22-1.5',
     'i23': 'Mesa 5i23',
-    'i43': 'Mesa 7i43',
+    'i43_200': 'Mesa 7i43-2',
+    'i43_400': 'Mesa 7i43-4',
     'i65': 'Mesa 4i65',
     'i68': 'Mesa 4i68',
-    'x20': 'Mesa 3x20',
+    'x20_1000': 'Mesa 3x20-1',
+    'x20_1500': 'Mesa 3x20-1.5',
 }
 
 path = {
     'i20': '5i20',
-    'i22': '5i22',
+    'i22_1000': '5i22-1',
+    'i22_1500': '5i22-1.5',
     'i23': '5i23',
-    'i43': '7i43',
+    'i43_200': '7i43-2',
+    'i43_400': '7i43-4',
     'i65': '4i65',
     'i68': '4i68',
-    'x20': '3x20',
+    'x20_1000': '3x20-1',
+    'x20_1500': '3x20-1.5',
 }
 
 all_chips = []
@@ -44,7 +50,6 @@ for line in open("firmwares.txt"):
     if not line or line.startswith("#"): continue
     line = line.split()
     chip = line[0]
-    chip = chip.split("_")[0]
     if chip not in all_chips: all_chips.append(chip)
 
 for chip in all_chips:
