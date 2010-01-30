@@ -83,13 +83,12 @@ Description: Meta-package to install all hostmot2 firmwares
 for chip in all_chips:
     f.write("""\
 Package: hostmot2-firmware-%(chip)s
-Replaces: emc2-firmware-mesa-%(chip)s-hostmot2
-Conflicts: emc2-firmware-mesa-%(chip)s-hostmot2, emc2 (<< 2.4.0)
+Conflicts: emc2-firmware-mesa-%(oldchip)s-hostmot2, emc2 (<< 2.3.5)
+Enhances: emc2 (>= 2.3.5)
 Architecture: all
-Enhances: emc2 (>= 2.4.0~)
 Description: HostMot2 firmware images for %(chipname)s
   This package contains HostMot2 firmware images for the %(chipname)s
   "Anything I/O" board.  If you don't use a %(chipname)s you can safely
   remove this package.
 
-""" % {'chip': path[chip], 'chipname': name[chip]})
+""" % {'oldchip': path[chip].split("-")[0], 'chip': path[chip], 'chipname': name[chip]})
