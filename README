@@ -20,9 +20,12 @@ On my system (quad core AMD Phenom 9600) building the full set of
 firmwares took about 75 minutes wall time with the -j4 setting shown
 above.
 
-This package will probably be rolled into emc2 after it matures, but for
-now it stands alone to make distributing it easier.
-
+To build Debian packages:
+    debian/gencontrol
+    . ~/Xilinx92i/config.sh  # depends on ISE version and install path
+    DEB_BUILD_OPTIONS=parallel=4 debian/rules binary
+                             # parallel= setting depends on RAM and # cores
+    dpkg-buildpackage -S
 
 TODO:
  * basic test of firmware images
