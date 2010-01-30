@@ -27,6 +27,9 @@ To build Debian packages:
                              # parallel= setting depends on RAM and # cores
     dpkg-buildpackage -S
 
-TODO:
- * basic test of firmware images
-   * I have hardware to test 5i20, 7i43-400 only
+A representative firmware for each supported board type has been tested:
+ * 5i20, 5i22-1M, 5i23 (PCI)
+ * 7i43-400 (EPP)
+ * 3x20-1M (PCI-Express)
+ * 4i65, 4i68 (PC104+)
+The 5i22-1.5M and 7i43-200 are not tested, but are expected to work.
