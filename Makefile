@@ -1,7 +1,3 @@
-ifeq ($(shell which xst 2>/dev/null),)
-$(error 'xst' is not on your PATH.  Make sure that the Xilinx ISE is available)
-endif
-
 XIL_PAR_DESIGN_CHECK_VERBOSE=1
 export XIL_PAR_DESIGN_CHECK_VERBOSE
 

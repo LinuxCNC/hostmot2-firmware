@@ -1,16 +1,9 @@
 #!/usr/bin/make -f
 
-check-xst:
-ifeq ($(shell which xst 2>/dev/null),)
-	@echo '`xst'\'' is not on your path'
-	@echo 'Make sure that Xilinx ISE 9.2 is available (source .../Xilinx92i/settings.sh))'
-	@false
-endif
-
 check-root:
 	dh_testroot
 
-build: check-xst
+build:
 	$(MAKE)
 
 install: build
