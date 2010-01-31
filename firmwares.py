@@ -55,9 +55,8 @@ def pin(chip, fw):
     return existing("PIN_%s.vhd" % fw, "PIN_%s_%d.vhd" % (fw, sz[chip]))[4:-4]
 
 def gen(chip, fw):
-    print "$(eval $(call FIRMWARE_template,fw/%s/%s,%s,%s))" % (
-        path[chip], fw, chip, pin(chip, fw))
-
+    print "$(eval $(call FIRMWARE_template,fw/%s/%s,%s,%s,%s))" % (
+        path[chip], fw, chip, pin(chip, fw), path[chip])
 all_chips = []
 for line in open("firmwares.txt"):
     line = line.strip()
@@ -69,4 +68,4 @@ for line in open("firmwares.txt"):
         gen(chip, fw)
 
 for chip in all_chips:
-    print "$(eval $(call CHIP_template,%s))" % chip
+    print "$(eval $(call CHIP_template,%s))" % path[chip]

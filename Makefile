@@ -64,7 +64,7 @@ $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in pin.py
 	mv $(1).PIN.tmp $(1).PIN
 bitfiles: $(1).BIT
 pinfiles: $(1).PIN
-dist/hostmot2-firmware-bin-$(2)-$(VERSION).tar.gz: $(1).BIT $(1).PIN
+dist/hostmot2-firmware-bin-$(4)-$(VERSION).tar.gz: $(1).BIT $(1).PIN
 endef
 
 define CHIP_template
