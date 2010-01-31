@@ -37,7 +37,8 @@ dist-src:
 	$(error Use make dist-src-force to make a distribution from a dirty tree)
 dist-src-force:
 	@mkdir -p dist
-	git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ $(shell git stash create) \
+	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ $(shell git stash create) | \
+		python mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
 		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz
 dist-bin:
 	$(error Use make dist-bin-force to make a distribution from a dirty tree)
@@ -46,8 +47,9 @@ dist: dist-force
 dist-src: dist-src-force
 dist-src-force:
 	@mkdir -p dist
-	git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD \
-		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz 
+	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD | \
+		python mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
+		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz
 dist-bin: dist-bin-force
 endif
 
