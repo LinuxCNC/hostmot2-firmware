@@ -29,6 +29,11 @@ To build Debian packages:
 (for some reason ise encounters an error when run from fakeroot on some
 systems)
 
+To build tar packages (must be in a git checkout):
+    make -j4                 # -j setting depends on RAM and # CPU cores
+    make dist
+    # or make dist-force if your working tree is dirty
+
 A representative firmware for each supported board type has been tested:
  * 5i20, 5i22-1M, 5i23 (PCI)
  * 7i43-400 (EPP)
