@@ -111,7 +111,7 @@ def help_pins(card):
             subsequent_indent=" "*8)) + "\n"
 
 def help_env():
-    return "\nYou must 'source settings.sh' before running this program\n"
+    return "\nYou must 'source .../Xilinx92i/settings.sh' before running this program\n"
 
 def usage(hint='', card=''):
     usage =  __doc__ % sys.argv[0] + help_cards() + help_pins(card) + help_env()
