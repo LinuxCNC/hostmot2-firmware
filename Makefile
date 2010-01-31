@@ -78,4 +78,5 @@ endef
 -include firmwares.mk
 Makefile: firmwares.mk
 firmwares.mk: firmwares.py firmwares.txt
-	python firmwares.py > firmwares.mk
+	python firmwares.py > firmwares.mk.tmp
+	mv -f firmwares.mk.tmp firmwares.mk
