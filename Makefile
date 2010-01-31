@@ -30,16 +30,29 @@ TOP_x20_1000 := 9054
 TOP_x20_1500 := 9054
 TOP_x20_2000 := 9054
 
-.PHONY: dist default clean tarfiles bitfiles pinfiles
-default: tarfiles bitfiles pinfiles
+.PHONY: dist dist-src dist-src-force dist-bin dist-bin-force default clean bitfiles pinfiles
+default: bitfiles pinfiles
 
+dist-force: dist-src-force dist-bin-force
+ifneq ($(filter %-dirty,$(VERSION)),)
 dist:
-ifeq ($(filter %-dirty,$(VERSION)),)
+	$(error Use make dist-force to make a distribution from a dirty tree)
+dist-src:
+	$(error Use make dist-src-force to make a distribution from a dirty tree)
+dist-src-force:
+	@mkdir -p dist
+	git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ $(shell git stash create) \
+		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz
+dist-bin:
+	$(error Use make dist-bin-force to make a distribution from a dirty tree)
+else
+dist: dist-force
+dist-src: dist-src-force
+dist-src-force:
 	@mkdir -p dist
 	git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD \
 		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz 
-else
-	$(error Cannot make a distribution from a dirty tree)
+dist-bin: dist-bin-force
 endif
 
 clean:
@@ -59,7 +72,7 @@ dist/hostmot2-firmware-bin-$(2)-$(VERSION).tar.gz: $(1).BIT $(1).PIN
 endef
 
 define CHIP_template
-tarfiles: dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
+dist-bin-force: dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz:
 	@mkdir -p $$(dir $$@)
 	@rm -f $$@
