@@ -1,7 +1,7 @@
 XIL_PAR_DESIGN_CHECK_VERBOSE=1
 export XIL_PAR_DESIGN_CHECK_VERBOSE
 
-VERSION := $(shell git describe --dirty | sed s/^v//)
+VERSION := $(shell ./DESCRIBE)
 
 COMMON_VHDL := IDROMConst.vhd \
     atrans.vhd boutreg.vhd bufferedspi.vhd \

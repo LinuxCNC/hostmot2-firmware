@@ -1,0 +1,18 @@
+#!/bin/bash
+if [ -f VERSION ]; then exec cat VERSION; fi
+
+dirty () {
+    git update-index -q --refresh
+    ! test -z "$(git diff-index --name-only HEAD --)"
+}
+
+desc () {
+    if ! test -d .git ; then
+        echo 'not git'
+    else
+        DESC=$(git describe --always)
+        if dirty > /dev/null; then echo $DESC-dirty; else echo $DESC; fi
+    fi
+}
+
+desc | sed s/^v//
