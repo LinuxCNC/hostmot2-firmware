@@ -16,7 +16,7 @@ binary: binary-indep
 binary-indep: check-root install
 	dh_movefiles
 	dh_installchangelogs
-	dh_installdocs
+	dh_installdocs -A README
 	dh_installdeb
 	dh_gencontrol
 	dh_md5sums
