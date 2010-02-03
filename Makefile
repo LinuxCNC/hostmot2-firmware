@@ -34,8 +34,14 @@ ifneq ($(filter %-dirty,$(VERSION)),)
 dist:
 	$(error Use make dist-force to make a distribution from a dirty tree)
 dist-src:
+ifeq ($(wildcard .git),)
+	$(error Use a git repository to make dist-src or dist-src-force)
+endif
 	$(error Use make dist-src-force to make a distribution from a dirty tree)
 dist-src-force:
+ifeq ($(wildcard .git),)
+	$(error Use a git repository to make dist-src or dist-src-force)
+endif
 	@mkdir -p dist
 	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ $(shell git stash create) | \
 		python mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
@@ -45,7 +51,13 @@ dist-bin:
 else
 dist: dist-force
 dist-src: dist-src-force
+ifeq ($(wildcard .git),)
+	$(error Use a git repository to make dist-src or dist-src-force)
+endif
 dist-src-force:
+ifeq ($(wildcard .git),)
+	$(error Use a git repository to make dist-src or dist-src-force)
+endif
 	@mkdir -p dist
 	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD | \
 		python mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
