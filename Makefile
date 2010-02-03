@@ -44,7 +44,7 @@ ifeq ($(wildcard .git),)
 endif
 	@mkdir -p dist
 	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ $(shell git stash create) | \
-		python mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
+		./mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
 		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz
 dist-bin:
 	$(error Use make dist-bin-force to make a distribution from a dirty tree)
@@ -60,7 +60,7 @@ ifeq ($(wildcard .git),)
 endif
 	@mkdir -p dist
 	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD | \
-		python mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
+		./mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
 		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz
 dist-bin: dist-bin-force
 endif
@@ -71,10 +71,10 @@ clean:
 define FIRMWARE_template
 $(1).BIT: $(TOP_$(2)).vhd.in
 	@mkdir -p $(dir $(1))
-	python build.py $(2) $(3) $(1).BIT
+	./build.py $(2) $(3) $(1).BIT
 $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in pin.py
 	@mkdir -p $(dir $(1))
-	python pin.py $(3) $(2) > $(1).PIN.tmp
+	./pin.py $(3) $(2) > $(1).PIN.tmp
 	mv $(1).PIN.tmp $(1).PIN
 bitfiles: $(1).BIT
 pinfiles: $(1).PIN
@@ -86,11 +86,11 @@ dist-bin-force: dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz:
 	@mkdir -p $$(dir $$@)
 	@rm -f $$@
-	python mktar.py $$@ fw/ hostmot2-firmware-bin-$(1)-$(VERSION)/ $$^
+	./mktar.py $$@ fw/ hostmot2-firmware-bin-$(1)-$(VERSION)/ $$^
 endef
 
 -include firmwares.mk
 Makefile: firmwares.mk
 firmwares.mk: firmwares.py firmwares.txt
-	python firmwares.py > firmwares.mk.tmp
+	./firmwares.py > firmwares.mk.tmp
 	mv -f firmwares.mk.tmp firmwares.mk
