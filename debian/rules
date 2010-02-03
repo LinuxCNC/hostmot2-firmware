@@ -24,7 +24,7 @@ binary-indep: check-root install
 
 clean:
 	dh_clean
-	rm -r fw firmwares.mk
+	rm -rf fw firmwares.mk
 
 .PHONY: check-xst check-root build binary binary-indep clean
 # vim:sw=8:sts=8:ts=8:noet
