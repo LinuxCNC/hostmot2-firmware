@@ -87,6 +87,7 @@ dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz:
 	@mkdir -p $$(dir $$@)
 	@rm -f $$@
 	./mktar.py $$@ fw/ hostmot2-firmware-bin-$(1)-$(VERSION)/ $$^
+dist-force-$(1): dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 endef
 
 -include firmwares.mk
