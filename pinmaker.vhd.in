@@ -77,6 +77,7 @@ begin
     if(tag = SSSITag)	    then return "SSSI"; end if;
     if(tag = UARTTTag)	    then return "UARTT"; end if;
     if(tag = AddrXTag)	    then return "AddrX"; end if;
+    if(tag = MuxedQCountTag) then return "MuxedQCount"; end if;
     if(tag = MuxedQCountSelTag) then return "MuxedQCountSel"; end if;
     if(tag = BSPITag)	    then return "BSPI"; end if;
     if(tag = DBSPITag)	    then return "DBSPI"; end if;
@@ -117,6 +118,15 @@ begin
         if(pin = PWMAOutPin)          then return "PWM/Up (out)";
         elsif(pin = PWMBDirPin)       then return "Dir/Down (out)";
         elsif(pin = PWMCEnaPin)       then return "Enable (out)"; end if;
+    elsif(tag = MuxedQCountTag) then
+        if(pin = MuxedQCountQAPin)    then return "Muxed Phase A (in)";
+        elsif(pin = MuxedQCountQBPin) then return "Muxed Phase B (in)";
+        elsif(pin = MuxedQCountIdxPin) then return "Muxed Index (in)";
+        elsif(pin = MuxedQCountIdxMaskPin) then return "Muxed Index Mask (in)";
+        elsif(pin = MuxedQCountProbePin) then return "Muxed Probe (in)"; end if;
+    elsif(tag = MuxedQCountSelTag) then
+        if(pin = MuxedQCountSel0Pin)   then return "Muxed Encoder Select 0 (out)";
+        elsif(pin = MuxedQCountSel1Pin) then return "Muxed Encoder Select 1 (out)"; end if;
     end if;
     return "???";
 end function;
@@ -168,7 +178,7 @@ begin
         end loop;
 	writeline(output_file, so);
 
-        write(so, string'("PIN   IO# Module   Chan Func"));
+        write(so, string'("PIN   IO# Module         Chan Func"));
 	writeline(output_file, so);
 
 	for i in 0 to IOWidth-1 loop
@@ -180,7 +190,7 @@ begin
             write(so, i, RIGHT, 3);
 	    if(pr.SecFunc /= NullTag) then
                 write(so, ' ', RIGHT, 1);
-                write(so, TagToName(pr.SecFunc), LEFT, 8);
+                write(so, TagToName(pr.SecFunc), LEFT, 14);
                 write(so, ' ', RIGHT, 1);
                 if((pr.SecInst and x"80") /= 0) then
                     write(so, string'("ALL "));
@@ -191,6 +201,7 @@ begin
                 write(so, Funct(pr.SecFunc, pr.SecPin), RIGHT, 4);
             end if;
             writeline(output_file, so);
+            if((i mod 24) = 23) then writeline(output_file, so); end if;
 	end loop;
 
 	wait;
