@@ -56,7 +56,8 @@ for chip in all_chips:
     p = path[chip]
     f = open("debian/hostmot2-firmware-%s.files" % p, "w")
     f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
-    f.write("/lib/firmware/hm2/%s/*.PIN\n" % p)
+    f = open("debian/hostmot2-firmware-%s.docs" % p, "w")
+    f.write("fw/%s/*.PIN\n" % p)
 
 f = open("debian/control", "w")
 f.write("""\
