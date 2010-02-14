@@ -178,10 +178,13 @@ begin
         end loop;
 	writeline(output_file, so);
 
-        write(so, string'("PIN   IO# Module         Chan Func"));
-	writeline(output_file, so);
 
 	for i in 0 to IOWidth-1 loop
+            if((i mod 24) = 0) then
+                writeline(output_file, so);
+                write(so, string'("PIN   IO# Module         Chan Func"));
+                writeline(output_file, so);
+            end if;
             pr := GetPinDesc(i);
             write(so, Conn(i));
             write(so, string'("-"));
@@ -201,7 +204,6 @@ begin
                 write(so, Funct(pr.SecFunc, pr.SecPin), RIGHT, 4);
             end if;
             writeline(output_file, so);
-            if((i mod 24) = 23) then writeline(output_file, so); end if;
 	end loop;
 
 	wait;
