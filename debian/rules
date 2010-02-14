@@ -18,7 +18,7 @@ install: build
 	done < debian/compat_symlinks
 
 binary: binary-indep
-binary-indep: check-root install
+binary-indep: check-root install debian/control
 	dh_movefiles
 	dh_installchangelogs
 	dh_installdocs -A README
@@ -26,6 +26,9 @@ binary-indep: check-root install
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
+
+debian/control: debian/gencontrol firmwares.txt
+	debian/gencontrol
 
 clean:
 	dh_clean
