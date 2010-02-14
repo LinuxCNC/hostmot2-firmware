@@ -44,6 +44,13 @@ path = {
     'x20_1500': '3x20-1.5',
 }
 
+path_compat = {
+    'i43_200': '7i43/*S.BIT',
+    'i43_400': '7i43/*B.BIT',
+    'i22_1000': '5i22/*S.BIT',
+    'i22_1500': '5i22/*B.BIT',
+}
+
 all_chips = []
 for line in open("firmwares.txt"):
     line = line.strip()
@@ -56,6 +63,9 @@ for chip in all_chips:
     p = path[chip]
     f = open("debian/hostmot2-firmware-%s.files" % p, "w")
     f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
+    c = path_compat.get(chip, None)
+    if c:
+        f.write("/lib/firmware/hm2/%s\n" % c)
     f = open("debian/hostmot2-firmware-%s.docs" % p, "w")
     f.write("fw/%s/*.PIN\n" % p)
 
