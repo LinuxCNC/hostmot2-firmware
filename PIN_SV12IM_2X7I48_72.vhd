@@ -107,7 +107,7 @@ package PIN_SV12IM_2X7I48_72 is
 			
 	constant PinDesc : PinDescType :=(
 -- 	Base func  sec unit sec func 	 		 sec pin		
-		IOPortTag & x"00" & NullTag & x"00",        						-- I/O 00
+		IOPortTag & x"00" & PWMTag & PWMCEnaPin,       					-- I/O 00
 		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 01
 		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 02	
 		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 03		
@@ -130,9 +130,9 @@ package PIN_SV12IM_2X7I48_72 is
 		IOPortTag & x"04" & PWMTag & PWMBDirPin,            			-- I/O 20
 		IOPortTag & x"05" & PWMTag & PWMAOutPin,            			-- I/O 21
 		IOPortTag & x"05" & PWMTag & PWMBDirPin,            			-- I/O 22
-		IOPortTag & x"00" & NullTag & x"00",        						-- I/O 23
+		IOPortTag & x"00" & PWMTag & PWMCEnaPin,        				-- I/O 23
 					                                   
-		IOPortTag & x"00" & NullTag & x"00",        						-- I/O 24
+		IOPortTag & x"06" & PWMTag & PWMCEnaPin,        				-- I/O 24
 		IOPortTag & x"03" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 25	
 		IOPortTag & x"03" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 26
 		IOPortTag & x"03" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 27	
@@ -155,7 +155,7 @@ package PIN_SV12IM_2X7I48_72 is
 		IOPortTag & x"0A" & PWMTag & PWMBDirPin,            			-- I/O 44
 		IOPortTag & x"0B" & PWMTag & PWMAOutPin,            			-- I/O 45
 		IOPortTag & x"0B" & PWMTag & PWMBDirPin,            			-- I/O 46
-		IOPortTag & x"00" & NullTag & x"00",        						-- I/O 47	
+		IOPortTag & x"06" & PWMTag & PWMCEnaPin,        				-- I/O 47	
 																					
 		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountIdxMaskPin, -- I/O 48   
 		IOPortTag & x"01" & MuxedQCountTag & MuxedQCountIdxMaskPin, -- I/O 49
