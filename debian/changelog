@@ -1,3 +1,11 @@
+hostmot2-firmware (0.5) hardy; urgency=low
+
+  * New firmwares: i22-*/SVST2_4_7I47, i20/SV12IM_2X7I48
+  * Symlinks for compatibility with emc 2.3 firmware locations
+  * .PIN files in documentation directory, not in /lib/firmware
+
+ -- Jeff Epler <jepler@unpythonic.net>  Thu, 25 Feb 2010 15:05:03 -0600
+
 hostmot2-firmware (0.4) hardy; urgency=low
 
   * Tidy up various things
