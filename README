@@ -14,7 +14,7 @@ intended to be human readable (not machine readable) so it is not a
 requirement that it exactly match the format of existing PIN files.
 
 To build all bitfiles and pinfiles:
-    . ~/Xilinx92i/config.sh  # depends on ISE version and install path
+    . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
     make -j4                 # -j setting depends on RAM and # CPU cores
 On my system (quad core AMD Phenom 9600) building the full set of
 firmwares took about 75 minutes wall time with the -j4 setting shown
@@ -22,7 +22,7 @@ above.
 
 To build Debian packages:
     debian/gencontrol
-    . ~/Xilinx92i/config.sh  # depends on ISE version and install path
+    . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
     make -j4                 # -j setting depends on RAM and # CPU cores
     fakeroot debian/rules binary
     dpkg-buildpackage -S
