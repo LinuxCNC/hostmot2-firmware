@@ -81,6 +81,7 @@ begin
         variable pr : PinDescRecord;
     begin
         write(so, string'("<?xml version=""1.0""?>"));
+        writeline(output_file, so);
         write(so, string'("<hostmot2>"));
         writeline(output_file, so);
         WriteTag(output_file, string'("version"), 3);
@@ -155,16 +156,18 @@ begin
                 Conn(BoardNameLow, BoardNameHigh, i));
             WriteTag(output_file, string'("pinno"),
                 conv_integer(i) mod 24*2+1);
-            WriteTag(output_file, "module", conv_integer(pr.SecFunc));
-            WriteTag(output_file, "modulename", TagToName(pr.SecFunc));
-            WriteTag(output_file, "function", conv_integer(pr.SecPin));
-            WriteTag(output_file, "functionname", Funct(pr.SecFunc, pr.SecPin));
+            WriteTag(output_file, "secondarymodule", conv_integer(pr.SecFunc));
+            WriteTag(output_file, "secondarymodulename", TagToName(pr.SecFunc));
+            WriteTag(output_file, "secondaryfunction", conv_integer(pr.SecPin));
+            WriteTag(output_file, "secondaryfunctionname",
+                Funct(pr.SecFunc, pr.SecPin));
 
             if(pr.SecFunc /= NullTag) then
                 if((pr.SecInst and x"80") /= 0) then
-                    WriteTag(output_file, "instance", string'("ALL"));
+                    WriteTag(output_file, "secondaryinstance", string'("ALL"));
                 else
-                    WriteTag(output_file, "instance", conv_integer(pr.SecInst));
+                    WriteTag(output_file, "secondaryinstance",
+                        conv_integer(pr.SecInst));
                 end if;
             end if;
 
