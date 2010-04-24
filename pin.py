@@ -57,6 +57,7 @@ print >>sys.stderr, "# tempdir", sq(d)
 atexit.register(shutil.rmtree, d)
 
 shutil.copy("IDROMConst.vhd", p("IDROMConst.vhd"))
+shutil.copy("idrom_tools.vhd", p("idrom_tools.vhd"))
 shutil.copy("PIN_%s.vhd" % pinvhdl, p("PIN_%s.vhd") % pinvhdl)
 shutil.copy("%s.vhd" % cardvhdl, p("%s.vhd") % cardvhdl)
 subst("pinmaker.vhd.in", p("pinmaker_%s.vhd") % pinvhdl,
@@ -66,6 +67,7 @@ orgdir = os.getcwd()
 os.chdir(d)
 run("ghdl", "-a", "-fexplicit", "--ieee=synopsys",
     "IDROMConst.vhd",
+    "idrom_tools.vhd",
     "PIN_%s.vhd" % pinvhdl,
     "%s.vhd" % cardvhdl,
     "pinmaker_%s.vhd" % pinvhdl)
