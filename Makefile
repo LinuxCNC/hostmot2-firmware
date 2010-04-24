@@ -76,9 +76,13 @@ $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in pin.py
 	@mkdir -p $(dir $(1))
 	./pin.py $(3) $(2) > $(1).PIN.tmp
 	mv $(1).PIN.tmp $(1).PIN
+$(1).xml: PIN_$(3).vhd IDROMConst.vhd xmlrom.vhd.in pin.py
+	@mkdir -p $(dir $(1))
+	./pinxml.py $(3) $(2) > $(1).xml.tmp
+	mv $(1).xml.tmp $(1).xml
 bitfiles: $(1).BIT
-pinfiles: $(1).PIN
-dist/hostmot2-firmware-bin-$(4)-$(VERSION).tar.gz: $(1).BIT $(1).PIN
+pinfiles: $(1).PIN $(1).xml
+dist/hostmot2-firmware-bin-$(4)-$(VERSION).tar.gz: $(1).BIT $(1).PIN $(1).xml
 endef
 
 define CHIP_template

@@ -1,0 +1,182 @@
+library IEEE;
+use std.textio.all;
+use IEEE.std_logic_1164.all;  -- defines std_logic types
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_TEXTIO.ALL;
+
+use work.IDROMConst.all;
+use work.PIN_@PIN@.all;
+use work.@CARD@.all;
+use work.idrom_tools.all;
+
+entity xmlrom_@PIN@ is
+
+function GetPinDesc(i: integer) return PinDescRecord is
+begin
+    return MakePinRecord(PinDesc(i));
+end function;
+
+procedure WriteTag(file f: TEXT; tname: string; tvalue: string) is
+    variable so: line;
+begin
+    write(so, string'("<"));
+    write(so, tname);
+    write(so, string'(">"));
+    write(so, tvalue);
+    write(so, string'("</"));
+    write(so, tname);
+    write(so, string'(">"));
+    writeline(f, so);
+end procedure;
+
+procedure WriteTag(file f: TEXT; tname: string; tvalue: integer) is
+    variable so: line;
+begin
+    write(so, string'("<"));
+    write(so, tname);
+    write(so, string'(">"));
+    write(so, tvalue, LEFT, 1);
+    write(so, string'("</"));
+    write(so, tname);
+    write(so, string'(">"));
+    writeline(f, so);
+end procedure;
+
+procedure WriteTagHex(file f: TEXT; tname: string; tvalue: integer) is
+    variable so: line;
+    variable h: string(1 to 8);
+    variable v: integer;
+    constant hexchars : string(1 to 16) := "0123456789abcdef";
+begin
+    write(so, string'("<"));
+    write(so, tname);
+    write(so, string'(">0x"));
+    v := tvalue;
+    for i in 7 downto 0 loop
+        h(i+1) := hexchars(v mod 16 + 1);
+        v := v / 16;
+    end loop;
+    write(so, h);
+    write(so, string'("</"));
+    write(so, tname);
+    write(so, string'(">"));
+    writeline(f, so);
+end procedure;
+
+function b2i(v: boolean) return integer is
+begin
+    if(v) then return 1; else return 0; end if;
+end function;
+
+end xmlrom_@PIN@;
+
+architecture bbb of xmlrom_@PIN@ is
+    file output_file : TEXT open write_mode is in "/dev/stdout";
+begin
+    process
+        variable so: line;
+        variable i: integer;
+        variable mr : ModuleRecord;
+        variable pr : PinDescRecord;
+    begin
+        write(so, string'("<?xml version=""1.0""?>"));
+        write(so, string'("<hostmot2>"));
+        writeline(output_file, so);
+        WriteTag(output_file, string'("version"), 3);
+        WriteTagHex(output_file, string'("vendor"),
+            conv_integer(signed(BoardNameLow)));
+        WriteTag(output_file, string'("vendorname"), BoardVendor(BoardNameLow));
+        WriteTagHex(output_file, string'("board"),
+            conv_integer(signed(BoardNameHigh)));
+        WriteTag(output_file, string'("boardname"),
+            BoardName(BoardNameLow, BoardNameHigh));
+        WriteTag(output_file, string'("fpgasize"), conv_integer(fpgasize));
+        WriteTag(output_file, string'("fpgapins"), conv_integer(fpgapins));
+        WriteTag(output_file, string'("ioports"), conv_integer(ioports));
+        WriteTag(output_file, string'("iowidth"), conv_integer(iowidth));
+        WriteTag(output_file, string'("portwidth"), conv_integer(portwidth));
+        WriteTag(output_file, string'("ledcount"), conv_integer(ledcount));
+        WriteTag(output_file, string'("sepclocks"), b2i(sepclocks));
+        WriteTag(output_file, string'("onews"), b2i(onews));
+        WriteTag(output_file, string'("clocklow"), conv_integer(clocklow));
+        WriteTag(output_file, string'("clockhigh"), conv_integer(clockhigh));
+--      WriteTag(output_file, string'("inststride0"),conv_integer(inststride0));
+--      WriteTag(output_file, string'("inststride1"),conv_integer(inststride1));
+--      WriteTag(output_file, string'("regstride0"), conv_integer(regstride0));
+--      WriteTag(output_file, string'("regstride1"), conv_integer(regstride1));
+
+        write(so, string'("<modules>"));
+        writeline(output_file, so);
+
+        for i in 0 to MaxModules-1 loop
+            mr := ModuleId(i);
+            if(mr.GTag = NullTag) then
+                exit;
+            end if;
+            write(so, string'("<module>"));
+            writeline(output_file, so);
+
+            WriteTag(output_file, string'("index"), i);
+            WriteTag(output_file, string'("tag"),
+                conv_integer(mr.GTag));
+            WriteTag(output_file, string'("tagname"),
+                TagToName(mr.GTag));
+            WriteTag(output_file, string'("version"),
+                conv_integer(mr.Version));
+            WriteTag(output_file, string'("numinstances"),
+                conv_integer(mr.NumInstances));
+            WriteTag(output_file, string'("numregisters"),
+                conv_integer(mr.NumRegisters));
+            WriteTag(output_file, string'("strides"),
+                conv_integer(mr.Strides));
+            WriteTag(output_file, string'("multregs"),
+                conv_integer(signed(mr.MultRegs)));
+            WriteTag(output_file, string'("baseaddr"),
+                conv_integer(mr.BaseAddr));
+            WriteTag(output_file, string'("clock"),
+                conv_integer(mr.Clock));
+
+            write(so, string'("</module>"));
+        end loop;
+        write(so, string'("</modules>"));
+        writeline(output_file, so);
+
+        write(so, string'("<pins>"));
+        for i in 0 to IOWidth-1 loop
+            write(so, string'("<pin>"));
+            writeline(output_file, so);
+
+            WriteTag(output_file, string'("index"), i);
+
+            pr := GetPinDesc(i);
+
+            WriteTag(output_file, string'("connector"),
+                Conn(BoardNameLow, BoardNameHigh, i));
+            WriteTag(output_file, string'("pinno"),
+                conv_integer(i) mod 24*2+1);
+            WriteTag(output_file, "module", conv_integer(pr.SecFunc));
+            WriteTag(output_file, "modulename", TagToName(pr.SecFunc));
+            WriteTag(output_file, "function", conv_integer(pr.SecPin));
+            WriteTag(output_file, "functionname", Funct(pr.SecFunc, pr.SecPin));
+
+            if(pr.SecFunc /= NullTag) then
+                if((pr.SecInst and x"80") /= 0) then
+                    WriteTag(output_file, "instance", string'("ALL"));
+                else
+                    WriteTag(output_file, "instance", conv_integer(pr.SecInst));
+                end if;
+            end if;
+
+            write(so, string'("</pin>"));
+            writeline(output_file, so);
+        end loop;
+        write(so, string'("</pins>"));
+        writeline(output_file, so);
+        write(so, string'("</hostmot2>"));
+        writeline(output_file, so);
+
+        wait;
+    end process;
+end bbb;
+
