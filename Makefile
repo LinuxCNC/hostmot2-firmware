@@ -72,11 +72,11 @@ define FIRMWARE_template
 $(1).BIT: $(TOP_$(2)).vhd.in
 	@mkdir -p $(dir $(1))
 	./build.py $(2) $(3) $(1).BIT
-$(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in pin.py
+$(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in idrom_tools.vhd pin.py
 	@mkdir -p $(dir $(1))
 	./pin.py $(3) $(2) > $(1).PIN.tmp
 	mv $(1).PIN.tmp $(1).PIN
-$(1).xml: PIN_$(3).vhd IDROMConst.vhd xmlrom.vhd.in pin.py
+$(1).xml: PIN_$(3).vhd IDROMConst.vhd xmlrom.vhd.in idrom_tools.vhd pinxml.py
 	@mkdir -p $(dir $(1))
 	./pinxml.py $(3) $(2) > $(1).xml.tmp
 	mv $(1).xml.tmp $(1).xml
