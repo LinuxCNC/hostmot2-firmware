@@ -146,8 +146,12 @@ begin
     elsif(tag = StepGenTag) then
         if(pin = StepGenStepPin)      then return "Step (out)";
         elsif(pin = StepGenDirPin)    then return "Dir (out)";
-        elsif(pin >= StepGenTable2Pin and pin <=StepGenTable7Pin)
-                                      then return "StepTable (out)"; end if;
+        elsif(pin = StepGenTable2Pin) then return "StepTable 2 (out)";
+        elsif(pin = StepGenTable3Pin) then return "StepTable 3 (out)";
+        elsif(pin = StepGenTable4Pin) then return "StepTable 4 (out)";
+        elsif(pin = StepGenTable5Pin) then return "StepTable 5 (out)";
+        elsif(pin = StepGenTable6Pin) then return "StepTable 6 (out)";
+        elsif(pin = StepGenTable7Pin) then return "StepTable 7 (out)"; end if;
     elsif(tag = PWMTag) then
         if(pin = PWMAOutPin)          then return "PWM/Up (out)";
         elsif(pin = PWMBDirPin)       then return "Dir/Down (out)";
