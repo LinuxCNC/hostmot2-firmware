@@ -156,6 +156,15 @@ begin
         if(pin = PWMAOutPin)          then return "PWM/Up (out)";
         elsif(pin = PWMBDirPin)       then return "Dir/Down (out)";
         elsif(pin = PWMCEnaPin)       then return "Enable (out)"; end if;
+    elsif(tag = TPPWMTag) then
+        if(pin = TPPWMAOutPin)        then return "PWM A (out)";
+        elsif(pin = TPPWMBOutPin)     then return "PWM B (out)";
+        elsif(pin = TPPWMCOutPin)     then return "PWM C (out)";
+        elsif(pin = NTPPWMAOutPin)    then return "PWM /A (out)";
+        elsif(pin = NTPPWMBOutPin)    then return "PWM /B (out)";
+        elsif(pin = NTPPWMCOutPin)    then return "PWM /C (out)";
+        elsif(pin = TPPWMEnaPin)      then return "Enable (out)";
+        elsif(pin = TPPWMFaultPin)    then return "Fault (in)"; end if;
     elsif(tag = MuxedQCountTag) then
         if(pin = MuxedQCountQAPin)    then return "Muxed Phase A (in)";
         elsif(pin = MuxedQCountQBPin) then return "Muxed Phase B (in)";
