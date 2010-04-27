@@ -9,7 +9,7 @@ build:
 install: build
 	rm -rf debian/tmp
 	mkdir -p debian/tmp/lib/firmware/hm2
-	(cd fw; find -name "*.BIT" | cpio -o) \
+	(cd fw; find -name "*.BIT" -or -name "*.xml" | cpio -o) \
 		| (cd debian/tmp/lib/firmware/hm2; cpio -i --make-directories)
 	while read a b; do \
 		(cd debian/tmp/lib/firmware/hm2; mkdir -p `dirname $$b`; \

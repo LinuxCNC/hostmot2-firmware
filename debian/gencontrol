@@ -63,6 +63,7 @@ for chip in all_chips:
     p = path[chip]
     f = open("debian/hostmot2-firmware-%s.files" % p, "w")
     f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
+    f.write("/lib/firmware/hm2/%s/*.xml\n" % p)
     c = path_compat.get(chip, None)
     if c:
         f.write("/lib/firmware/hm2/%s\n" % c)
