@@ -1,3 +1,14 @@
+hostmot2-firmware (0.6) hardy; urgency=low
+
+  * New xml files describing firmware information in a machine-readable
+    fashion.  The exact format should be considered "in flux" until a released
+    version of pncconf uses it.
+  * Show better information about stepgen and tppwm pins in PIN and xml
+    files
+  * Fix dependency information that could lead to out-of-date BIT files.
+
+ -- Jeff Epler <jepler@unpythonic.net>  Tue, 27 Apr 2010 07:37:33 -0500
+
 hostmot2-firmware (0.5) hardy; urgency=low
 
   * New firmwares: i22-*/SVST2_4_7I47, i20/SV12IM_2X7I48
