@@ -69,7 +69,7 @@ clean:
 	rm -rf fw
 # No whitespace is acceptable in args to FIRMWARE_template
 define FIRMWARE_template
-$(1).BIT: $(TOP_$(2)).vhd.in
+$(1).BIT: $(TOP_$(2)).vhd.in PIN_$(3).vhd $(COMMON_VHDL) build.py
 	@mkdir -p $(dir $(1))
 	./build.py $(2) $(3) $(1).BIT
 $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in idrom_tools.vhd pin.py
