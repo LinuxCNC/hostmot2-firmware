@@ -1,24 +1,27 @@
 hostmot2-firmware: build assorted hostmot2 FPGA firmwares automatically
 
-emc 2.4 will include over 30 FPGA firmware images.  This package
-includes the hostmot2 source files along with Makefiles and other
-scripts to automatically build all the desired variants of the
+This package includes the hostmot2 source files along with Makefiles and
+other scripts to automatically build all the desired variants of the
 firmwares.
 
 It requires the no-cost version of Xilinx ISE.  I have tested with ISE
 9.2.  This version supports all FPGAs on Mesa cards with the exception
 of the 3x20-2M.
 
-It also requires ghdl for building PIN files.  The PIN file format is
-intended to be human readable (not machine readable) so it is not a
-requirement that it exactly match the format of existing PIN files.
+It also requires ghdl for building PIN and xml files.  The PIN file
+format is intended to be human readable (not machine readable) so it is
+not a requirement that it exactly match the format of existing PIN
+files.  There is also an experimental xml description format.
 
-To build all bitfiles and pinfiles:
+To build all bitfiles, pinfiles, and xmlfiles:
     . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
     make -j4                 # -j setting depends on RAM and # CPU cores
 On my system (quad core AMD Phenom 9600) building the full set of
 firmwares took about 75 minutes wall time with the -j4 setting shown
 above.
+
+To build just a subset of firmwares, edit 'firmwares.txt' before
+building.
 
 To build Debian packages:
     debian/gencontrol
