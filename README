@@ -15,7 +15,7 @@ files.  There is also an experimental xml description format.
 
 To build all bitfiles, pinfiles, and xmlfiles:
     . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
-    make -j4                 # -j setting depends on RAM and # CPU cores
+    make -j4                   # -j setting depends on RAM and # CPU cores
 On my system (quad core AMD Phenom 9600) building the full set of
 firmwares took about 75 minutes wall time with the -j4 setting shown
 above.
@@ -24,16 +24,14 @@ To build just a subset of firmwares, edit 'firmwares.txt' before
 building.
 
 To build Debian packages:
-    debian/gencontrol
     . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
-    make -j4                 # -j setting depends on RAM and # CPU cores
-    fakeroot debian/rules binary
-    dpkg-buildpackage -S
-(for some reason ise encounters an error when run from fakeroot on some
-systems)
+    debian/gencontrol
+    export MAKEFLAGS=-j4 dpkg-buildpackage
+                               # -j setting depends on RAM and # CPU cores
 
 To build tar packages (must be in a git checkout):
-    make -j4                 # -j setting depends on RAM and # CPU cores
+    . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
+    make -j4                   # -j setting depends on RAM and # CPU cores
     make dist
     # or make dist-force if your working tree is dirty
 
