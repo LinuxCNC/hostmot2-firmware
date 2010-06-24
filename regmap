@@ -89,7 +89,8 @@ SecPin(0)	(byte) = Which pin of secondary function connects here
                          Output pins have bit 7 = '1'
 SecTag(0)	(byte) = Secondary function type (PWM,QCTR etc). 
                 Same as module GTag
-SecUnit(0)	(byte) = Which secondary unit or channel connects here
+SecUnit(0)	(byte) = Which secondary unit or channel connects here.
+                If bit 7 is set, the pin is shared by all secondary units.
 PrimaryTag(0)	(byte) = Primary function tag (normally I/O port)
 
 0x604:(from least to most significant order)
