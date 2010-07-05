@@ -21,7 +21,7 @@ binary: binary-indep
 binary-indep: check-root install debian/control
 	dh_movefiles
 	dh_installchangelogs
-	dh_installdocs -A README
+	dh_installdocs -A README regmap
 	dh_installdeb
 	dh_gencontrol
 	dh_md5sums
