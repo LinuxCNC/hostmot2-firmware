@@ -1,3 +1,14 @@
+hostmot2-firmware (0.7) hardy; urgency=low
+
+  * New firmware SVST2_4_7i47 for 5i20 (servo and stepper pinout for 7i47
+    daughtercard)
+  * new firmware TPEN6_6 for 5i20, 5i23, 4i68 and TPEN4_5 for 7i43
+    (three-phase motor control, currently compatible with emc2 master only)
+  * Fix the hostmot2-firmware-all package so that it actually installs all
+    the firmware packages.
+
+ -- Jeff Epler <jepler@unpythonic.net>  Mon, 05 Jul 2010 13:30:48 -0500
+
 hostmot2-firmware (0.6) hardy; urgency=low
 
   * New xml files describing firmware information in a machine-readable
