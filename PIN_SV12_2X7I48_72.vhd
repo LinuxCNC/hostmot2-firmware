@@ -69,7 +69,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.IDROMConst.all;
 
-package PIN_SV12IM_2X7I48_72 is
+package PIN_SV12_2X7I48_72 is
 	constant ModuleID : ModuleIDType :=( 
 		(WatchDogTag,			x"00",	ClockLowTag,	x"01",	WatchDogTimeAddr&PadT,		WatchDogNumRegs,		x"00",	WatchDogMPBitMask),
 		(IOPortTag,				x"00",	ClockLowTag,	x"03",	PortAddr&PadT,					IOPortNumRegs,			x"00",	IOPortMPBitMask),
@@ -193,4 +193,4 @@ package PIN_SV12IM_2X7I48_72 is
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin);
 
-end package PIN_SV12IM_2X7I48_72;
+end package PIN_SV12_2X7I48_72;
