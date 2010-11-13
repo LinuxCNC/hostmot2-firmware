@@ -142,7 +142,7 @@ package PIN_SV12IM_2X7I48_72 is
 		IOPortTag & x"05" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 31
 		IOPortTag & x"05" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 32
 		IOPortTag & x"05" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 33
-		IOPortTag & x"00" & MuxedQCountSelTag & MuxedQCountSel0Pin,	-- I/O 34
+		IOPortTag & x"03" & MuxedQCountSelTag & MuxedQCountSel0Pin,	-- I/O 34 Note: so driver will enable for muxed 3,4,5
 		IOPortTag & x"06" & PWMTag & PWMAOutPin,            			-- I/O 35
 		IOPortTag & x"06" & PWMTag & PWMBDirPin,            			-- I/O 36
 		IOPortTag & x"07" & PWMTag & PWMAOutPin,            			-- I/O 37	

@@ -70,34 +70,30 @@ use IEEE.std_logic_UNSIGNED.ALL;
 use work.IDROMConst.all;	
 library UNISIM;
 use UNISIM.VComponents.all;
+use work.log2.all;
+use work.decodedstrobe.all;	
+use work.oneofndecode.all;	
+use work.IDROMConst.all;	
+use work.NumberOfModules.all;	
+use work.MaxPinsPerModule.all;	
+use work.MaxInputPinsPerModule.all;	
+use work.MaxOutputPinsPerModule.all;	
+use work.MaxIOPinsPerModule.all;	
+use work.CountPinsInRange.all;
+use work.PinExists.all;	
+use work.ModuleExists.all;	
 	
 entity HostMot2 is
   	generic
 	(  
 		ThePinDesc: PinDescType;
 		TheModuleID: ModuleIDType;
-		StepGens: integer;
-		QCounters: integer;
-		MuxedQCounters: integer;
-		MuxedQCountersMIM: integer;
-	   UseProbe: boolean;
-		UseMuxedProbe: boolean;
-		PWMGens: integer;
-		SPIs: integer;
-		BSPIs: integer;
-		DBSPIs: integer;
-		SSSIs: integer;
-		UARTs: integer;
-		TPPWMGens: integer;
-		PWMRefWidth: integer;
-		StepGenTableWidth: integer;
-      BSPICSWidth : integer;
-      DBSPICSWidth : integer;
 		IDROMType: integer;		
 	   SepClocks: boolean;
 		OneWS: boolean;
 		UseStepGenPrescaler : boolean;
 		UseIRQLogic: boolean;
+		PWMRefWidth  : integer;
 		UseWatchDog: boolean;
 		OffsetToModules: integer;
 		OffsetToPinDesc: integer;
@@ -109,6 +105,7 @@ entity HostMot2 is
 		FPGAPins: integer;
 		IOPorts: integer;
 		IOWidth: integer;
+		LIOWidth: integer;
 		PortWidth: integer;
 		BusWidth: integer;
 		AddrWidth: integer;
@@ -125,12 +122,15 @@ entity HostMot2 is
 	ibus: in std_logic_vector(buswidth -1 downto 0);
 	obus: out std_logic_vector(buswidth -1 downto 0);
 	addr: in std_logic_vector(addrwidth -1 downto 2);
-	read: in std_logic;
-	write: in std_logic;
+	readstb: in std_logic;
+	writestb: in std_logic;
 	clklow: in std_logic;
 	clkhigh: in std_logic;
 	int: out std_logic; 
+	dreq: out std_logic;
+	demandmode: out std_logic;
 	iobits: inout std_logic_vector (iowidth -1 downto 0);			
+	liobits: inout std_logic_vector (liowidth -1 downto 0);			
 	leds: out std_logic_vector(ledcount-1 downto 0)
 	);
 end HostMot2;
@@ -142,7 +142,50 @@ architecture dataflow of HostMot2 is
 
 -- decodes --
 --	IDROM related signals
-	signal A : std_logic_vector(addrwidth -1 downto 2);
+	-- Extract the number of modules of each type from the ModuleID
+constant StepGens: integer := NumberOfModules(TheModuleID,StepGenTag);
+constant QCounters: integer := NumberOfModules(TheModuleID,QCountTag);
+constant MuxedQCounters: integer := NumberOfModules(TheModuleID,MuxedQCountTag);			-- non-muxed index mask
+constant MuxedQCountersMIM: integer := NumberOfModules(TheModuleID,MuxedQCountMIMTag); -- muxed index mask
+constant PWMGens : integer := NumberOfModules(TheModuleID,PWMTag);
+constant UsePWMEnas: boolean := PinExists(ThePinDesc,PWMTag,PWMCEnaPin);
+constant TPPWMGens : integer := NumberOfModules(TheModuleID,TPPWMTag);
+constant SPIs: integer := NumberOfModules(TheModuleID,SPITag);
+constant BSPIs: integer := NumberOfModules(TheModuleID,BSPITag);
+constant DBSPIs: integer := NumberOfModules(TheModuleID,DBSPITag);
+constant SSSIs: integer := NumberOfModules(TheModuleID,SSSITag);   
+constant UARTs: integer := NumberOfModules(TheModuleID,UARTRTag);
+constant WaveGens: integer := NumberOfModules(TheModuleID,WaveGenTag);
+constant ResolverMods: integer := NumberOfModules(TheModuleID,ResModTag);
+constant SSerials: integer := NumberOfModules(TheModuleID,SSerialTag);
+constant UARTSPerSSerial: integer := MaxInputPinsPerModule(ThePinDesc,SSerialTag);
+constant RegsPerSSerial: integer := UARTSPerSSerial;
+constant	Twiddlers: integer := NumberOfModules(TheModuleID,TwiddlerTag);
+constant InputsPerTwiddler: integer := MaxInputPinsPerModule(ThePinDesc,TwiddlerTag)+MaxIOPinsPerModule(ThePinDesc,TwiddlerTag);
+constant OutputsPerTwiddler: integer := MaxOutputPinsPerModule(ThePinDesc,TwiddlerTag); -- MaxOutputsPer pin counts I/O pins also
+constant RegsPerTwiddler: integer := 4;	-- until I find a per instance way of doing this	
+constant DAQFIFOs: integer := NumberOfModules(TheModuleID,DAQFIFOTag);
+constant DAQFIFOWidth: integer := MaxInputPinsPerModule(ThePinDesc,DAQFIFOTag); -- until I find a per instance way of doing this
+constant	UseDemandModeDMA: boolean := ModuleExists(TheModuleID,DMDMATag);		-- demand mode DMA must be explicitly included in the module ID
+constant NDRQs: integer := NumberOfModules(TheModuleID,DAQFIFOTag); -- + any other drq sources that are used
+constant BinOscs: integer := NumberOfModules(TheModuleID,BinOscTag);
+constant BinOscWidth: integer := MaxOutputPinsPerModule(ThePinDesc,BinOscTag);
+
+-- extract the needed Stepgen table width from the max pin# used with a stepgen tag
+constant StepGenTableWidth: integer := MaxPinsPerModule(ThePinDesc,StepGenTag);
+	-- extract how many BSPI CS pins are needed
+constant BSPICSWidth: integer := CountPinsInRange(ThePinDesc,BSPITag,BSPICS0Pin,BSPICS7Pin);
+	-- extract how many DBSPI CS pins are needed
+constant DBSPICSWidth: integer := CountPinsInRange(ThePinDesc,DBSPITag,DBSPICS0Pin,DBSPICS7Pin);
+constant UseProbe: boolean := PinExists(ThePinDesc,QCountTag,QCountProbePin);
+constant UseMuxedProbe: boolean := PinExists(ThePinDesc,MuxedQCountTag,MuxedQCountProbePin);
+constant UseStepgenIndex: boolean := PinExists(ThePinDesc,StepGenTag,StepGenIndexPin);
+constant UseStepgenProbe: boolean := PinExists(ThePinDesc,StepGenTag,StepGenProbePin);
+
+-- all these signals should be put in per module components
+-- to reduce clutter
+
+	signal A: std_logic_vector(addrwidth -1 downto 2);
 	signal LoadIDROM: std_logic;
 	signal ReadIDROM: std_logic;
 
@@ -210,6 +253,7 @@ architecture dataflow of HostMot2 is
 	
 	type StepGenOutType is array(StepGens-1 downto 0) of std_logic_vector(StepGenTableWidth-1 downto 0);
 	signal StepGenOut : StepGenOutType;
+	signal StepGenIndex: std_logic_vector(StepGens -1 downto 0);
 
 -- Step generators master rate related signals
 
@@ -333,6 +377,13 @@ architecture dataflow of HostMot2 is
 	signal SPIFrame: std_logic_vector(SPIs -1 downto 0);
 	signal SPIDAV: std_logic_vector(SPIs -1 downto 0);	
 
+-- BinOsc related signals
+
+	signal LoadBinOscEnaSel: std_logic;	
+	signal LoadBinOscEna: std_logic_vector(BinOscs -1 downto 0);	
+	type BinOscOutType is array(BinOscs-1 downto 0) of std_logic_vector(BinOscWidth-1 downto 0);
+	signal BinOscOut: BinOscOutType;	
+	
 --- BSPI interface related signals
 	signal BSPIDataSel : std_logic;	
 	signal BSPIFIFOCountSel : std_logic;
@@ -379,6 +430,23 @@ architecture dataflow of HostMot2 is
 	signal SSSIClk: std_logic_vector(SSSIs -1 downto 0);
 	signal SSSIIn: std_logic_vector(SSSIs -1 downto 0);
 
+-- DAQFIFO interface related signals
+	signal DAQFIFODataSel : std_logic;
+	signal DAQFIFOCountSel : std_logic;
+	signal DAQFIFOModeSel : std_logic;
+	signal ReadDAQFIFO: std_logic_vector(DAQFIFOs-1 downto 0);
+	signal ReadDAQFIFOCount: std_logic_vector(DAQFIFOs-1 downto 0);
+	signal ClearDAQFIFO: std_logic_vector(DAQFIFOs-1 downto 0);
+	signal LoadDAQFIFOMode: std_logic_vector(DAQFIFOs-1 downto 0);
+	signal ReadDAQFIFOMode: std_logic_vector(DAQFIFOs-1 downto 0);
+	signal PushDAQFIFOFrac: std_logic_vector(DAQFIFOs-1 downto 0);
+	type DAQFIFODataType is array(DAQFIFOs-1 downto 0) of std_logic_vector(DAQFIFOWidth-1 downto 0);
+	signal DAQFIFOData: DAQFIFODataType;
+	signal DAQFIFOReq: std_logic_vector(DAQFIFOs-1 downto 0);
+	signal DAQFIFOFull: std_logic_vector(DAQFIFOs-1 downto 0);
+	signal DAQFIFOStrobe: std_logic_vector(DAQFIFOs-1 downto 0);
+
+
 --- UARTX interface related signals		
 	signal UARTTDataSel : std_logic;
 	signal UARTTBitrateSel : std_logic;
@@ -412,6 +480,88 @@ architecture dataflow of HostMot2 is
 	signal UARTRFIFOHasData: std_logic_vector(UARTs -1 downto 0);
 	signal URData: std_logic_vector(UARTs -1 downto 0);			
 
+--- Wavegen related signals
+	signal WaveGenRateSel: std_logic;
+	signal WaveGenLengthSel: std_logic;
+	signal WaveGenPDMRateSel: std_logic;
+	signal WaveGenTablePtrSel: std_logic;
+	signal WaveGenTableDataSel: std_logic;
+	signal LoadWaveGenRate: std_logic_vector(WaveGens -1 downto 0);
+	signal LoadWaveGenLength: std_logic_vector(WaveGens -1 downto 0);
+	signal LoadWaveGenPDMRate: std_logic_vector(WaveGens -1 downto 0);
+	signal LoadWaveGenTablePtr: std_logic_vector(WaveGens -1 downto 0);
+	signal LoadWaveGenTableData: std_logic_vector(WaveGens -1 downto 0);
+	signal WavegenPDMA: std_logic_vector(WaveGens -1 downto 0);
+	signal WaveGenPDMB: std_logic_vector(WaveGens -1 downto 0);
+	signal WaveGenTrigger0: std_logic_vector(WaveGens -1 downto 0);
+	signal WaveGenTrigger1: std_logic_vector(WaveGens -1 downto 0);
+	signal WaveGenTrigger2: std_logic_vector(WaveGens -1 downto 0);
+	signal WaveGenTrigger3: std_logic_vector(WaveGens -1 downto 0);
+
+--- Resolver Module related signals
+	signal ResModCommandSel: std_logic;
+	signal ResModDataSel: std_logic;          
+	signal ResModStatusSel: std_logic;          
+	signal ResModVelRAMSel: std_logic; 
+	signal ResModPosRAMSel: std_logic; 
+	signal LoadResModCommand: std_logic_vector(ResolverMods -1 downto 0);
+	signal ReadResModCommand: std_logic_vector(ResolverMods -1 downto 0);
+	signal LoadResModData: std_logic_vector(ResolverMods -1 downto 0);
+	signal ReadResModData: std_logic_vector(ResolverMods -1 downto 0);           
+	signal ReadResModStatus: std_logic_vector(ResolverMods -1 downto 0);           
+	signal ReadResModVelRam: std_logic_vector(ResolverMods -1 downto 0); 
+	signal ReadResModPosRam: std_logic_vector(ResolverMods -1 downto 0); 
+	signal ResModPDMP: std_logic_vector(ResolverMods -1 downto 0);   
+	signal ResModPDMM: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModSPICS: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModSPIClk: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModSPIDI0: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModSPIDI1: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModPwrEn: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModChan0: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModChan1: std_logic_vector(ResolverMods -1 downto 0);
+	signal ResModChan2: std_logic_vector(ResolverMods -1 downto 0);	
+	signal ResModTestBit: std_logic_vector(ResolverMods -1 downto 0);	
+
+--- Smart Serial related signals
+	signal SSerialCommandSel: std_logic;
+	signal SSerialDataSel: std_logic;          
+	signal SSerialRAMSel0: std_logic; 
+	signal SSerialRAMSel1: std_logic; 
+	signal SSerialRAMSel2: std_logic; 
+	signal LoadSSerialCommand: std_logic_vector(SSerials -1 downto 0);
+	signal ReadSSerialCommand: std_logic_vector(SSerials -1 downto 0);
+	signal LoadSSerialData: std_logic_vector(SSerials -1 downto 0);
+	signal ReadSSerialData: std_logic_vector(SSerials -1 downto 0);           
+	signal LoadSSerialRAM0: std_logic_vector(SSerials -1 downto 0);
+	signal ReadSSerialRAM0: std_logic_vector(SSerials -1 downto 0);           
+	signal LoadSSerialRAM1: std_logic_vector(SSerials -1 downto 0);
+	signal ReadSSerialRAM1: std_logic_vector(SSerials -1 downto 0);           
+	signal LoadSSerialRAM2: std_logic_vector(SSerials -1 downto 0);
+	signal ReadSSerialRAM2: std_logic_vector(SSerials -1 downto 0);           
+	type  SSerialRXType is array(SSerials-1 downto 0) of std_logic_vector(UARTsPerSSerial-1 downto 0);
+	signal SSerialRX: SSerialRXType;   
+	type  SSerialTXType is array(SSerials-1 downto 0) of std_logic_vector(UARTsPerSSerial-1 downto 0);
+	signal SSerialTX: SSerialTXType;
+	type  SSerialTXEnType is array(SSerials-1 downto 0) of std_logic_vector(UARTsPerSSerial-1 downto 0);
+	signal SSerialTXEn: SSerialTXEnType;
+	signal SSerialTestBits: std_logic_vector(SSerials -1 downto 0);	
+
+-- Bit twiddler related signals
+	signal TwiddlerCommandSel: std_logic;
+	signal TwiddlerDataSel: std_logic;          
+	signal TwiddlerRAMSel: std_logic; 
+	signal LoadTwiddlerCommand: std_logic_vector(Twiddlers -1 downto 0);
+	signal ReadTwiddlerCommand: std_logic_vector(Twiddlers -1 downto 0);
+	signal LoadTwiddlerData: std_logic_vector(Twiddlers -1 downto 0);
+	signal ReadTwiddlerData: std_logic_vector(Twiddlers -1 downto 0);           
+	signal LoadTwiddlerRAM: std_logic_vector(Twiddlers -1 downto 0);
+	signal ReadTwiddlerRAM: std_logic_vector(Twiddlers -1 downto 0);           
+	type  TwiddlerInputType is array(Twiddlers-1 downto 0) of std_logic_vector(InputsPerTwiddler-1 downto 0);
+	signal TwiddlerInput: TwiddlerInputType;   
+	type  TwiddlerOutputType is array(Twiddlers-1 downto 0) of std_logic_vector(OutputsPerTwiddler-1 downto 0);
+	signal TwiddlerOutput: TwiddlerOutputType;
+
 --- Watchdog related signals 
 	signal LoadWDTime : std_logic; 
 	signal ReadWDTime : std_logic;
@@ -428,6 +578,11 @@ architecture dataflow of HostMot2 is
 	signal ReadIrqStatus : std_logic;
 	signal ClearIRQ : std_logic;
 
+--- Demand mode DMA related signals
+	signal LoadDMDMAMode: std_logic;
+	signal ReadDMDMAMode: std_logic;
+	signal DRQSources: std_logic_vector(NDRQs -1 downto 0);
+
 --- ID related signals
 	signal ReadID : std_logic;
 
@@ -435,24 +590,6 @@ architecture dataflow of HostMot2 is
 	signal LoadLEDS : std_logic;
 	
 
-
-	function OneOfNdecode(width : integer;ena1 : std_logic;ena2 : std_logic; dec : std_logic_vector) return std_logic_vector is
-	variable result   : std_logic_vector(width-1 downto 0);
-	begin
-		if ena1 = '1' and ena2 = '1' then
-			for i in 0 to width -1 loop
-				if CONV_INTEGER(dec) = i then
-					result(i) := '1';
-				else
-					result(i) := '0';
-				end if;	
-			end loop;		
-		else
-			result := (others => '0');
-		end if;
-		return result;
-	end OneOfNDecode;			
-	
 	function bitreverse(v: in std_logic_vector) -- Thanks: J. Bromley
 	return std_logic_vector is
 	variable result: std_logic_vector(v'RANGE);
@@ -463,11 +600,12 @@ architecture dataflow of HostMot2 is
 		end loop;
 		return result;
 	end;
+
 	
 	begin
 
 
-	ahosmotid : entity hostmotid
+	ahosmotid : entity work.hostmotid
 		generic map ( 
 			buswidth => BusWidth,
 			cookie => Cookie,
@@ -483,7 +621,7 @@ architecture dataflow of HostMot2 is
 
 
 	makeoports: for i in 0 to IOPorts -1 generate
-		oportx: entity WordPR 
+		oportx: entity work.WordPR 
 		generic map (
 			size => PortWidth,
 			buswidth => BusWidth
@@ -505,7 +643,7 @@ architecture dataflow of HostMot2 is
 	end generate;
 
 	makeiports: for i in 0 to IOPorts -1 generate
-		iportx: entity WordRB 		  
+		iportx: entity work.WordRB 		  
 		generic map (size => PortWidth,
 						 buswidth => BusWidth)
 		port map (
@@ -516,7 +654,7 @@ architecture dataflow of HostMot2 is
 	end generate;
 
 	makewatchdog: if UseWatchDog generate  
-		wdogabittus: entity watchdog
+		wdogabittus: entity work.watchdog
 		generic map ( buswidth => BusWidth)
 		
 		port map (
@@ -533,8 +671,28 @@ architecture dataflow of HostMot2 is
 			);
 		end generate;
 
+	makedrqlogic: if UseDemandModeDMA generate
+		somolddrqlogic: entity work.dmdrqlogic
+		generic map( ndrqs => NDRQs )
+		port map(
+			clk => clklow,
+			ibus => ibus,
+			obus => obus,
+			loadmode => LoadDMDMAMode,
+			readmode => ReadDMDMAMode,
+			drqsources => DRQSources,
+			dreqout => dreq,					-- passed directly to top
+			demandmode => demandmode		-- passed directly to top
+			);
+		end generate;	
+
+	makenodrqlogic: if not UseDemandModeDMA generate
+		dreq <= '0';							-- passed directly to top
+		demandmode <= '0';					-- passed directly to top
+	end generate;	
+			
 	makeirqlogic: if UseIRQlogic generate
-		somoldirqlogic: entity irqlogic    
+		somoldirqlogic: entity work.irqlogic    
 		generic map( 
 			buswidth =>  BusWidth,
 			dividerwidth => 16
@@ -555,7 +713,7 @@ architecture dataflow of HostMot2 is
 	makestepgens: if StepGens >0 generate
 	
 		makeStepGenPreScaler:  if UseStepGenPreScaler generate
-			StepRategen : entity RateGen port map(
+			StepRategen : entity work.RateGen port map(
 				ibus => ibus,
 				obus => obus,
 				loadbasicrate => LoadStepGenBasicRate,
@@ -566,8 +724,8 @@ architecture dataflow of HostMot2 is
 			end generate;
 
 		generatestepgens: for i in 0 to StepGens-1 generate
-			usg: if UseStepGenPreScaler generate
-			stepgenx: entity stepgen
+			usg: if UseStepGenPreScaler and not(UseStepgenIndex or UseStepgenProbe) generate
+		   stepgenx: entity work.stepgen
 			generic map (
 				buswidth => BusWidth,
 				timersize => 14,			-- = ~480 usec at 33 MHz, ~320 at 50 Mhz 
@@ -603,8 +761,8 @@ architecture dataflow of HostMot2 is
 				);
 			end generate usg;
 		
-			nusg: if not UseStepGenPreScaler generate
-			stepgenx: entity stepgen
+			nusg: if not UseStepGenPreScaler and not(UseStepgenIndex or UseStepgenProbe) generate
+			stepgenx: entity work.stepgen
 			generic map (	
 				buswidth => BusWidth,
 				timersize => 14,			-- = ~480 usec at 33 MHz, ~320 at 50 Mhz 
@@ -640,13 +798,93 @@ architecture dataflow of HostMot2 is
 				);
 			end generate nusg;
 
+			usgi: if UseStepGenPreScaler and (UseStepgenIndex or UseStepgenProbe) generate
+		   stepgenx: entity work.stepgeni
+			generic map (
+				buswidth => BusWidth,
+				timersize => 14,			-- = ~480 usec at 33 MHz, ~320 at 50 Mhz 
+				tablewidth => StepGenTableWidth,
+				asize => 48,
+				rsize => 32,
+				lsize =>16
+				)
+			port map (
+				clk => clklow,
+				ibus => ibus,
+				obus 	=>	 obus,
+				loadsteprate => LoadStepGenRate(i),
+				loadaccum => LoadStepGenAccum(i),
+				loadstepmode => LoadStepGenMode(i),
+				loaddirsetuptime => LoadStepGenDSUTime(i),
+				loaddirholdtime => LoadStepGenDHLDTime(i),
+				loadpulseactivetime => LoadStepGenPulseATime(i),
+				loadpulseidletime => LoadStepGenPulseITime(i),
+				loadtable => LoadStepGenTable(i),
+				loadtablemax => LoadStepGenTableMax(i),
+				readsteprate => ReadStepGenRate(i),
+				readaccum => ReadStepGenAccum(i),
+				readstepmode => ReadStepGenMode(i),
+				readdirsetuptime => ReadStepGenDSUTime(i),
+				readdirholdtime => ReadStepGenDHLDTime(i),
+				readpulseactivetime => ReadStepGenPulseATime(i),
+				readpulseidletime => ReadStepGenPulseITime(i),
+				readtable => ReadStepGenTable(i),
+				readtablemax => ReadStepGenTableMax(i),
+				basicrate => StepGenBasicRate,
+				hold => '0',
+				stout => StepGenOut(i),
+				index => StepGenIndex(i),
+				probe => probe
+				);
+			end generate usgi;
+
+			nusgi: if not UseStepGenPreScaler and not(UseStepgenIndex or UseStepgenProbe) generate
+			stepgenx: entity work.stepgeni
+			generic map (	
+				buswidth => BusWidth,
+				timersize => 14,			-- = ~480 usec at 33 MHz, ~320 at 50 Mhz 
+				tablewidth => StepGenTableWidth,
+				asize => 48,
+				rsize => 32, 			
+				lsize =>16
+				)
+			port map (
+				clk => clklow,
+				ibus => ibus,
+				obus 	=>	 obus,
+				loadsteprate => LoadStepGenRate(i),
+				loadaccum => LoadStepGenAccum(i),
+				loadstepmode => LoadStepGenMode(i),
+				loaddirsetuptime => LoadStepGenDSUTime(i),
+				loaddirholdtime => LoadStepGenDHLDTime(i),
+				loadpulseactivetime => LoadStepGenPulseATime(i),
+				loadpulseidletime => LoadStepGenPulseITime(i),
+				loadtable => LoadStepGenTable(i),
+				loadtablemax => LoadStepGenTableMax(i),
+				readsteprate => ReadStepGenRate(i),
+				readaccum => ReadStepGenAccum(i),
+				readstepmode => ReadStepGenMode(i),
+				readdirsetuptime => ReadStepGenDSUTime(i),
+				readdirholdtime => ReadStepGenDHLDTime(i),
+				readpulseactivetime => ReadStepGenPulseATime(i),
+				readpulseidletime => ReadStepGenPulseITime(i),
+				readtable => ReadStepGenTable(i),
+				readtablemax => ReadStepGenTableMax(i),
+				basicrate => '1',
+				hold => '0',
+				stout => StepGenOut(i),  -- densely packed starting with I/O bit 0
+				index => StepGenIndex(i),
+				probe => probe
+				);
+			end generate nusgi;
+
 		end generate generatestepgens;
 	end generate makestepgens;
 
 	
 	nuseprobe1: if not UseProbe generate
 		makequadcounters: for i in 0 to QCounters-1 generate
-			qcounterx: entity qcounter 
+			qcounterx: entity work.qcounter 
 			generic map (
 				buswidth => BusWidth
 			)
@@ -670,7 +908,7 @@ architecture dataflow of HostMot2 is
 	
 	useprobe1: if UseProbe generate
 		makequadcountersp: for i in 0 to QCounters-1 generate
-			qcounterx: entity qcounterp 
+			qcounterx: entity work.qcounterp 
 			generic map (
 				buswidth => BusWidth
 			)
@@ -696,7 +934,7 @@ architecture dataflow of HostMot2 is
 		
 	nuseprobe2: if not UseMuxedProbe generate
 		makemuxedquadcounters: for i in 0 to MuxedQCounters-1 generate
-			qcounterx: entity qcounter 
+			qcounterx: entity work.qcounter 
 			generic map (
 				buswidth => BusWidth
 			)
@@ -720,7 +958,7 @@ architecture dataflow of HostMot2 is
 	
 	useprobe2: if UseMuxedProbe generate
 		makemuxedquadcountersp: for i in 0 to MuxedQCounters-1 generate
-			qcounterx: entity qcounterp 
+			qcounterx: entity work.qcounterp 
 			generic map (
 				buswidth => BusWidth
 			)
@@ -745,7 +983,7 @@ architecture dataflow of HostMot2 is
 	
 	nuseprobe3: if not UseMuxedProbe generate
 		makemuxedquadcountersmim: for i in 0 to MuxedQCountersMIM-1 generate
-			qcounterx: entity qcounter 
+			qcounterx: entity work.qcounter 
 			generic map (
 				buswidth => BusWidth
 			)
@@ -769,7 +1007,7 @@ architecture dataflow of HostMot2 is
 	
 	useprobe3: if UseMuxedProbe generate
 		makemuxedquadcountersmimp: for i in 0 to MuxedQCountersMIM-1 generate
-			qcounterx: entity qcounterp 
+			qcounterx: entity work.qcounterp 
 			generic map (
 				buswidth => BusWidth
 			)
@@ -793,7 +1031,7 @@ architecture dataflow of HostMot2 is
 	end generate useprobe3;
 	
 	makeqcounterglobals:  if (QCounters >0) generate
-		timestampx: entity timestamp 
+		timestampx: entity work.timestamp 
 			port map( 
 				ibus => ibus(15 downto 0),
 				obus => obus(15 downto 0),
@@ -804,7 +1042,7 @@ architecture dataflow of HostMot2 is
 				clk => clklow
 			);
 				
-			qcountratex: entity qcounterate 
+			qcountratex: entity work.qcounterate 
 			generic map (defaultrate => x"800") -- default is clklow divided by 1 for normal counters
 			port map( 
 				ibus => ibus(11 downto 0),
@@ -815,7 +1053,7 @@ architecture dataflow of HostMot2 is
 	end generate;
 	
 	makemuxedqcounterglobals:  if (MuxedQCounters >0) generate
-		timestampx: entity timestamp 
+		timestampx: entity work.timestamp 
 			port map( 
 				ibus => ibus(15 downto 0),
 				obus => obus(15 downto 0),
@@ -826,7 +1064,7 @@ architecture dataflow of HostMot2 is
 				clk => clklow
 			);
 				
-			qcountratex: entity qcounterate 
+			qcountratex: entity work.qcounterate 
 			generic map (defaultrate => x"002") -- default is clklow divided by 4 (N+2) for muxed counters
 			port map( 									
 				ibus => ibus(11 downto 0),
@@ -840,7 +1078,7 @@ architecture dataflow of HostMot2 is
 		
 		
 	makepwmref:  if ((PWMGens > 0) or UseIRQLogic) generate
-		pwmref : entity pwmrefh
+		pwmref : entity work.pwmrefh
 		generic map ( 
 			buswidth => 16,
 			refwidth => PWMRefWidth			-- Normally 13	for 12,11,10, and 9 bit PWM resolutions = 25KHz,50KHz,100KHz,200KHz max. Freq
@@ -857,7 +1095,7 @@ architecture dataflow of HostMot2 is
 	end generate;
 	
 	makepwmgens : for i in 0 to PWMGens-1 generate
-		pwmgenx: entity pwmpdmgenh
+		pwmgenx: entity work.pwmpdmgenh
 		generic map ( 
 			buswidth => BusWidth,
 			refwidth => PWMRefWidth			-- Normally 13 for 12,11,10, and 9 bit PWM resolutions = 25KHz,50KHz,100KHz,200KHz max. Freq
@@ -875,8 +1113,8 @@ architecture dataflow of HostMot2 is
 		 	);
 	end generate;
 
-	makePWMEna:  if (PWMGens >0) generate
-		PWMEnaReg : entity boutreg 
+	makePWMEna:  if (PWMGens >0) and UsePWMEnas generate
+		PWMEnaReg : entity work.boutreg 
 			generic map (
 				size => PWMGens,
 				buswidth => BusWidth,
@@ -895,7 +1133,7 @@ architecture dataflow of HostMot2 is
 	end generate;
 	
 	maketppwmref:  if (TPPWMGens > 0) generate
-		tppwmref : entity pwmrefh
+		tppwmref : entity work.pwmrefh
 		generic map ( 
 			buswidth => 16,
 			refwidth => 11			-- always 11 for TPPWM 
@@ -911,7 +1149,7 @@ architecture dataflow of HostMot2 is
 	end generate;		
 
 	maketppwmgens : for i in 0 to TPPWMGens-1 generate
-		tppwmgenx: entity threephasepwm
+		tppwmgenx: entity work.threephasepwm
 		port map (
 			clk => clklow,
 			hclk => clkhigh,
@@ -936,7 +1174,7 @@ architecture dataflow of HostMot2 is
 	end generate;	
 	
 	makeSPIs: for i in 0 to SPIs -1 generate
-		aspi: entity SimpleSPI
+		aspi: entity work.SimpleSPI
 		generic map (
 			buswidth => BusWidth)		
 		port map (
@@ -958,7 +1196,7 @@ architecture dataflow of HostMot2 is
 	end generate;	
 		
 	makeBSPIs: for i in 0 to BSPIs -1 generate
-		bspi: entity BufferedSPI
+		bspi: entity work.BufferedSPI
 		generic map (
 			cswidth => BSPICSWidth,
 			gatedcs => false)		
@@ -982,7 +1220,7 @@ architecture dataflow of HostMot2 is
 	end generate;	
 
 	makeDBSPIs: for i in 0 to DBSPIs -1 generate
-		bspi: entity BufferedSPI
+		bspi: entity work.BufferedSPI
 		generic map (
 			cswidth => DBSPICSWidth,
 			gatedcs => true
@@ -1006,8 +1244,8 @@ architecture dataflow of HostMot2 is
 	end generate;	
 	
 	MakeSSSIs: for i in 0 to SSSIs -1 generate
-		sssi: entity SimpleSSI
-		Port  map ( 
+		sssi: entity work.SimpleSSI
+		port  map ( 
 			clk => clklow,
 	 		ibus => ibus,
 			obus => obus,
@@ -1023,9 +1261,32 @@ architecture dataflow of HostMot2 is
 			ssiin => SSSIIn(i)
           );
 	end generate;
+
+	MakeDAQFIFOs: for i in 0 to DAQFIFOs -1 generate
+		adaqfifo: entity work.DAQFIFO16				-- need to parametize width
+		generic map (
+			depth => 2048									-- this needs to be in module header
+			)
+		port  map ( 
+			clk => clklow,
+	 		ibus => ibus,
+			obus => obus,
+         readfifo => ReadDAQFIFO(i),
+         readfifocount => ReadDAQFIFOCount(i),
+         clearfifo =>  ClearDAQFIFO(i),
+         loadmode =>  LoadDAQFIFOMode(i),
+         readmode =>  ReadDAQFIFOMode(i) ,
+			pushfrac =>  PushDAQFIFOFrac(i),
+         daqdata =>   DAQFIFOData(i),
+			daqfull =>   DAQFIFOFull(i),
+			daqreq => 	 DAQFIFOReq(i),
+         daqstrobe => DAQFIFOStrobe(i)
+			);
+	end generate;
+
 	
 	makeUARTRs: for i in 0 to UARTs -1 generate
-		auarrx: entity uartr	
+		auarrx: entity work.uartr	
 		port map (
 			clk => clklow,
 			ibus => ibus,
@@ -1045,7 +1306,7 @@ architecture dataflow of HostMot2 is
 	end generate;
 	
 	makeUARTTXs: for i in 0 to UARTs -1 generate
-		auartx:  entity uartx	
+		auartx:  entity work.uartx	
 		port map (
 			clk => clklow,
 			ibus => ibus,
@@ -1065,7 +1326,126 @@ architecture dataflow of HostMot2 is
          );
 	end generate;
 
-	LEDReg : entity boutreg 
+	makeBinOsc: for i in 0 to BinOscs -1 generate
+		aBinOsc: entity work.binosc
+		generic map (
+			width => BinOscWidth
+			)
+		port map ( 
+			clk => clklow,
+			ibus0 => ibus(0),
+			loadena => LoadBinOscEna(i),
+			oscout => BinOscOut(i)		
+			);
+	end generate;
+		
+	makeWaveGens: for i in 0 to WaveGens -1 generate
+		awavegen:  entity work.wavegen	
+		port map (
+			clk => clklow,
+			hclk => clkhigh,
+			ibus => ibus,
+--			obus => obus,
+			loadrate => LoadWaveGenRate(i),
+			loadlength => LoadWaveGenLength(i),
+			loadpdmrate => LoadWaveGenPDMRate(i),
+			loadtableptr => LoadWaveGenTablePtr(i),
+			loadtabledata =>LoadWaveGenTableData(i),
+			trigger0 => WaveGenTrigger0(i),
+			trigger1 => WaveGenTrigger1(i),
+			trigger2 => WaveGenTrigger2(i),
+			trigger3 => WaveGenTrigger3(i),
+			pdmouta => WaveGenPDMA(i),
+			pdmoutb => WaveGenPDMB(i) 
+         );
+	end generate;
+
+	makeresolvers: for i in 0 to ResolverMods -1 generate
+		aresolver: entity work.resolver     
+		port map(
+			clk => clklow,
+			ibus => ibus,
+			obus => obus,
+			hloadcommand => LoadResModCommand(i),
+			hreadcommand => ReadResModCommand(i),
+			hloaddata => LoadResModData(i),
+			hreaddata => ReadResModData(i),           
+			hreadstatus => ReadResModStatus(i),           
+			regaddr => addr(4 downto 2), 		-- early address for DPRAM access
+			readvel => ReadResModVelRam(i),
+			readpos => ReadResModPosRam(i),
+			testbit => ResModTestBit(i),
+			respdmp => ResModPDMP(i),   
+			respdmm => ResModPDMM(i),
+			spics => ResModSPICS(i),
+			spiclk => ResModSPIClk(i),
+			spidi0 => ResModSPIDI0(i),
+			spidi1 => ResModSPIDI1(i),
+			pwren => ResModPwrEn(i),
+			chan0 => ResModChan0(i),
+			chan1 => ResModChan1(i),
+			chan2 => ResModChan2(i)
+			);
+	end generate;
+
+	makesserials: for i in 0 to sserials -1 generate
+		asserial: entity work.sserial     
+		generic map (
+			Ports => UARTSPerSSerial,
+			InterfaceRegs => RegsPerSSerial,	-- must be power of 2
+			BaseClock => ClockLow,
+			NeedCRC8 => true
+		)
+		port map( 
+			clk  => clklow,
+			ibus  => ibus,
+			obus  => obus,
+			hloadcommand  => LoadSSerialCommand(i),
+			hreadcommand  => ReadSSerialCommand(i),
+			hloaddata  => LoadSSerialData(i),
+			hreaddata  => ReadSSerialData(i),           
+			regraddr  =>  addr(log2(RegsPerSSerial)+1 downto 2),	-- early address for DPRAM access
+			regwaddr  =>  A(log2(RegsPerSSerial)+1 downto 2),
+			hloadregs0  => LoadSSerialRAM0(i),
+			hreadregs0  => ReadSSerialRAM0(i),
+			hloadregs1  => LoadSSerialRAM1(i),
+			hreadregs1  => ReadSSerialRAM1(i),
+			hloadregs2  => LoadSSerialRAM2(i),
+			hreadregs2  => ReadSSerialRAM2(i),
+			rxserial  =>  SSerialRX(i),
+			txserial  =>  SSerialTX(i),
+			txenable  =>  SSerialTXEn(i),
+			testbit  =>   SSerialTestBits(i)
+			);
+	end generate;
+
+	maketwiddlers: for i in 0 to twiddlers -1 generate
+		atwiddler: entity work.twiddle     
+		generic map (
+			InterfaceRegs => RegsPerTwiddler,	-- must be power of 2
+			InputBits => InputsPerTwiddler,
+			OutputBits => OutputsPerTwiddler,
+			BaseClock => ClockLow
+		)
+		port map( 
+			clk  => clklow,
+			ibus  => ibus,
+			obus  => obus,
+			hloadcommand  => LoadTwiddlerCommand(i),
+			hreadcommand  => ReadTwiddlerCommand(i),
+			hloaddata  => LoadTwiddlerData(i),
+			hreaddata  => ReadTwiddlerData(i),           
+			regraddr  =>  addr(log2(RegsPerTwiddler)+1 downto 2),	-- early address for DPRAM access
+			regwaddr  =>  A(log2(RegsPerTwiddler)+1 downto 2),
+			hloadregs  => LoadTwiddlerRAM(i),
+			hreadregs  => ReadTwiddlerRAM(i),
+			ibits  =>  TwiddlerInput(i),
+			obits  =>  TwiddlerOutput(i)
+--			testbit  =>   TwiddlerTestBits(i)
+			);
+	end generate;	
+	
+	LEDReg : entity work.boutreg 
 	generic map (
 		size => LEDCount,
 		buswidth => LEDCount,
@@ -1081,7 +1461,7 @@ architecture dataflow of HostMot2 is
 		); 
 
 		
-	IDROMWP : entity boutreg 
+	IDROMWP : entity work.boutreg 
  		generic map (
 			size => 1,
 			buswidth => BusWidth,
@@ -1098,7 +1478,7 @@ architecture dataflow of HostMot2 is
 		); 
 		 		
 
-	IDROM : entity IDROM
+	IDROM : entity work.IDROM
 		generic map (
 			idromtype => IDROMType,
 			offsettomodules => OffsetToModules,
@@ -1128,12 +1508,13 @@ architecture dataflow of HostMot2 is
 			dout => obus
 		); 
 
-		DoPinout: process(PWMGenOutA,PWMGenOutB,PWMGenOutC,StepGenOut,SPIFrame,SPIOut,SPIClk,
+		DoEPinout: process(PWMGenOutA,PWMGenOutB,PWMGenOutC,StepGenOut,SPIFrame,SPIOut,SPIClk,
 		                  UTData,UTDrvEn,BSPIFrame,BSPIOut,BSPIClk,BSPICS,DBSPIOut,DBSPIClk,
-								DBSPICS,IOBits)
+								DBSPICS,ResModPwrEn,ResModChan2,ResModChan1,ResModChan0,BinOscOut, 
+								ResModSPIClk,ResModSPICS,ResModPDMM,ResModPDMP,IOBits,DAQFIFOFull)
 		begin
 			Altdata <= (others => '0');
-			for i in 0 to IOWidth -1 loop				-- loop through all the pins 
+			for i in 0 to IOWidth -1 loop				-- loop through all the external I/O pins 
 				case ThePinDesc(i)(15 downto 8) is 	-- GTag
 					-- all these nasty subranges will go away when pindescs are changed to records
 					when QCountTag => 
@@ -1174,7 +1555,34 @@ architecture dataflow of HostMot2 is
 								AltData(i) <= MuxedQCtrSel(1);
 							when others => null;
 						end case;
-					
+
+					when ResModTag =>
+						case (ThePinDesc(i)(7 downto 0)) is	--secondary pin function
+							when ResModPwrEnPin =>
+								AltData(i) <= ResModPwrEn(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModPDMPPin =>
+								AltData(i) <= ResModPDMP(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModPDMMPin =>
+								AltData(i) <= ResModPDMM(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModChan0Pin =>
+								AltData(i) <= ResModChan0(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModChan1Pin =>
+								AltData(i) <= ResModChan1(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModChan2Pin =>
+								AltData(i) <= ResModChan2(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModSPICSPin =>
+								AltData(i) <= ResModSPICS(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModSPIClkPin =>
+								AltData(i) <= ResModSPIClk(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModTestBitPin =>
+								AltData(i) <= ResModTestBit(conv_integer(ThePinDesc(i)(23 downto 16))); 
+							when ResModSPIDI0Pin =>
+								ResModSPIDI0(conv_integer(ThePinDesc(i)(23 downto 16))) <= iobits(i); 
+							when ResModSPIDI1Pin =>
+								ResModSPIDI1(conv_integer(ThePinDesc(i)(23 downto 16))) <= iobits(i); 
+							when others => null;
+						end case;
+						
 					when PWMTag =>
 						case (ThePinDesc(i)(7 downto 0)) is	--secondary pin function
 							when PWMAOutPin =>
@@ -1207,15 +1615,62 @@ architecture dataflow of HostMot2 is
 							when others => null;
 						end case;
 						
-					when StepGenTag =>						
-						AltData(i) <= StepGenOut(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(6 downto 0))-1);						
+					when SSerialTag =>	-- this hideous masking of pinnumbers/vs pintype is why they should be separate bytes, maybe IDROM type 4...											
+						if (ThePinDesc(i)(7 downto 0) and x"F0") = x"80" then 	-- txouts match 8X 
+							AltData(i) <=   SSerialTX(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(3 downto 0))-1);	-- 16 max ports			
+						end if;
+						if (ThePinDesc(i)(7 downto 0) and x"F0") = x"90" then 	-- txens match 9X
+							AltData(i) <= not SSerialTXEn(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(3 downto 0))-1); 	-- 16 max ports						
+						end if;
+						if (ThePinDesc(i)(7 downto 0) and x"F0") = x"00" then 	-- rxins match 0X
+							SSerialRX(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(3 downto 0))-1) <= IOBits(i);		-- 16 max ports			
+						end if;
+						if ThePinDesc(i)(7 downto 0) = SSerialTestPin then
+							AltData(i) <= SSerialTestBits(i);
+						end if;
 
+					when TwiddlerTag =>										
+						if (ThePinDesc(i)(7 downto 0) and x"C0") = x"80" then 	-- outs match 8X .. BX 
+							AltData(i) <=   TwiddlerOutput(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(5 downto 0))-1);	--  max ports, more than 8 requires adding to IDROM pins					
+						end if;
+						if (ThePinDesc(i)(7 downto 0) and x"C0") = x"00" then 	-- ins match 0X .. 3X
+							TwiddlerInput(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(5 downto 0))-1) <= IOBits(i);		-- 16 max ports			
+						end if;
+						if (ThePinDesc(i)(7 downto 0) and x"C0") = x"C0" then 	-- I/Os match CX .. FX
+							TwiddlerInput(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(5 downto 0))-1) <= IOBits(i);		-- 16 max ports			
+							AltData(i) <= TwiddlerOutput(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(4 downto 0))-1); 	-- 16 max ports						
+						end if;
+
+					when DAQFIFOTag =>										
+						if (ThePinDesc(i)(7 downto 0) and x"C0") = x"00" then 	-- DAQ data matches 0X .. 3X
+							DAQFIFOData(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(5 downto 0))-1) <= IOBits(i);		-- 16 max ports			
+						end if;
+						if ThePinDesc(i)(7 downto 0) = DAQFIFOStrobePin then 	
+							 DAQFIFOStrobe(conv_integer(ThePinDesc(i)(23 downto 16))) <= IOBits(i);
+						end if;			
+						if ThePinDesc(i)(7 downto 0) = DAQFIFOFullPin then 	
+							AltData(i) <= DAQFIFOFull(conv_integer(ThePinDesc(i)(23 downto 16)));					
+						end if;
+							
+
+					when StepGenTag =>												
+						if (ThePinDesc(i)(7 downto 0) and x"80") /= 0 then -- only for outputs 
+							AltData(i) <= StepGenOut(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(6 downto 0))-1);						
+						end if;
+						case (ThePinDesc(i)(7 downto 0)) is	--secondary pin function
+							when StepGenIndexPin =>
+								StepGenIndex(conv_integer(ThePinDesc(i)(23 downto 16))) <= IOBits(i);
+							when StepGenProbePin =>
+								Probe <= IOBits(i);	-- only 1 please!
+							when others => null;
+						end case;
+						
 					when UARTTTag =>
 						case (ThePinDesc(i)(7 downto 0)) is	--secondary pin function
 							when UTDataPin =>
 								AltData(i) <= UTData(conv_integer(ThePinDesc(i)(23 downto 16)));				
 							when UTDrvEnPin =>
-								AltData(i) <= UTDrvEn(conv_integer(ThePinDesc(i)(23 downto 16)));	
+								AltData(i) <=  not UTDrvEn(conv_integer(ThePinDesc(i)(23 downto 16)));	
 							when others => null;								
 						end case;
 						
@@ -1273,14 +1728,62 @@ architecture dataflow of HostMot2 is
 								SSSIIn(conv_integer(ThePinDesc(i)(23 downto 16))) <= IOBits(i);
 							when others => null;
 						end case;
+	
+					when BinOscTag =>
+						AltData(i) <= BinOscOut(conv_integer(ThePinDesc(i)(23 downto 16)))(conv_integer(ThePinDesc(i)(6 downto 0))-1);						
+						report("External BinOscOutPin found");
+
+					when WaveGenTag =>
+						case (ThePinDesc(i)(7 downto 0)) is	--secondary pin function, drop MSB
+							when PDMAOutPin =>
+								AltData(i) <= WaveGenPDMA(conv_integer(ThePinDesc(i)(23 downto 16)));				
+							when PDMBOutPin =>
+								AltData(i) <= WaveGenPDMB(conv_integer(ThePinDesc(i)(23 downto 16)));				
+							when Trigger0OutPin =>
+								AltData(i) <= WaveGenTrigger0(conv_integer(ThePinDesc(i)(23 downto 16)));				
+							when Trigger1OutPin =>
+								AltData(i) <= WaveGenTrigger1(conv_integer(ThePinDesc(i)(23 downto 16)));				
+							when Trigger2OutPin =>
+								AltData(i) <= WaveGenTrigger2(conv_integer(ThePinDesc(i)(23 downto 16)));				
+							when Trigger3OutPin =>
+								AltData(i) <= WaveGenTrigger3(conv_integer(ThePinDesc(i)(23 downto 16)));				
+							when others => null;
+						end case;
 					
 					when others => null;		
 				end case;	
 			end loop;		
 		end process;	
 		
+		DoLocalPinout: process(LIOBits,BinOscOut,DBSPICS,DBSPIClk,DBSPIOut)
+		begin
+			for i in 0 to LIOWidth -1 loop				-- loop through all the local I/O pins 
+				report("Doing LIOLoop: "& integer'image(i));
+				case ThePinDesc(i+IOWidth)(15 downto 8) is 	-- GTag (Local I/O starts at end of external I/O)				
+					when DBSPITag =>
+						case (ThePinDesc(i+IOWidth)(7 downto 0)) is	--secondary pin function, drop MSB		
+							when DBSPIOutPin =>
+								LIOBits(i) <= DBSPIOut(conv_integer(ThePinDesc(i+IOWidth)(23 downto 16)));				
+								report("Local DBSPIOutPin found");
+							when DBSPIClkPin =>
+								LIOBits(i) <= DBSPIClk(conv_integer(ThePinDesc(i+IOWidth)(23 downto 16)));				
+								report("Local DBSPClkPin found");
+							when DBSPIInPin =>		
+								DBSPIIn(conv_integer(ThePinDesc(i+IOWidth)(23 downto 16))) <= LIOBits(i);
+								report("Local DBSPIInPin found");
+							when others => LIOBits(i) <= DBSPICS(conv_integer(ThePinDesc(i+IOWidth)(23 downto 16)))(conv_integer(ThePinDesc(i+IOWidth)(6 downto 0))-5);			
+								report("Local DBSPICSPin found");
+							-- magic foo, magic foo, what on earth does it do?						
+							-- (this needs to written more clearly!)							
+						end case;
+					when BinOscTag =>
+						LIOBits(i) <= BinOscOut(conv_integer(ThePinDesc(i+IOWidth)(23 downto 16)))(conv_integer(ThePinDesc(i)(6 downto 0))-1);						
+						report("Local BinOscOutPin found");
+					when others => null;		
+				end case;	
+			end loop;		
+		end process;	
 		
-
    LooseEnds: process(A,clklow)
 	begin
 		if rising_edge(clklow) then
@@ -1341,18 +1844,18 @@ architecture dataflow of HostMot2 is
 	end generate;		
 	
 
-	Decode: process(A,write, IDROMWEn, read) 
+	Decode: process(A,writestb, IDROMWEn, readstb) 
 	begin	
 		-- basic multi decodes are at 256 byte increments (64 longs)
 		-- first decode is 256 x 32 ID ROM
+		-- these need to all be updated to the decoded strobe function instead of if_then_else
 
-
-		if (A(15 downto 10) = IDROMAddr(7 downto 2)) and Write = '1' and IDROMWEn = "1" then	 -- 400 Hex  
+		if (A(15 downto 10) = IDROMAddr(7 downto 2)) and writestb = '1' and IDROMWEn = "1" then	 -- 400 Hex  
 			LoadIDROM <= '1';
 		else
 			LoadIDROM <= '0';
 		end if;
-		if (A(15 downto 10) = IDROMAddr(7 downto 2)) and Read = '1' then	 --  
+		if (A(15 downto 10) = IDROMAddr(7 downto 2)) and readstb = '1' then	 --  
 			ReadIDROM <= '1';
 		else
 			ReadIDROM <= '0';
@@ -1466,6 +1969,133 @@ architecture dataflow of HostMot2 is
 			MuxedQCounterCCRSel <= '0';
 		end if;
 
+		if A(15 downto 8) = WaveGenRateAddr then	 --  WaveGen table index rate
+			WaveGenRateSel <= '1';
+		else
+			WaveGenRateSel <= '0';
+		end if;
+
+		if A(15 downto 8) = WaveGenLengthAddr then	 --  WaveGen table length
+			WaveGenlengthSel <= '1';
+		else
+			WaveGenlengthSel <= '0';
+		end if;
+
+		if A(15 downto 8) = WaveGenPDMRateAddr then	 --  WaveGen PDMRate
+			WaveGenPDMRateSel <= '1';
+		else
+			WaveGenPDMRateSel <= '0';
+		end if;
+
+		if A(15 downto 8) = WaveGenTablePtrAddr then	 --  WaveGen TablePtr
+			WaveGenTablePtrSel <= '1';
+		else
+			WaveGenTablePtrSel <= '0';
+		end if;
+
+		if A(15 downto 8) = WaveGenTableDataAddr then	 --  WaveGen TableData
+			WaveGenTableDataSel <= '1';
+		else
+			WaveGenTableDataSel <= '0';
+		end if;
+
+		if A(15 downto 8) = ResModCommandAddr then
+			ResModCommandSel <= '1';
+		else
+			ResModCommandSel <= '0';
+		end if;
+
+		if A(15 downto 8) = ResModDataAddr then
+			ResModDataSel <= '1';      
+		else
+			ResModDataSel <= '0';      
+		end if;
+
+		if A(15 downto 8) = ResModStatusAddr then
+			ResModStatusSel <= '1';      
+		else
+			ResModStatusSel <= '0';      
+		end if;
+
+		if A(15 downto 8) = ResModVelRAMAddr then
+			ResModVelRAMSel <= '1';
+		else
+			ResModVelRAMSel <= '0';
+		end if;
+
+		if A(15 downto 8) = ResModPosRAMAddr then
+			ResModPosRAMSel <= '1';
+		else
+			ResModPosRAMSel <= '0';
+		end if;
+
+		if A(15 downto 8) = SSerialCommandAddr then
+			SSerialCommandSel <= '1';
+		else	
+			SSerialCommandSel <= '0';
+		end if;
+		
+		if A(15 downto 8) = SSerialDataAddr then
+			SSerialDataSel <= '1';      
+		else	
+			SSerialDataSel <= '0';      
+		end if;
+
+		if A(15 downto 8) = SSerialRAMAddr0 then
+			SSerialRAMSel0 <= '1'; 
+		else	
+			SSerialRAMSel0 <= '0'; 
+		end if;
+
+		if A(15 downto 8) = SSerialRAMAddr1 then
+			SSerialRAMSel1 <= '1'; 
+		else	
+			SSerialRAMSel1 <= '0'; 
+		end if;
+
+		if A(15 downto 8) = SSerialRAMAddr2 then
+			SSerialRAMSel2 <= '1'; 
+		else	
+			SSerialRAMSel2 <= '0'; 
+		end if;
+
+		if A(15 downto 8) = DAQFIFODataAddr then
+			DAQFIFODataSel <= '1';
+		else	
+			DAQFIFODataSel <= '0';
+		end if;
+		
+		if A(15 downto 8) = DAQFIFOCountAddr then
+			DAQFIFOCountSel <= '1';      
+		else	
+			DAQFIFOCountSel <= '0';      
+		end if;
+	
+		if A(15 downto 8) = DAQFIFOModeAddr then
+			DAQFIFOModeSel <= '1';      
+		else	
+			DAQFIFOModeSel <= '0';      
+		end if;
+
+		if A(15 downto 8) = TwiddlerCommandAddr then
+			TwiddlerCommandSel <= '1';
+		else	
+			TwiddlerCommandSel <= '0';
+		end if;
+		
+		if A(15 downto 8) = TwiddlerDataAddr then
+			TwiddlerDataSel <= '1';      
+		else	
+			TwiddlerDataSel <= '0';      
+		end if;
+
+		if A(15 downto 8) = TwiddlerRAMAddr then
+			TwiddlerRAMSel <= '1'; 
+		else	
+			TwiddlerRAMSel <= '0'; 
+		end if;
+
+
 		if A(15 downto 8) = PWMValAddr then	 --  PWMVal select
 			PWMValSel <= '1';
 		else
@@ -1513,6 +2143,13 @@ architecture dataflow of HostMot2 is
 		else
 			SPIBitrateSel <= '0';
 		end if;
+		
+		if A(15 downto 8) = BinOscEnaAddr then	 	--  Charge Pump Power Supply enable decode
+			LoadBinOscEnaSel <= '1';
+		else
+			LoadBinOscEnaSel <= '0';
+		end if;
+		
 	
 		if A(15 downto 8) = SSSIDataAddr then	 --  SSSI data register select
 			SSSIDataSel <= '1';
@@ -1617,178 +2254,191 @@ architecture dataflow of HostMot2 is
 			UARTRModeRegSel <= '0';
 		end if;
 
-		if A(15 downto 8) = ReadIDAddr and Read = '1' then	 --  
+		if A(15 downto 8) = ReadIDAddr and readstb = '1' then	 --  
 			ReadID <= '1';
 		else
 			ReadID <= '0';
 		end if;
 
-		if A(15 downto 8) = WatchdogTimeAddr and Read = '1' then	 --  
+		if A(15 downto 8) = WatchdogTimeAddr and readstb = '1' then	 --  
 			ReadWDTime <= '1';
 		else
 			ReadWDTime <= '0';
 		end if;
-		if A(15 downto 8) = WatchdogTimeAddr and Write = '1' then	 --  
+		if A(15 downto 8) = WatchdogTimeAddr and writestb = '1' then	 --  
 			LoadWDTime <= '1';
 		else
 			LoadWDTime <= '0';
 		end if;
 
-		if A(15 downto 8) = WatchdogStatusAddr and Read = '1' then	 --  
+		if A(15 downto 8) = WatchdogStatusAddr and readstb = '1' then	 --  
 			ReadWDStatus <= '1';
 		else
 			ReadWDStatus <= '0';
 		end if;
-		if A(15 downto 8) = WatchdogStatusAddr and Write = '1' then	 --  
+		if A(15 downto 8) = WatchdogStatusAddr and writestb = '1' then	 --  
 			LoadWDStatus <= '1';
 		else
 			LoadWDStatus <= '0';
 		end if;
 
-		if A(15 downto 8) = WatchdogCookieAddr and Write = '1' then	 --  
+		if A(15 downto 8) = WatchdogCookieAddr and writestb = '1' then	 --  
 			WDCookie <= '1';
 		else
 			WDCookie <= '0';
 		end if;
 
 
-		if A(15 downto 8) = IRQDivAddr and Write = '1' then	 --  
+		if A(15 downto 8) = IRQDivAddr and writestb = '1' then	 --  
 			LoadIRQDiv <= '1';
 		else
 			LoadIRQDiv <= '0';
 		end if;
 
-		if A(15 downto 8) = IRQDivAddr and Read = '1' then	 --  
+		if A(15 downto 8) = IRQDivAddr and readstb = '1' then	 --  
 			ReadIRQDiv <= '1';
 		else
 			ReadIRQDiv <= '0';
 		end if;
 
-		if A(15 downto 8) = IRQStatusAddr and Write = '1' then	 --  
+		if A(15 downto 8) = IRQStatusAddr and writestb = '1' then	 --  
 			LoadIRQStatus <= '1';
 		else
 			LoadIRQStatus <= '0';
 		end if;
 
-		if A(15 downto 8) = IRQStatusAddr and Read = '1' then	 --  
+		if A(15 downto 8) = IRQStatusAddr and readstb = '1' then	 --  
 			ReadIrqStatus <= '1';
 		else
 			ReadIrqStatus <= '0';
 		end if;
 
-		if A(15 downto 8) = ClearIRQAddr and Write = '1' then	 --  
+		if A(15 downto 8) = ClearIRQAddr and writestb = '1' then	 --  
 			ClearIRQ <= '1';
 		else
 			ClearIRQ <= '0';
 		end if;
+
+		if A(15 downto 8) = DMDMAModeAddr and writestb = '1' then	 --  
+			LoadDMDMAMode <= '1';
+		else
+			LoadDMDMAMode <= '0';
+		end if;
+
+		if A(15 downto 8) = DMDMAModeAddr and readstb = '1' then	 --  
+			ReadDMDMAMode <= '1';
+		else
+			ReadDMDMAMode <= '0';
+		end if;
  		
-		if A(15 downto 8) = StepGenBasicRateAddr and Write = '1' then	 --  
+		if A(15 downto 8) = StepGenBasicRateAddr and writestb = '1' then	 --  
 			LoadStepGenBasicRate <= '1';
 		else
 			LoadStepGenBasicRate <= '0';
 		end if;
-		if A(15 downto 8) = StepGenBasicRateAddr and Read = '1' then	 --  
+
+		if A(15 downto 8) = StepGenBasicRateAddr and readstb = '1' then	 --  
 			ReadStepGenBasicRate <= '1';
 		else
 			ReadStepGenBasicRate <= '0';
 		end if;
 
-		if A(15 downto 8) = TSDivAddr and Write = '1' then	 --  
+		if A(15 downto 8) = TSDivAddr and writestb = '1' then	 --  
 			LoadTSDiv <= '1';
 		else
 			LoadTSDiv <= '0';
 		end if;
-		if A(15 downto 8) = TSDivAddr and Read = '1' then	 --  
+		if A(15 downto 8) = TSDivAddr and readstb = '1' then	 --  
 			ReadTSDiv <= '1';
 		else
 			ReadTSDiv <= '0';
 		end if;
 
-		if A(15 downto 8) = TSAddr and Read = '1' then	 --  
+		if A(15 downto 8) = TSAddr and readstb = '1' then	 --  
 			ReadTS <= '1';
 		else
 			ReadTS <= '0';
 		end if;
 
-		if A(15 downto 8) = QCRateAddr and Write = '1' then	 --  
+		if A(15 downto 8) = QCRateAddr and writestb = '1' then	 --  
 			LoadQCountRate <= '1';
 		else
 			LoadQCountRate <= '0';
 		end if;
 		
-		if A(15 downto 8) = MuxedTSDivAddr and Write = '1' then	 --  
+		if A(15 downto 8) = MuxedTSDivAddr and writestb = '1' then	 --  
 			LoadMuxedTSDiv <= '1';
 		else
 			LoadMuxedTSDiv <= '0';
 		end if;
-		if A(15 downto 8) = MuxedTSDivAddr and Read = '1' then	 --  
+		if A(15 downto 8) = MuxedTSDivAddr and readstb = '1' then	 --  
 			ReadMuxedTSDiv <= '1';
 		else
 			ReadMuxedTSDiv <= '0';
 		end if;
 
-		if A(15 downto 8) = MuxedTSAddr and Read = '1' then	 --  
+		if A(15 downto 8) = MuxedTSAddr and readstb = '1' then	 --  
 			ReadMuxedTS <= '1';
 		else
 			ReadMuxedTS <= '0';
 		end if;
 
-		if A(15 downto 8) = MuxedQCRateAddr and Write = '1' then	 --  
+		if A(15 downto 8) = MuxedQCRateAddr and writestb = '1' then	 --  
 			LoadMuxedQCountRate <= '1';
 		else
 			LoadMuxedQCountRate <= '0';
 		end if;
 
 
-		if A(15 downto 8) = PWMRateAddr and Write = '1' then	 --  
+		if A(15 downto 8) = PWMRateAddr and writestb = '1' then	 --  
 			LoadPWMRate <= '1';
 		else
 			LoadPWMRate <= '0';
 		end if;
 
-		if A(15 downto 8) = PDMRateAddr and Write = '1' then	 --  
+		if A(15 downto 8) = PDMRateAddr and writestb = '1' then	 --  
 			LoadPDMRate <= '1';
 		else
 			LoadPDMRate <= '0';
 		end if;
 
-		if A(15 downto 8) = PWMEnasAddr and Write = '1' then	 --  
+		if A(15 downto 8) = PWMEnasAddr and writestb = '1' then	 --  
 			LoadPWMEnas <= '1';
 		else
 			LoadPWMEnas <= '0';
 		end if;
 
-		if A(15 downto 8) = PWMEnasAddr and Read = '1' then	 --  
+		if A(15 downto 8) = PWMEnasAddr and readstb = '1' then	 --  
 			ReadPWMEnas <= '1';
 		else
 			ReadPWMEnas <= '0';
 		end if;
 
-		if A(15 downto 8) = TPPWMRateAddr and Write = '1' then	 --  
+		if A(15 downto 8) = TPPWMRateAddr and writestb = '1' then	 --  
 			LoadTPPWMRate <= '1';
 		else
 			LoadTPPWMRate <= '0';
 		end if;
 
-		if A(15 downto 8) = SSSIGlobalPStartAddr and Write = '1' then	 --  
+		if A(15 downto 8) = SSSIGlobalPStartAddr and writestb = '1' then	 --  
 			GlobalPStartSSSI <= '1';
 		else
 			GlobalPStartSSSI <= '0';
 		end if;
 
-		if A(15 downto 8) = IDROMWEnAddr and Write = '1' then	 --  
+		if A(15 downto 8) = IDROMWEnAddr and writestb = '1' then	 --  
 			LoadIDROMWEn <= '1';
 		else
 			LoadIDROMWEn <= '0';
 		end if;
 	
-		if A(15 downto 8) = IDROMWEnAddr and Read = '1' then	 --  
+		if A(15 downto 8) = IDROMWEnAddr and readstb = '1' then	 --  
 			ReadIDROMWEn <= '1';
 		else
 			ReadIDROMWEn <= '0';
 		end if;
 
-		if A(15 downto 8) = LEDAddr and Write = '1' then	 --  
+		if A(15 downto 8) = LEDAddr and writestb = '1' then	 --  
 			LoadLEDs <= '1';
 		else
 			LoadLEDs <= '0';
@@ -1796,162 +2446,237 @@ architecture dataflow of HostMot2 is
 
 	end process;
 	
-	PortDecode: process (A,Read,Write,PortSel, DDRSel, AltDataSrcSel, OpenDrainModeSel, OutputInvSel)
+	PortDecode: process (A,readstb,writestb,PortSel, DDRSel, AltDataSrcSel, OpenDrainModeSel, OutputInvSel)
 	begin
 
-		LoadPortCMD <= OneOfNDecode(IOPorts,PortSel,Write,A(4 downto 2)); -- 8 max
-		ReadPortCMD <= OneOfNDecode(IOPorts,PortSel,Read,A(4 downto 2));
-		LoadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,Write,A(4 downto 2));
-		ReadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,Read,A(4 downto 2));
+		LoadPortCMD <= OneOfNDecode(IOPorts,PortSel,writestb,A(4 downto 2)); -- 8 max
+		ReadPortCMD <= OneOfNDecode(IOPorts,PortSel,readstb,A(4 downto 2));
+		LoadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,writestb,A(4 downto 2));
+		ReadDDRCMD <= OneOfNDecode(IOPorts,DDRSel,readstb,A(4 downto 2));
 
-		LoadAltDataSrcCMD <= OneOfNDecode(IOPorts,AltDataSrcSel,Write,A(4 downto 2));
-		LoadOpenDrainModeCMD <= OneOfNDecode(IOPorts,OpenDrainModeSel,Write,A(4 downto 2));
-		LoadOutputInvCMD <= OneOfNDecode(IOPorts,OutputInvSel,Write,A(4 downto 2));
+		LoadAltDataSrcCMD <= OneOfNDecode(IOPorts,AltDataSrcSel,writestb,A(4 downto 2));
+		LoadOpenDrainModeCMD <= OneOfNDecode(IOPorts,OpenDrainModeSel,writestb,A(4 downto 2));
+		LoadOutputInvCMD <= OneOfNDecode(IOPorts,OutputInvSel,writestb,A(4 downto 2));
 
 	end process PortDecode;
 
 		StepGenDecode: if (STEPGENs > 0) generate
-			StepGenDecodeProcess : process (A,Read,write,StepGenRateSel, StepGenAccumSel, StepGenModeSel,
+			StepGenDecodeProcess : process (A,readstb,writestb,StepGenRateSel, StepGenAccumSel, StepGenModeSel,
                                  			StepGenDSUTimeSel, StepGenDHLDTimeSel, StepGenPulseATimeSel, 
 			                                 StepGenPulseITimeSel, StepGenTableSel, StepGenTableMaxSel)
 			begin
-				LoadStepGenRate <= OneOfNDecode(STEPGENs,StepGenRateSel,Write,A(6 downto 2)); -- 32 max
-				ReadStepGenRate <= OneOfNDecode(STEPGENs,StepGenRateSel,Read,A(6 downto 2));
-				LoadStepGenAccum <= OneOfNDecode(STEPGENs,StepGenAccumSel,Write,A(6 downto 2));
-				ReadStepGenAccum <= OneOfNDecode(STEPGENs,StepGenAccumSel,Read,A(6 downto 2));
-				LoadStepGenMode <= OneOfNDecode(STEPGENs,StepGenModeSel,Write,A(6 downto 2));			 
-				ReadStepGenMode <= OneOfNDecode(STEPGENs,StepGenModeSel,Read,A(6 downto 2));	
-				LoadStepGenDSUTime <= OneOfNDecode(STEPGENs,StepGenDSUTimeSel,Write,A(6 downto 2));
-				ReadStepGenDSUTime <= OneOfNDecode(STEPGENs,StepGenDSUTimeSel,Read,A(6 downto 2));
-				LoadStepGenDHLDTime <= OneOfNDecode(STEPGENs,StepGenDHLDTimeSel,Write,A(6 downto 2));
-				ReadStepGenDHLDTime <= OneOfNDecode(STEPGENs,StepGenDHLDTimeSel,Read,A(6 downto 2));
-				LoadStepGenPulseATime <= OneOfNDecode(STEPGENs,StepGenPulseATimeSel,Write,A(6 downto 2));
-				ReadStepGenPulseATime <= OneOfNDecode(STEPGENs,StepGenPulseATimeSel,Read,A(6 downto 2));
-				LoadStepGenPulseITime <= OneOfNDecode(STEPGENs,StepGenPulseITimeSel,Write,A(6 downto 2));
-				ReadStepGenPulseITime <= OneOfNDecode(STEPGENs,StepGenPulseITimeSel,Read,A(6 downto 2));
-				LoadStepGenTable <= OneOfNDecode(STEPGENs,StepGenTableSel,Write,A(6 downto 2));
-				ReadStepGenTable <= OneOfNDecode(STEPGENs,StepGenTableSel,Read,A(6 downto 2));
-				LoadStepGenTableMax <= OneOfNDecode(STEPGENs,StepGenTableMaxSel,Write,A(6 downto 2));
-				ReadStepGenTableMax <= OneOfNDecode(STEPGENs,StepGenTableMaxSel,Read,A(6 downto 2));
+				LoadStepGenRate <= OneOfNDecode(STEPGENs,StepGenRateSel,writestb,A(7 downto 2)); 	-- 64 max
+				ReadStepGenRate <= OneOfNDecode(STEPGENs,StepGenRateSel,readstb,A(7 downto 2)); 		-- Note: all the reads are decoded here
+				LoadStepGenAccum <= OneOfNDecode(STEPGENs,StepGenAccumSel,writestb,A(7 downto 2));	-- but most are commented out in the 
+				ReadStepGenAccum <= OneOfNDecode(STEPGENs,StepGenAccumSel,readstb,A(7 downto 2));	-- stepgen module hardware for space reasons
+				LoadStepGenMode <= OneOfNDecode(STEPGENs,StepGenModeSel,writestb,A(7 downto 2));			 
+				ReadStepGenMode <= OneOfNDecode(STEPGENs,StepGenModeSel,Readstb,A(7 downto 2));	
+				LoadStepGenDSUTime <= OneOfNDecode(STEPGENs,StepGenDSUTimeSel,writestb,A(7 downto 2));
+				ReadStepGenDSUTime <= OneOfNDecode(STEPGENs,StepGenDSUTimeSel,Readstb,A(7 downto 2));
+				LoadStepGenDHLDTime <= OneOfNDecode(STEPGENs,StepGenDHLDTimeSel,writestb,A(7 downto 2));
+				ReadStepGenDHLDTime <= OneOfNDecode(STEPGENs,StepGenDHLDTimeSel,Readstb,A(7 downto 2));
+				LoadStepGenPulseATime <= OneOfNDecode(STEPGENs,StepGenPulseATimeSel,writestb,A(7 downto 2));
+				ReadStepGenPulseATime <= OneOfNDecode(STEPGENs,StepGenPulseATimeSel,Readstb,A(7 downto 2));
+				LoadStepGenPulseITime <= OneOfNDecode(STEPGENs,StepGenPulseITimeSel,writestb,A(7 downto 2));
+				ReadStepGenPulseITime <= OneOfNDecode(STEPGENs,StepGenPulseITimeSel,Readstb,A(7 downto 2));
+				LoadStepGenTable <= OneOfNDecode(STEPGENs,StepGenTableSel,writestb,A(7 downto 2));
+				ReadStepGenTable <= OneOfNDecode(STEPGENs,StepGenTableSel,Readstb,A(7 downto 2));
+				LoadStepGenTableMax <= OneOfNDecode(STEPGENs,StepGenTableMaxSel,writestb,A(7 downto 2));
+				ReadStepGenTableMax <= OneOfNDecode(STEPGENs,StepGenTableMaxSel,Readstb,A(7 downto 2));
 			end process StepGenDecodeProcess;
 		end generate;
 
 
 		QCounterDecode: if (QCounters > 0) generate		
-			QCounterDecodeProcess : process (A,Read,write,QCounterSel, QCounterCCRSel)
+			QCounterDecodeProcess : process (A,Readstb,writestb,QCounterSel, QCounterCCRSel)
 			begin
-				LoadQCounter <= OneOfNDecode(QCounters,QCounterSel,Write,A(6 downto 2));  -- 32 max
-				ReadQCounter <= OneOfNDecode(QCounters,QCounterSel,Read,A(6 downto 2));
-				LoadQCounterCCR <= OneOfNDecode(QCounters,QCounterCCRSel,Write,A(6 downto 2));
-				ReadQCounterCCR <= OneOfNDecode(QCounters,QCounterCCRSel,Read,A(6 downto 2));
+				LoadQCounter <= OneOfNDecode(QCounters,QCounterSel,writestb,A(6 downto 2));  -- 32 max
+				ReadQCounter <= OneOfNDecode(QCounters,QCounterSel,Readstb,A(6 downto 2));
+				LoadQCounterCCR <= OneOfNDecode(QCounters,QCounterCCRSel,writestb,A(6 downto 2));
+				ReadQCounterCCR <= OneOfNDecode(QCounters,QCounterCCRSel,Readstb,A(6 downto 2));
 			end process QCounterDecodeProcess;
 		end generate;
 
 		MuxedQCounterDecode: if (MuxedQcounters > 0) generate		
-			MuxedQCounterDecodeProcess : process (A,Read,write,MuxedQCounterSel, MuxedQCounterCCRSel)
+			MuxedQCounterDecodeProcess : process (A,Readstb,writestb,MuxedQCounterSel, MuxedQCounterCCRSel)
 			begin
-				LoadMuxedQCounter <= OneOfNDecode(MuxedQCounters,MuxedQCounterSel,Write,A(6 downto 2));  -- 32 max
-				ReadMuxedQCounter <= OneOfNDecode(MuxedQCounters,MuxedQCounterSel,Read,A(6 downto 2));
-				LoadMuxedQCounterCCR <= OneOfNDecode(MuxedQCounters,MuxedQCounterCCRSel,Write,A(6 downto 2));
-				ReadMuxedQCounterCCR <= OneOfNDecode(MuxedQCounters,MuxedQCounterCCRSel,Read,A(6 downto 2));
+				LoadMuxedQCounter <= OneOfNDecode(MuxedQCounters,MuxedQCounterSel,writestb,A(6 downto 2));  -- 32 max
+				ReadMuxedQCounter <= OneOfNDecode(MuxedQCounters,MuxedQCounterSel,Readstb,A(6 downto 2));
+				LoadMuxedQCounterCCR <= OneOfNDecode(MuxedQCounters,MuxedQCounterCCRSel,writestb,A(6 downto 2));
+				ReadMuxedQCounterCCR <= OneOfNDecode(MuxedQCounters,MuxedQCounterCCRSel,Readstb,A(6 downto 2));
 			end process MuxedQCounterDecodeProcess;
 		end generate;
 
 
 		PWMDecode: if (PWMGENs > 0) generate		
-			PWMDecodeProcess : process (A,Read,write,PWMValSel, PWMCRSel)
+			PWMDecodeProcess : process (A,Readstb,writestb,PWMValSel, PWMCRSel)
 			begin
-				LoadPWMVal <= OneOfNDecode(PWMGENs,PWMValSel,Write,A(6 downto 2)); -- 32 max
-				LoadPWMCR <= OneOfNDecode(PWMGENs,PWMCRSel,Write,A(6 downto 2));
+				LoadPWMVal <= OneOfNDecode(PWMGENs,PWMValSel,writestb,A(7 downto 2)); -- 64 max
+				LoadPWMCR <= OneOfNDecode(PWMGENs,PWMCRSel,writestb,A(7 downto 2));
 			end process PWMDecodeProcess;
 		end generate;
 
 		TPPWMDecode: if (TPPWMGENs > 0) generate		
-			TPPWMDecodeProcess : process (A,Read,write,TPPWMValSel, TPPWMEnaSel,TPPWMDZSel)
+			TPPWMDecodeProcess : process (A,Readstb,writestb,TPPWMValSel, TPPWMEnaSel,TPPWMDZSel)
 			begin
-				LoadTPPWMVal <= OneOfNDecode(TPPWMGENs,TPPWMValSel,Write,A(6 downto 2)); -- 32 max
-				LoadTPPWMEna <= OneOfNDecode(TPPWMGENs,TPPWMEnaSel,Write,A(6 downto 2));
-				ReadTPPWMEna <= OneOfNDecode(TPPWMGENs,TPPWMEnaSel,Read,A(6 downto 2));
-				LoadTPPWMDZ <= OneOfNDecode(TPPWMGENs,TPPWMDZSel,Write,A(6 downto 2));
+				LoadTPPWMVal <= OneOfNDecode(TPPWMGENs,TPPWMValSel,writestb,A(6 downto 2)); -- 32 max
+				LoadTPPWMEna <= OneOfNDecode(TPPWMGENs,TPPWMEnaSel,writestb,A(6 downto 2));
+				ReadTPPWMEna <= OneOfNDecode(TPPWMGENs,TPPWMEnaSel,Readstb,A(6 downto 2));
+				LoadTPPWMDZ <= OneOfNDecode(TPPWMGENs,TPPWMDZSel,writestb,A(6 downto 2));
 			end process TPPWMDecodeProcess;
 		end generate;
 
 		SPIDecode: if (SPIs > 0) generate		
-			SPIDecodeProcess : process (A,Read,write,SPIDataSel,SPIBitCountSel,SPIBitRateSel)
+			SPIDecodeProcess : process (A,Readstb,writestb,SPIDataSel,SPIBitCountSel,SPIBitRateSel)
 			begin		
-				LoadSPIData <= OneOfNDecode(SPIs,SPIDataSel,Write,A(5 downto 2)); -- 16 max
-				ReadSPIData <= OneOfNDecode(SPIs,SPIDataSel,Read,A(5 downto 2));
-				LoadSPIBitCount <= OneOfNDecode(SPIs,SPIBitCountSel,Write,A(5 downto 2));
-				ReadSPIBitCount <= OneOfNDecode(SPIs,SPIBitCountSel,Read,A(5 downto 2));
-				LoadSPIBitRate <= OneOfNDecode(SPIs,SPIBitRateSel,Write,A(5 downto 2));
-				ReadSPIBitRate <= OneOfNDecode(SPIs,SPIBitRateSel,Read,A(5 downto 2));
+				LoadSPIData <= OneOfNDecode(SPIs,SPIDataSel,writestb,A(5 downto 2)); -- 16 max
+				ReadSPIData <= OneOfNDecode(SPIs,SPIDataSel,Readstb,A(5 downto 2));
+				LoadSPIBitCount <= OneOfNDecode(SPIs,SPIBitCountSel,writestb,A(5 downto 2));
+				ReadSPIBitCount <= OneOfNDecode(SPIs,SPIBitCountSel,Readstb,A(5 downto 2));
+				LoadSPIBitRate <= OneOfNDecode(SPIs,SPIBitRateSel,writestb,A(5 downto 2));
+				ReadSPIBitRate <= OneOfNDecode(SPIs,SPIBitRateSel,Readstb,A(5 downto 2));
 			end process SPIDecodeProcess;
 		end generate;
 
-		BSPIDecode: if (BSPIs > 0) generate		
-			BSPIDecodeProcess : process (A,Read,write,BSPIDataSel,BSPIFIFOCountSel,BSPIDescriptorSel)
+		BinOscDecode: if (BinOscs > 0) generate		
+			BinOscDecodeProcess : process (A,writestb,LoadBinOscEnaSel)
 			begin		
-				LoadBSPIData <= OneOfNDecode(BSPIs,BSPIDataSel,Write,A(7 downto 6)); -- 4 max
-				ReadBSPIData <= OneOfNDecode(BSPIs,BSPIDataSel,Read,A(7 downto 6));
-				LoadBSPIDescriptor<= OneOfNDecode(BSPIs,BSPIDescriptorSel,Write,A(5 downto 2));
-				ReadBSPIFIFOCOunt <= OneOfNDecode(BSPIs,BSPIFIFOCountSel,Read,A(5 downto 2));
-				ClearBSPIFIFO <= OneOfNDecode(BSPIs,BSPIFIFOCountSel,Write,A(5 downto 2));
+				LoadBinOscEna <= OneOfNDecode(BinOscs,LoadBinOscEnaSel,writestb,A(5 downto 2)); -- 16 max
+			end process BinOscDecodeProcess;
+		end generate;
+
+		BSPIDecode: if (BSPIs > 0) generate		
+			BSPIDecodeProcess : process (A,Readstb,writestb,BSPIDataSel,BSPIFIFOCountSel,BSPIDescriptorSel)
+			begin		
+				LoadBSPIData <= OneOfNDecode(BSPIs,BSPIDataSel,writestb,A(7 downto 6)); -- 4 max
+				ReadBSPIData <= OneOfNDecode(BSPIs,BSPIDataSel,Readstb,A(7 downto 6));
+				LoadBSPIDescriptor<= OneOfNDecode(BSPIs,BSPIDescriptorSel,writestb,A(5 downto 2));
+				ReadBSPIFIFOCOunt <= OneOfNDecode(BSPIs,BSPIFIFOCountSel,Readstb,A(5 downto 2));
+				ClearBSPIFIFO <= OneOfNDecode(BSPIs,BSPIFIFOCountSel,writestb,A(5 downto 2));
 			end process BSPIDecodeProcess;
 		end generate;
 
 		DBSPIDecode: if (DBSPIs > 0) generate		
-			DBSPIDecodeProcess : process (A,Read,write,DBSPIDataSel,DBSPIFIFOCountSel,DBSPIDescriptorSel)
+			DBSPIDecodeProcess : process (A,Readstb,writestb,DBSPIDataSel,DBSPIFIFOCountSel,DBSPIDescriptorSel)
 			begin		
-				LoadDBSPIData <= OneOfNDecode(DBSPIs,DBSPIDataSel,Write,A(7 downto 6)); -- 4 max
-				ReadDBSPIData <= OneOfNDecode(DBSPIs,DBSPIDataSel,Read,A(7 downto 6));
-				LoadDBSPIDescriptor<= OneOfNDecode(DBSPIs,DBSPIDescriptorSel,Write,A(5 downto 2));
-				ReadDBSPIFIFOCOunt <= OneOfNDecode(DBSPIs,DBSPIFIFOCountSel,Read,A(5 downto 2));
-				ClearDBSPIFIFO <= OneOfNDecode(DBSPIs,DBSPIFIFOCountSel,Write,A(5 downto 2));
+				LoadDBSPIData <= OneOfNDecode(DBSPIs,DBSPIDataSel,writestb,A(7 downto 6)); -- 4 max
+				ReadDBSPIData <= OneOfNDecode(DBSPIs,DBSPIDataSel,Readstb,A(7 downto 6));
+				LoadDBSPIDescriptor<= OneOfNDecode(DBSPIs,DBSPIDescriptorSel,writestb,A(5 downto 2));
+				ReadDBSPIFIFOCOunt <= OneOfNDecode(DBSPIs,DBSPIFIFOCountSel,Readstb,A(5 downto 2));
+				ClearDBSPIFIFO <= OneOfNDecode(DBSPIs,DBSPIFIFOCountSel,writestb,A(5 downto 2));
 			end process DBSPIDecodeProcess;
 		end generate;
 
 		SSSIDecode: if (SSSIs > 0) generate		
-			SSSIDecodeProcess : process (A,Read,write,SSSIDataSel,SSSIBitCountSel,SSSIBitRateSel)
+			SSSIDecodeProcess : process (A,Readstb,writestb,SSSIDataSel,SSSIBitCountSel,SSSIBitRateSel)
 			begin		
-				LoadSSSIData <= OneOfNDecode(SSSIs,SSSIDataSel,Write,A(5 downto 2)); 
-				ReadSSSIData <= OneOfNDecode(SSSIs,SSSIDataSel,Read,A(5 downto 2));
-				LoadSSSIBitCount <= OneOfNDecode(SSSIs,SSSIBitCountSel,Write,A(5 downto 2));
-				ReadSSSIBitCount <= OneOfNDecode(SSSIs,SSSIBitCountSel,Read,A(5 downto 2));
-				LoadSSSIBitRate <= OneOfNDecode(SSSIs,SSSIBitRateSel,Write,A(5 downto 2));
-				ReadSSSIBitRate <= OneOfNDecode(SSSIs,SSSIBitRateSel,Read,A(5 downto 2));
+				LoadSSSIData <= OneOfNDecode(SSSIs,SSSIDataSel,writestb,A(5 downto 2)); 
+				ReadSSSIData <= OneOfNDecode(SSSIs,SSSIDataSel,Readstb,A(5 downto 2));
+				LoadSSSIBitCount <= OneOfNDecode(SSSIs,SSSIBitCountSel,writestb,A(5 downto 2));
+				ReadSSSIBitCount <= OneOfNDecode(SSSIs,SSSIBitCountSel,Readstb,A(5 downto 2));
+				LoadSSSIBitRate <= OneOfNDecode(SSSIs,SSSIBitRateSel,writestb,A(5 downto 2));
+				ReadSSSIBitRate <= OneOfNDecode(SSSIs,SSSIBitRateSel,Readstb,A(5 downto 2));
 			end process SSSIDecodeProcess;
 		end generate;
 
 		UARTDecode: if (UARTs > 0) generate		
-			UARTDecodeProcess : process (A,Read,write,UARTTDataSel,UARTTBitRateSel,UARTTModeRegSel,UARTTFIFOCountSel,
+			UARTDecodeProcess : process (A,Readstb,writestb,UARTTDataSel,UARTTBitRateSel,UARTTModeRegSel,UARTTFIFOCountSel,
 			                             UARTRDataSel,UARTRBitRateSel,UARTRFIFOCountSel,UARTRModeRegSel)
 			begin		
-				LoadUARTTData <= OneOfNDecode(UARTs,UARTTDataSel,Write,A(6 downto 4));
-				LoadUARTTBitRate <= OneOfNDecode(UARTs,UARTTBitRateSel,Write,A(4 downto 2));
-				ReadUARTTBitrate <= OneOfNDecode(UARTs,UARTTBitRateSel,Read,A(4 downto 2));
-				LoadUARTTModeReg <= OneOfNDecode(UARTs,UARTTModeRegSel,Write,A(4 downto 2));
-				ReadUARTTModeReg <= OneOfNDecode(UARTs,UARTTModeRegSel,Read,A(4 downto 2));
-				ClearUARTTFIFO <= OneOfNDecode(UARTs,UARTTFIFOCountSel,Write,A(4 downto 2));
-				ReadUARTTFIFOCount <= OneOfNDecode(UARTs,UARTTFIFOCountSel,Read,A(4 downto 2));
+				LoadUARTTData <= OneOfNDecode(UARTs,UARTTDataSel,writestb,A(6 downto 4));
+				LoadUARTTBitRate <= OneOfNDecode(UARTs,UARTTBitRateSel,writestb,A(4 downto 2));
+				ReadUARTTBitrate <= OneOfNDecode(UARTs,UARTTBitRateSel,Readstb,A(4 downto 2));
+				LoadUARTTModeReg <= OneOfNDecode(UARTs,UARTTModeRegSel,writestb,A(4 downto 2));
+				ReadUARTTModeReg <= OneOfNDecode(UARTs,UARTTModeRegSel,Readstb,A(4 downto 2));
+				ClearUARTTFIFO <= OneOfNDecode(UARTs,UARTTFIFOCountSel,writestb,A(4 downto 2));
+				ReadUARTTFIFOCount <= OneOfNDecode(UARTs,UARTTFIFOCountSel,Readstb,A(4 downto 2));
 
-				LoadUARTRData <= OneOfNDecode(UARTs,UARTRDataSel,Read,A(6 downto 4));
-				LoadUARTRBitRate <= OneOfNDecode(UARTs,UARTRBitRateSel,Write,A(4 downto 2));
-				ReadUARTRBitrate <= OneOfNDecode(UARTs,UARTRBitRateSel,Read,A(4 downto 2));
-				ClearUARTRFIFO <= OneOfNDecode(UARTs,UARTRFIFOCountSel,Write,A(4 downto 2));
-				ReadUARTRFIFOCount <= OneOfNDecode(UARTs,UARTRFIFOCountSel,Read,A(4 downto 2));
-				LoadUARTRModeReg <= OneOfNDecode(UARTs,UARTRModeRegSel,Write,A(4 downto 2));
-				ReadUARTRModeReg <= OneOfNDecode(UARTs,UARTRModeRegSel,Read,A(4 downto 2));
+				LoadUARTRData <= OneOfNDecode(UARTs,UARTRDataSel,Readstb,A(6 downto 4));
+				LoadUARTRBitRate <= OneOfNDecode(UARTs,UARTRBitRateSel,writestb,A(4 downto 2));
+				ReadUARTRBitrate <= OneOfNDecode(UARTs,UARTRBitRateSel,Readstb,A(4 downto 2));
+				ClearUARTRFIFO <= OneOfNDecode(UARTs,UARTRFIFOCountSel,writestb,A(4 downto 2));
+				ReadUARTRFIFOCount <= OneOfNDecode(UARTs,UARTRFIFOCountSel,Readstb,A(4 downto 2));
+				LoadUARTRModeReg <= OneOfNDecode(UARTs,UARTRModeRegSel,writestb,A(4 downto 2));
+				ReadUARTRModeReg <= OneOfNDecode(UARTs,UARTRModeRegSel,Readstb,A(4 downto 2));
 			end process UARTDecodeProcess;
 		end generate;
 
-		
+		WaveGenDecode: if (WaveGens > 0) generate		
+			WaveGenDecodeProcess : process (A,Readstb,writestb,WaveGenRateSel,WaveGenLengthSel,
+			                                WaveGenPDMRateSel,WaveGenTablePtrSel,WaveGenTableDataSel)
+			begin		
+				LoadWaveGenRate <= OneOfNDecode(WaveGens,WaveGenRateSel,writestb,A(5 downto 2)); 
+				LoadWaveGenLength <= OneOfNDecode(WaveGens,WaveGenLengthSel,writestb,A(5 downto 2));
+				LoadWaveGenPDMRate <= OneOfNDecode(WaveGens,WaveGenPDMRateSel,writestb,A(5 downto 2));
+				LoadWaveGenTablePtr <= OneOfNDecode(WaveGens,WaveGenTablePtrSel,writestb,A(5 downto 2));
+				LoadWaveGenTableData <= OneOfNDecode(WaveGens,WaveGenTableDataSel,writestb,A(5 downto 2));
+			end process WaveGenDecodeProcess;
+		end generate;
+
+		ResolverModDecode: if (ResolverMods > 0) generate		
+			ResolverModDecodeProcess : process (A,Readstb,writestb,ResModCommandSel,ResModDataSel,ResModVelRAMSel,ResModPosRAMSel)
+			begin		
+				LoadResModCommand <= OneOfNDecode(ResolverMods,ResModCommandSel,writestb,A(7 downto 6)); 
+				ReadResModCommand <= OneOfNDecode(ResolverMods,ResModCommandSel,Readstb,A(7 downto 6)); 
+				LoadResModData <= OneOfNDecode(ResolverMods,ResModDataSel,writestb,A(7 downto 6)); 
+				ReadResModData <= OneOfNDecode(ResolverMods,ResModDataSel,Readstb,A(7 downto 6));           
+				ReadResModStatus <= OneOfNDecode(ResolverMods,ResModStatusSel,Readstb,A(7 downto 6));           
+				ReadResModVelRam <= OneOfNDecode(ResolverMods,ResModVelRAMSel,Readstb,A(7 downto 6)); -- 16 addresses per resmod
+				ReadResModPosRam <= OneOfNDecode(ResolverMods,ResModPosRAMSel,Readstb,A(7 downto 6)); -- 16 addresses per resmod
+			end process ResolverModDecodeProcess;
+		end generate;
+
+		SSerialDecode: if (SSerials > 0) generate		
+			SSerialDecodeProcess : process (A,Readstb,writestb,SSerialCommandSel,SSerialDataSel,SSerialRAMSel0,SSerialRAMSel1,SSerialRAMSel2)
+			begin		
+				LoadSSerialCommand <= OneOfNDecode(SSerials,SSerialCommandSel,writestb,A(7 downto 6)); 
+				ReadSSerialCommand <= OneOfNDecode(SSerials,SSerialCommandSel,Readstb,A(7 downto 6)); 
+				LoadSSerialData <= OneOfNDecode(SSerials,SSerialDataSel,writestb,A(7 downto 6)); 
+				ReadSSerialData <= OneOfNDecode(SSerials,SSerialDataSel,Readstb,A(7 downto 6));           
+				LoadSSerialRam0 <= OneOfNDecode(SSerials,SSerialRAMSel0,writestb,A(7 downto 6)); 	-- 16 addresses per SSerial RAM max, this implies 4 max sserials
+				ReadSSerialRam0 <= OneOfNDecode(SSerials,SSerialRAMSel0,Readstb,A(7 downto 6)); 	-- 16 addresses per SSerial RAM max, this implies 4 max sserials
+				LoadSSerialRam1 <= OneOfNDecode(SSerials,SSerialRAMSel1,writestb,A(7 downto 6)); 	-- 16 addresses per SSerial RAM max, this implies 4 max sserials
+				ReadSSerialRam1 <= OneOfNDecode(SSerials,SSerialRAMSel1,Readstb,A(7 downto 6)); 	-- 16 addresses per SSerial RAM max
+				LoadSSerialRam2 <= OneOfNDecode(SSerials,SSerialRAMSel2,writestb,A(7 downto 6)); 	-- 16 addresses per SSerial RAM max
+				ReadSSerialRam2 <= OneOfNDecode(SSerials,SSerialRAMSel2,Readstb,A(7 downto 6)); 	-- 16 addresses per SSerial RAM max
+			end process SSerialDecodeProcess;
+		end generate;
+
+		DAQFIFODecode: if (DAQFIFOs > 0) generate		
+			DAQFIFODecodeProcess : process (A,Readstb,writestb,DAQFIFODataSel,DAQFIFOCountSel,DAQFIFOModeSel)
+			begin		
+				ReadDAQFIFO <= OneOfNDecode(DAQFIFOs,DAQFIFODataSel,Readstb,A(7 downto 6));	-- 16 addresses per fifo to allow burst reads	 
+				PushDAQFIFOFrac <= OneOfNDecode(DAQFIFOs,DAQFIFODataSel,writestb,A(5 downto 2)); 
+				ReadDAQFIFOCount <= OneOfNDecode(DAQFIFOs,DAQFIFOCountSel,Readstb,A(5 downto 2)); 
+				ClearDAQFIFO <= OneOfNDecode(DAQFIFOs,DAQFIFOCountSel,writestb,A(5 downto 2)); 
+				ReadDAQFIFOMode <= OneOfNDecode(DAQFIFOs,DAQFIFOModeSel,Readstb,A(5 downto 2)); 
+				LoadDAQFIFOMode <= OneOfNDecode(DAQFIFOs,DAQFIFOModeSel,writestb,A(5 downto 2)); 
+			end process DAQFIFODecodeProcess;
+		end generate;
+	
+		TwiddleDecode: if (Twiddlers > 0) generate		
+			TwiddleDecodeProcess : process (A,Readstb,writestb,TwiddlerCommandSel,TwiddlerDataSel,TwiddlerRAMSel)
+			begin		
+				LoadTwiddlerCommand <= OneOfNDecode(Twiddlers,TwiddlerCommandSel,writestb,A(5 downto 2)); 
+				ReadTwiddlerCommand <= OneOfNDecode(Twiddlers,TwiddlerCommandSel,Readstb,A(5 downto 2)); 
+				LoadTwiddlerData <= OneOfNDecode(Twiddlers,TwiddlerDataSel,writestb,A(5 downto 2)); 
+				ReadTwiddlerData <= OneOfNDecode(Twiddlers,TwiddlerDataSel,Readstb,A(5 downto 2));           
+				LoadTwiddlerRam <= OneOfNDecode(Twiddlers,TwiddlerRAMSel,writestb,A(7 downto 6)); 	-- 16 addresses per Twiddle RAM max, this implies 4 max Twiddles
+				ReadTwiddlerRam <= OneOfNDecode(Twiddlers,TwiddlerRAMSel,Readstb,A(7 downto 6)); 	-- 16 addresses per Twiddle RAM max
+			end process TwiddleDecodeProcess;
+		end generate;
+				
 	dotieupint: if not UseIRQLogic generate
 		tieupint : process(clklow)
 		begin
 			INT <= '1';
 		end process;
 	end generate;		
-
+	
+	drqrouting: if UseDemandModeDMA generate
+		DRQSources <= DAQFIFOReq;			-- this will grow as other demand mode DMA sources are added
+	end generate;	
+	
 end dataflow;
 
   

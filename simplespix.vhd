@@ -132,7 +132,7 @@ begin
 			if Frame = '1' then 
 				if RateDiv = 0 then
 					RateDiv <= RateDivReg;
-					SPIInLatch <= spiin;
+					SPIInLatch <= spiin;								-- sample every edge
 					if ClockFF = '0' then
 						if BitCount(5) = '1' then
 							Frame <= '0';								-- frame cleared 1/2 SPI clock after GO
@@ -144,14 +144,14 @@ begin
 							ClockFF <= '1';
 						end if;	
 						if CPHA = '1'  and FirstLeadingEdge = '0' then				-- shift out on leading edge for CPHA = 1 case
-							SPISreg <= SPISreg(30 downto 0) & (SPIInLatch);
+							SPISreg <= SPISreg(30 downto 0) & (SPIInLatch);			-- note shift in data is always one clock edge behind
 						end if;
 						FirstLeadingEdge <= '0';						
 					else
 						ClockFF <= '0';
 						BitCount <= BitCount -1;
-						if CPHA = '0' then				-- shift out on trailing edge for CPHA = 0 case
-							SPISreg <= SPISreg(30 downto 0) & (SPIInLatch);
+						if CPHA = '0' then													-- shift out on trailing edge for CPHA = 0 case
+							SPISreg <= SPISreg(30 downto 0) & (SPIInLatch);			-- note shift in data is always one clock edge behind
 						end if;	
 					end if;	
 				else					

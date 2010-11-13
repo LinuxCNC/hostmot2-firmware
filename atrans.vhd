@@ -96,7 +96,7 @@ end atrans;
  signal outb : std_logic_vector(width-1 downto 0); 
  
  begin 
- 	process (clk) 
+ 	process (clk, RAM, rea, reb) 
  	begin 
  		if (clk'event and clk = '1') then  
  			if (wea = '1') then 

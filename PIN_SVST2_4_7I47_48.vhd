@@ -69,15 +69,15 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.IDROMConst.all;
 
-package PIN_SVST2_4_48_7I47 is
-	constant ModuleID : ModuleIDType :=( 
+package PIN_SVST2_4_7I47_48 is
+	constant ModuleID : moduleIDType :=( 
 		(WatchDogTag,	x"00",	ClockLowTag,	x"01",	WatchDogTimeAddr&PadT,		WatchDogNumRegs,		x"00",	WatchDogMPBitMask),
 		(IOPortTag,		x"00",	ClockLowTag,	x"02",	PortAddr&PadT,					IOPortNumRegs,			x"00",	IOPortMPBitMask),
 		(QcountTag,		x"02",	ClockLowTag,	x"04",	QcounterAddr&PadT,			QCounterNumRegs,		x"00",	QCounterMPBitMask),
 		(PWMTag,			x"00",	ClockHighTag,	x"02",	PWMValAddr&PadT,				PWMNumRegs,				x"00",	PWMMPBitMask),
 		(StepGenTag,	x"02",	ClockLowTag,	x"04",	StepGenRateAddr&PadT,		StepGenNumRegs,		x"00",	StepGenMPBitMask),
-		(AddrXTag,		x"00",	ClockLowTag,	x"01",	TranslateRAMAddr&PadT,		TranslateNumRegs,		x"00",	TranslateMPBitMask),
 		(LEDTag,			x"00",	ClockLowTag,	x"01",	LEDAddr&PadT,					LEDNumRegs,				x"00",	LEDMPBitMask),
+		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
@@ -104,7 +104,7 @@ package PIN_SVST2_4_48_7I47 is
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000")
 		);
-	
+			
 	constant PinDesc : PinDescType :=(
 -- 	Base func  sec unit sec func 	 sec pin		
 		IOPortTag & x"00" & StepGenTag & StepGenStepPin,	-- I/O 00
@@ -126,12 +126,13 @@ package PIN_SVST2_4_48_7I47 is
 		IOPortTag & x"02" & StepGenTag & StepGenStepPin,	-- I/O 16			
 		IOPortTag & x"02" & StepGenTag & StepGenDirPin,		-- I/O 17
 		IOPortTag & x"03" & StepGenTag & StepGenStepPin,	-- I/O 18			
-		IOPortTag & x"03" & StepGenTag & StepGenStepPin,	-- I/O 19
+		IOPortTag & x"03" & StepGenTag & StepGenDirPin,		-- I/O 19
 		IOPortTag & x"00" & PWMTag  & PWMAOutPin,				-- I/O 20			
 		IOPortTag & x"00" & PWMTag  & PWMBDirPin,				-- I/O 21
 		IOPortTag & x"01" & PWMTag  & PWMAOutPin,				-- I/O 22			
 		IOPortTag & x"01" & PWMTag  & PWMBDirPin,				-- I/O 23
-								
+					
+					
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 24
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 25
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 26
@@ -156,6 +157,13 @@ package PIN_SVST2_4_48_7I47 is
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 45
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 46
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 47
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, 
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
+
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
@@ -163,9 +171,6 @@ package PIN_SVST2_4_48_7I47 is
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
-		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
-		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
-		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
-		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin);
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin);					
 
-end package PIN_SVST2_4_48_7I47;
+end package PIN_SVST2_4_7I47_48;

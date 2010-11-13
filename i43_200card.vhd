@@ -79,6 +79,7 @@ package i43_200card is
 		constant IOPorts: integer := 2;
 		constant IOWidth: integer := 48;
 		constant PortWidth: integer := 24;
+		constant LIOWidth: integer := 0;
 		constant LEDCount: integer := 8;
 		constant	SepClocks: boolean := true;
 		constant OneWS: boolean := true;

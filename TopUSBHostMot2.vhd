@@ -50,7 +50,7 @@ use UNISIM.VComponents.all;
 --         * Neither the name of Mesa Electronics nor the names of its
 --           contributors may be used to endorse or promote products
 --           derived from this software without specific prior written
---           permission.
+--           permission.c1
 -- 
 -- 
 -- Disclaimer:
@@ -70,18 +70,15 @@ use UNISIM.VComponents.all;
 -- 
 -- dont change these:
 use work.IDROMConst.all;	
-use work.NumberOfModules.all;	
-use work.MaxPinsPerModule.all;	
-use work.CountPinsInRange.all;
-use work.PinExists.all;	
 
 -------------------- option selection area ----------------------------
 
 
 -------------------- select one card type------------------------------
 
-use work.i43_200card.all; 	-- needs 7i43u.ucf and SP3 200K 144 pin
---use work.i43_400card.all;   -- needs 7i43u.ucf and SP3 400K 144 pin
+--use work.i43_200card.all; 	-- needs 7i43u.ucf and SP3 200K 144 pin
+use work.i43_400card.all;   -- needs 7i43u.ucf and SP3 400K 144 pin
+--use work.i61_x16card.all;   	-- needs 7i61u.ucf and SP6 x16 256 pin
 
 -----------------------------------------------------------------------
 
@@ -90,29 +87,35 @@ use work.i43_200card.all; 	-- needs 7i43u.ucf and SP3 200K 144 pin
 -- note that all the USB configurations drop the address translation
 -- as the LB Protocol has its own address system 
 --use work.PIN_SVST4_4NA_48.all;
---use work.PIN_SVSP4_6_7I46NA_48.all;
+use work.PIN_SVSP4_6_7I46NA_48.all;
 --use work.PIN_SVST4_6NA_48.all;
 --use work.PIN_SVST4_12NA_48.all;
-use work.PIN_SV8NA.all;
+--use work.PIN_SV8NA.all;
 
-
+-- 96 I/O pinouts for 7I61:
+--use work.PIN_SV16_96.all;
+--use work.PIN_SVST8_8_96.all;
+--use work.PIN_SVST8_24_96.all;
+--use work.PIN_SVSTSP8_12_6_96.all;
+--use work.PIN_SV12_2X7I49_96.all;
+--use work.PIN_SVST12_12_2X7I48_2X7I47_96.all;
 ----------------------------------------------------------------------
 	
 	
 -- dont change anything below unless you know what you are doing -----
 	
-entity TopUSBHostMot2 is -- for 7I43 in USB mode
+entity TopUSBHostMot2 is -- for 7I43/7I61 in USB mode
 	 generic 
 	 (
 		ThePinDesc: PinDescType := PinDesc;
 		TheModuleID: ModuleIDType := ModuleID;
 		PWMRefWidth: integer := 13;	-- PWM resolution is PWMRefWidth-1 bits 
-		IDROMType: integer := 2;		
+		IDROMType: integer := 3;		
 		UseStepGenPrescaler : boolean := true;
 		UseIRQLogic: boolean := true;
 		UseWatchDog: boolean := true;
 		OffsetToModules: integer := 64;
-		OffsetToPinDesc: integer := 512;
+		OffsetToPinDesc: integer := 448;
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
 		InstStride0: integer := 4;			-- instance stride 0 = 4 bytes = 1 x 32 bit
@@ -124,8 +127,8 @@ entity TopUSBHostMot2 is -- for 7I43 in USB mode
 						
 		
 	Port (	CLK : in std_logic;
-				LEDS : out std_logic_vector(7 downto 0);
-				IOBITS : inout std_logic_vector(47 downto 0);
+				LEDS : out std_logic_vector(LEDCount -1 downto 0);
+				IOBITS : inout std_logic_vector(IOWidth -1 downto 0);
 				DATABUS : inout std_logic_vector(7 downto 0);
 				USB_WRITE : out std_logic;
 				USB_RD :out std_logic;
@@ -163,7 +166,7 @@ alias  USB_WriteReg : std_logic is USBContReg(1);
 alias  USB_TSEn : std_logic is USBContReg(2);
 
 
-signal iabus : std_logic_vector(9 downto 0);		-- program address bus
+signal iabus : std_logic_vector(10 downto 0);	-- program address bus (changed to 11 bits 8/2010)
 signal idbus : std_logic_vector(15 downto 0);	-- program data bus		 
 signal mradd : std_logic_vector(11 downto 0);	-- memory read address
 signal ioradd :  std_logic_vector(11 downto 0);	-- I/O read address
@@ -226,55 +229,19 @@ signal hm2interfaceclock : std_logic;
 
 constant EIOCookie: std_logic_vector(7 downto 0) := x"EE"; 
 
-	-- Extract the number of modules of each type from the ModuleID
-constant StepGens: integer := NumberOfModules(TheModuleID,StepGenTag);
-constant QCounters: integer := NumberOfModules(TheModuleID,QCountTag);
-constant MuxedQCounters: integer := NumberOfModules(TheModuleID,MuxedQCountTag);			-- non-muxed index mask
-constant MuxedQCountersMIM: integer := NumberOfModules(TheModuleID,MuxedQCountMIMTag); -- muxed index mask
-constant PWMGens : integer := NumberOfModules(TheModuleID,PWMTag);
-constant TPPWMGens : integer := NumberOfModules(TheModuleID,TPPWMTag);
-constant SPIs: integer := NumberOfModules(TheModuleID,SPITag);
-constant BSPIs: integer := NumberOfModules(TheModuleID,BSPITag);
-constant DBSPIs: integer := NumberOfModules(TheModuleID,DBSPITag);
-constant SSSIs: integer := NumberOfModules(TheModuleID,SSSITag);   
-constant UARTs: integer := NumberOfModules(TheModuleID,UARTRTag);
-	-- extract the needed Stepgen table width from the max pin# used with a stepgen tag
-constant StepGenTableWidth: integer := MaxPinsPerModule(ThePinDesc,StepGenTag);
-	-- extract how many BSPI CS pins are needed
-constant BSPICSWidth: integer := CountPinsInRange(ThePinDesc,BSPITag,BSPICS0Pin,BSPICS7Pin);
-	-- extract how many DBSPI CS pins are needed
-constant DBSPICSWidth: integer := CountPinsInRange(ThePinDesc,DBSPITag,DBSPICS0Pin,DBSPICS7Pin);
-constant UseProbe: boolean := PinExists(ThePinDesc,QCountTag,QCountProbePin);
-constant UseMuxedProbe: boolean := PinExists(ThePinDesc,MuxedQCountTag,MuxedQCountProbePin);	
 begin
 
 
-ahostmot2: entity HostMot2
+ahostmot2: entity work.HostMot2
 	generic map (
 		thepindesc => ThePinDesc,
 		themoduleid => TheModuleID,
-		stepgens  => StepGens,
-		qcounters  => QCounters,
-		muxedqcounters => MuxedQCounters,
-		muxedqcountersmim => MuxedQCountersMIM,
-		useprobe => UseProbe,
-		usemuxedprobe => UseMuxedProbe,
-		pwmgens  => PWMGens,
-		spis  => SPIs,
-		bspis => BSPIs,
-		dbspis => DBSPIs,
-		sssis  => SSSIs,
-		uarts  => UARTs,
-		tppwmgens  => TPPWMGens,		
-		pwmrefwidth  => PWMRefWidth,
-		stepgentablewidth  => StepGenTableWidth,
-		bspicswidth => BSPICSWidth,
-		dbspicswidth => DBSPICSWidth,
 		idromtype  => IDROMType,		
 	   sepclocks  => SepClocks,
 		onews  => OneWS,
 		usestepgenprescaler => UseStepGenPrescaler,
 		useirqlogic  => UseIRQLogic,
+		pwmrefwidth  => PWMRefWidth,
 		usewatchdog  => UseWatchDog,
 		offsettomodules  => OffsetToModules,
 		offsettopindesc  => OffsetToPinDesc,
@@ -286,6 +253,7 @@ ahostmot2: entity HostMot2
 		fpgapins  => FPGAPins,
 		ioports  => IOPorts,
 		iowidth  => IOWidth,
+		liowidth  => LIOWidth,
 		portwidth  => PortWidth,
 		buswidth  => BusWidth,
 		addrwidth  => AddrWidth,
@@ -298,8 +266,8 @@ ahostmot2: entity HostMot2
 		ibus =>  HM2WriteBuffer1,
 		obus => HM2obus,
 		addr => ExtAddress1(15 downto 2),
-		read => Read32,
-		write => Write32,
+		readstb => Read32,
+		writestb => Write32,
 		clklow => hm2interfaceclock,
 		clkhigh =>  hm2fastclock,
 --		int => INT, 
@@ -307,19 +275,19 @@ ahostmot2: entity HostMot2
 		leds => LEDS	
 		);
 
-  
+ 	Is7I61: if (BoardNameHigh = BoardName7i61)  generate	 
    ClockMult0 : DCM
 		generic map (
 			CLKDV_DIVIDE => 2.0,
 			CLKFX_DIVIDE => 2, 
-			CLKFX_MULTIPLY =>3,			-- 3/2 FOR 75 MHz, 4/2 for 100 MHz, 8/5 for 80MHz, 7/4 for 87.5MHz
+			CLKFX_MULTIPLY =>3,			-- 3/4 FOR 75 MHz, 4/4 for 100 MHz, 8/10 for 80MHz, 7/8 for 87.5MHz
 			CLKIN_DIVIDE_BY_2 => FALSE, 
-			CLKIN_PERIOD => 20.0,          
+			CLKIN_PERIOD => 19.5,          
 			CLKOUT_PHASE_SHIFT => "NONE", 
 			CLK_FEEDBACK => "1X",         
 			DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", 
 															
-			DFS_FREQUENCY_MODE => "LOW",
+			DFS_FREQUENCY_MODE => "LOW",			
 			DLL_FREQUENCY_MODE => "LOW",
 			DUTY_CYCLE_CORRECTION => TRUE,
 			FACTORY_JF => X"C080",
@@ -330,7 +298,43 @@ ahostmot2: entity HostMot2
 			CLK0 => clk0,   	-- 
 			CLKFB => clk0,  	-- DCM clock feedback
 			CLKFX => clk0fx,
-			CLKIN => CLK,    	-- Clock input (from IBUFG, BUFG or DCM)
+			CLKIN => hm2fastclock,    	-- cascaded clock input (from IBUFG, BUFG or DCM) fails on spartan 3
+			PSCLK => '0',  	-- Dynamic phase adjust clock input
+			PSEN => '0',     	-- Dynamic phase adjust enable input
+			PSINCDEC => '0', 	-- Dynamic phase adjust increment/decrement
+			RST => '0'        -- DCM asynchronous reset input
+		);
+		BUFG0_inst : BUFG
+		port map (
+			O => procclk,    		-- Clock buffer output
+			I => clk0fx      	-- Clock buffer input
+		);
+	end generate;
+	
+ 	Isnot7I69: if (BoardNameHigh /= BoardName7i61)  generate	 
+		ClockMult0 : DCM
+		generic map (
+			CLKDV_DIVIDE => 2.0,
+			CLKFX_DIVIDE => 2, 
+			CLKFX_MULTIPLY =>3,			-- 3/4 FOR 75 MHz, 4/4 for 100 MHz, 8/10 for 80MHz, 7/8 for 87.5MHz
+			CLKIN_DIVIDE_BY_2 => FALSE, 
+			CLKIN_PERIOD => 19.5,          
+			CLKOUT_PHASE_SHIFT => "NONE", 
+			CLK_FEEDBACK => "1X",         
+			DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", 
+															
+			DFS_FREQUENCY_MODE => "LOW",			
+			DLL_FREQUENCY_MODE => "LOW",
+			DUTY_CYCLE_CORRECTION => TRUE,
+			FACTORY_JF => X"C080",
+			PHASE_SHIFT => 0, 
+			STARTUP_WAIT => FALSE)
+		port map (
+	
+			CLK0 => clk0,   	-- 
+			CLKFB => clk0,  	-- DCM clock feedback
+			CLKFX => clk0fx,
+			CLKIN => CLK,    	-- External clock input (from IBUFG, BUFG or DCM) not possible on SP6 7I61 
 			PSCLK => '0',  	-- Dynamic phase adjust clock input
 			PSEN => '0',     	-- Dynamic phase adjust enable input
 			PSINCDEC => '0', 	-- Dynamic phase adjust increment/decrement
@@ -342,7 +346,8 @@ ahostmot2: entity HostMot2
 			O => procclk,    		-- Clock buffer output
 			I => clk0fx      	-- Clock buffer input
 		);
-
+	end generate;
+	
   -- End of DCM_inst instantiation
 
    ClockMult1 : DCM
@@ -351,7 +356,7 @@ ahostmot2: entity HostMot2
 			CLKFX_DIVIDE => 2, 
 			CLKFX_MULTIPLY =>4,			-- 3/2 *50 FOR 75 MHz, 4/2 for 100 MHz, 8/5 for 80MHz, 7/4 for 87.5MHz
 			CLKIN_DIVIDE_BY_2 => FALSE, 
-			CLKIN_PERIOD => 20.0,          
+			CLKIN_PERIOD => 19.5,          
 			CLKOUT_PHASE_SHIFT => "NONE", 
 			CLK_FEEDBACK => "1X",         
 			DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", 
@@ -388,7 +393,7 @@ ahostmot2: entity HostMot2
 			CLKFX_DIVIDE => 3, 
 			CLKFX_MULTIPLY =>2,			-- 2/3 for 33 MHz 3/2 *50 FOR 75 MHz, 4/2 for 100 MHz, 8/5 for 80MHz, 7/4 for 87.5MHz
 			CLKIN_DIVIDE_BY_2 => FALSE, 
-			CLKIN_PERIOD => 20.0,          
+			CLKIN_PERIOD => 19.5,          
 			CLKOUT_PHASE_SHIFT => "NONE", 
 			CLK_FEEDBACK => "1X",         
 			DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", 
@@ -414,12 +419,12 @@ ahostmot2: entity HostMot2
 	BUFG2_inst : BUFG
 		port map (
 			O => hm2interfaceclock,    		-- Clock buffer output
-			I => clk2fx      	-- Clock buffer input
+			I => clk2fx      						-- Clock buffer input
 		);
 
   -- End of DCM_inst instantiation
 
-	asimplspi: entity simplespi8
+	asimplspi: entity work.simplespi8
 		generic map
 		(
 			buswidth => 8,
@@ -442,7 +447,8 @@ ahostmot2: entity HostMot2
 		 );
 
 
-	processor: entity DumbAss8
+	processor: entity work.DumbAss8sq
+
 	
 	port map (
 		clk     => procclk,
@@ -460,7 +466,7 @@ ahostmot2: entity HostMot2
 
 
 
-  programROM : entity usbrom 
+  programROM : entity work.usbrom 
   port map(
 		addr => iabus,
 		clk  => procclk,
@@ -469,7 +475,7 @@ ahostmot2: entity HostMot2
 		we	=> '0'
 	 );
 
-  DataRam : entity usbram 
+  DataRam : entity work.usbram 
   port map(
 		addra => pagedmwadd,
 		addrb => pagedmradd,
@@ -480,7 +486,7 @@ ahostmot2: entity HostMot2
 		wea	=> pagedmwrite
 	 );
 	 
-	MiscProcFixes : process (procclk)		-- need to match BlockRAM address pipeline register for I/O
+	MiscProcFixes : process (procclk, mradd, mwadd, mwrite)		-- need to match BlockRAM address pipeline register for I/O
 	begin									 		-- and map memory/IO so 1K IO,1K memory, 1K IO, 1K memory
 		if rising_edge(procclk) then
 			ioradd <= mradd;
@@ -499,7 +505,7 @@ ahostmot2: entity HostMot2
 		end if;
 	end process;
 
-	iodecode: process(ioradd,mwadd,mwrite)
+	iodecode: process(ioradd,mwadd,mwrite,rseladd,wseladd,extaddress0,writeextdata,readextdata)
 	begin
 		rseladd <= ioradd(7 downto 0);
 		wseladd <= mwadd(7 downto 0);
@@ -633,7 +639,10 @@ ahostmot2: entity HostMot2
 		HRECONFIG <= not ReConfigreg; -- for 7I43H
 	end process doreconfig;
 	
-	HM2InterfaceShim: process (procclk,hm2interfaceclock)
+	HM2InterfaceShim: process (procclk,hm2interfaceclock,startextreaddel,
+	                           startextwritedel,readextdata,rseladd,
+										HM2ReadBuffer1,extaddress0,readextaddhigh,
+										extaddress0,readeiocookie,readextaddlow)
 	begin	
 		if rising_edge(procclk) then
 		  	if WriteLEDS = '1' then
@@ -721,7 +730,8 @@ ahostmot2: entity HostMot2
 		end if;
 -- 	LEDS <= HM2WriteBuffer1(7 downto 0); -- debug kludge
 	end process;	
-	USBInterfaceDrive: process (procclk, USBDataReg, DATABUS, USB_TSEn, ReadUSBData, ReadUSBStatus)
+	USBInterfaceDrive: process (procclk, USBDataReg, DATABUS, USB_TSEn, 
+										 ReadUSBData, ReadUSBStatus, USB_RXF, USB_TXE)
 	begin
 		
 		DATABUS <= "ZZZZZZZZ";
@@ -752,7 +762,8 @@ ahostmot2: entity HostMot2
 		end if;
 		USB_RD <= USB_RdReg;
 		USB_WRITE <= USB_WriteReg;
---		LEDS <= not LocalLEDs;
+--		LEDS <= not LocalLEDs;				-- debug kludge
+--		LEDS <= ExtAddress0(7 downto 0);	-- debug kludge		
 		PARACONFIG <= '0';
 	end process USBInterfaceDrive;	
 

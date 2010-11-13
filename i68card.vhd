@@ -79,6 +79,7 @@ package i68card is
 		constant IOPorts: integer := 3;
 		constant IOWidth: integer := 72;
 		constant PortWidth: integer := 24;
+		constant LIOWidth: integer := 0;
 		constant LEDCount: integer := 4;
 		constant	SepClocks: boolean := true;
 		constant OneWS: boolean := true;

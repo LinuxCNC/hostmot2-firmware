@@ -78,6 +78,7 @@ package i22_1500card is
 		constant FPGAPins: integer := 320;
 		constant IOPorts: integer := 4;
 		constant IOWidth: integer := 96;
+		constant LIOWidth: integer := 0;
 		constant PortWidth: integer := 24;
 		constant LEDCount: integer := 8;
 		constant	SepClocks: boolean := true;

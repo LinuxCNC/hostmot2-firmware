@@ -77,8 +77,10 @@ entity uartr8 is
       obus : out std_logic_vector(7 downto 0);
       popfifo : in std_logic;
 		loadbitratel : in std_logic;
+		loadbitratem : in std_logic;
 		loadbitrateh : in std_logic;
 		readbitratel : in std_logic;
+		readbitratem : in std_logic;
 		readbitrateh : in std_logic;
       clrfifo : in std_logic;
 		readfifocount : in std_logic;
@@ -105,11 +107,11 @@ architecture Behavioral of uartr8 is
 
 -- uart interface related signals
 
-constant DDSWidth : integer := 16;
+constant DDSWidth : integer := 20;
 
 signal BitrateDDSReg : std_logic_vector(DDSWidth-1 downto 0);
 signal BitrateDDSAccum : std_logic_vector(DDSWidth-1 downto 0);
-alias  DDSMSB : std_logic is BitrateDDSAccum(15);
+alias  DDSMSB : std_logic is BitrateDDSAccum(DDSWidth -1);
 signal OldDDSMSB: std_logic;  
 signal SampleTime: std_logic; 
 signal BitCount : std_logic_vector(3 downto 0);
@@ -168,7 +170,7 @@ begin
 				popadd <= popadd +1;						-- popadd must follow data down shiftreg
 			end if;		 		
 						   
-			if  (pop = '1') and (push = '0') then		-- a pop
+			if  (pop = '1') and (push = '0') and (lfifoempty = '0') then		-- a pop
 				datacounter <= datacounter - 1;
 				popadd <= popadd -1;
 			end if;
@@ -236,8 +238,11 @@ begin
 			if loadbitratel =  '1' then 
 				BitRateDDSReg(7 downto 0) <= ibus;				 
 			end if;
-			if loadbitrateh =  '1' then 
+			if loadbitratem =  '1' then 
 				BitRateDDSReg(15 downto 8) <= ibus;				 
+			end if;
+			if loadbitrateh =  '1' then 
+				BitRateDDSReg(19 downto 16) <= ibus(3 downto 0);				 
 			end if;
 			
 			if loadmode=  '1' then 
@@ -261,8 +266,11 @@ begin
       if readbitratel =  '1' then
 			obus <= BitRateDDSReg(7 downto 0);
 		end if;
-      if readbitrateh =  '1' then
+      if readbitratem =  '1' then
 			obus <= BitRateDDSReg(15 downto 8);
+		end if;
+      if readbitrateh =  '1' then
+			obus(3 downto 0) <= BitRateDDSReg(19 downto 16);
 		end if;
 
 		if popfifo =  '1' then

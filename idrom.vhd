@@ -282,7 +282,7 @@ end IDROM;
  signal readout : std_logic_vector(31 downto 0); 
  
  begin 
- 	process (clk,RAM, re) 
+ 	process (clk,RAM, re,dradd,readout) 
  	begin 
  		if (clk'event and clk = '1') then  
  			if (we = '1') then 

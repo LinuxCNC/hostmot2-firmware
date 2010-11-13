@@ -74,7 +74,7 @@ package PIN_24XQCTRONLY_72 is
 		
 		(WatchDogTag,	x"00",	ClockLowTag,	x"01",	WatchDogTimeAddr&PadT,		WatchDogNumRegs,		x"00",	WatchDogMPBitMask),
 		(IOPortTag,		x"00",	ClockLowTag,	x"03",	PortAddr&PadT,					IOPortNumRegs,			x"00",	IOPortMPBitMask),
-		(QcountTag,		x"02",	ClockLowTag,	x"10",	QcounterAddr&PadT,			QCounterNumRegs,		x"00",	QCounterMPBitMask),
+		(QcountTag,		x"02",	ClockLowTag,	x"18",	QcounterAddr&PadT,			QCounterNumRegs,		x"00",	QCounterMPBitMask),
 		(LEDTag,			x"00",	ClockLowTag,	x"01",	LEDAddr&PadT,					LEDNumRegs,				x"00",	LEDMPBitMask),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),

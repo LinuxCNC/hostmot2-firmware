@@ -66,13 +66,11 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 --     POSSIBILITY OF SUCH DAMAGE.
 -- 
+Library UNISIM;
+use UNISIM.vcomponents.all;
 
 -- dont change these:
 use work.IDROMConst.all;	
-use work.NumberOfModules.all;	
-use work.MaxPinsPerModule.all;	
-use work.CountPinsInRange.all;
-use work.PinExists.all;	
 
 -------------------- option selection area ----------------------------
 
@@ -81,12 +79,13 @@ use work.PinExists.all;
 
 --use work.i43_200card.all; 	-- needs 7i43.ucf and SP3 200K 144 pin
 use work.i43_400card.all;   	-- needs 7i43.ucf and SP3 400K 144 pin
+--use work.i61_x16card.all;   	-- needs 7i61p.ucf and SP6 x16 256 pin
 
 -----------------------------------------------------------------------
 
 
 -------------------- select (or add) one pinout -----------------------
-
+-- 48 I/O pinouts for 7I43:
 --use work.PIN_SV8_48.all;
 --use work.PIN_SVSPD6_2_48.all;
 --use work.PIN_SVSP6_2_48.all;
@@ -94,25 +93,37 @@ use work.i43_400card.all;   	-- needs 7i43.ucf and SP3 400K 144 pin
 --use work.PIN_SVST4_6_48.all;
 --use work.PIN_SVST2_4_7I47_48.all;
 --use work.PIN_SVST4_12_48.all ;
-use work.PIN_SVSSP4_6_7I46_48.all;
+--use work.PIN_SVSSP4_6_7I46_48.all;
+--use work.PIN_SVST2_4_7I47_48.all ;
+--use work.PIN_SVUA4_8_48.all;
+use work.PIN_SVSS4_8_48.all;
+--use work.PIN_SVTW4_24_24_48.all ;
+--use work.PIN_SVTP4_7I39_48.all;
 
+-- 96 I/O pinouts for 7I61:
+--use work.PIN_SV16_96.all;
+--use work.PIN_SVST8_8_96.all;
+--use work.PIN_SVST8_24_96.all;
+--use work.PIN_SVSTSP8_12_6_96.all;
+--use work.PIN_SV12_2X7I49_96.all;
+--use work.PIN_SVST12_12_2X7I48_2X7I47_96.all;
 ----------------------------------------------------------------------
 	
 	
 -- dont change anything below unless you know what you are doing -----
 	
-entity TopEPPHostMot2 is -- for 7I43 in EPP mode
+entity TopEPPHostMot2 is -- for 7I43 or 7I61 in EPP mode
 	 generic 
 	 (
 		ThePinDesc: PinDescType := PinDesc;
 		TheModuleID: ModuleIDType := ModuleID;
 		PWMRefWidth: integer := 13;	-- PWM resolution is PWMRefWidth-1 bits 
-		IDROMType: integer := 2;		
+		IDROMType: integer := 3;		
 		UseStepGenPrescaler : boolean := true;
 		UseIRQLogic: boolean := true;
 		UseWatchDog: boolean := true;
 		OffsetToModules: integer := 64;
-		OffsetToPinDesc: integer := 512;
+		OffsetToPinDesc: integer := 448;
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
 		InstStride0: integer := 4;			-- instance stride 0 = 4 bytes = 1 x 32 bit
@@ -123,8 +134,8 @@ entity TopEPPHostMot2 is -- for 7I43 in EPP mode
 		);
 		
 	Port (	CLK : in std_logic;
-				LEDS : out std_logic_vector(7 downto 0);
-				IOBITS : inout std_logic_vector(47 downto 0);
+				LEDS : out std_logic_vector(LEDCount -1 downto 0);
+				IOBITS : inout std_logic_vector(IOWidth -1 downto 0);
 				EPP_DATABUS : inout std_logic_vector(7 downto 0);
 				EPP_DSTROBE : in std_logic;
 				EPP_ASTROBE : in std_logic;
@@ -192,54 +203,18 @@ signal fclk : std_logic;
 signal clkfx: std_logic;
 signal clk0: std_logic;
 
-	-- Extract the number of modules of each type from the ModuleID
-constant StepGens: integer := NumberOfModules(TheModuleID,StepGenTag);
-constant QCounters: integer := NumberOfModules(TheModuleID,QCountTag);
-constant MuxedQCounters: integer := NumberOfModules(TheModuleID,MuxedQCountTag);			-- non-muxed index mask
-constant MuxedQCountersMIM: integer := NumberOfModules(TheModuleID,MuxedQCountMIMTag); -- muxed index mask
-constant PWMGens : integer := NumberOfModules(TheModuleID,PWMTag);
-constant TPPWMGens : integer := NumberOfModules(TheModuleID,TPPWMTag);
-constant SPIs: integer := NumberOfModules(TheModuleID,SPITag);
-constant BSPIs: integer := NumberOfModules(TheModuleID,BSPITag);
-constant DBSPIs: integer := NumberOfModules(TheModuleID,DBSPITag);
-constant SSSIs: integer := NumberOfModules(TheModuleID,SSSITag);   
-constant UARTs: integer := NumberOfModules(TheModuleID,UARTRTag);
-	-- extract the needed Stepgen table width from the max pin# used with a stepgen tag
-constant StepGenTableWidth: integer := MaxPinsPerModule(ThePinDesc,StepGenTag);
-	-- extract how many BSPI CS pins are needed
-constant BSPICSWidth: integer := CountPinsInRange(ThePinDesc,BSPITag,BSPICS0Pin,BSPICS7Pin);
-	-- extract how many DBSPI CS pins are needed
-constant DBSPICSWidth: integer := CountPinsInRange(ThePinDesc,DBSPITag,DBSPICS0Pin,DBSPICS7Pin);
-constant UseProbe: boolean := PinExists(ThePinDesc,QCountTag,QCountProbePin);
-constant UseMuxedProbe: boolean := PinExists(ThePinDesc,MuxedQCountTag,MuxedQCountProbePin);	
 begin
 
-ahostmot2: entity HostMot2
+ahostmot2: entity work.HostMot2
 	generic map (
 		thepindesc => ThePinDesc,
 		themoduleid => TheModuleID,
-		stepgens  => StepGens,
-		qcounters  => QCounters,
-		muxedqcounters => MuxedQCounters,
-		muxedqcountersmim => MuxedQCountersMIM,
-		useprobe => UseProbe,
-		usemuxedprobe => UseMuxedProbe,
-		pwmgens  => PWMGens,
-		spis  => SPIs,
-		bspis => BSPIs,
-		dbspis => DBSPIs,
-		sssis  => SSSIs,
-		uarts  => UARTs,
-		tppwmgens  => TPPWMGens,		
-		pwmrefwidth  => PWMRefWidth,
-		stepgentablewidth  => StepGenTableWidth,
-		bspicswidth => BSPICSWidth,
-		dbspicswidth => DBSPICSWidth,
 		idromtype  => IDROMType,		
 	   sepclocks  => SepClocks,
 		onews  => OneWS,
 		usestepgenprescaler => UseStepGenPrescaler,
 		useirqlogic  => UseIRQLogic,
+		pwmrefwidth  => PWMRefWidth,
 		usewatchdog  => UseWatchDog,
 		offsettomodules  => OffsetToModules,
 		offsettopindesc  => OffsetToPinDesc,
@@ -251,6 +226,7 @@ ahostmot2: entity HostMot2
 		fpgapins  => FPGAPins,
 		ioports  => IOPorts,
 		iowidth  => IOWidth,
+		liowidth  => LIOWidth,
 		portwidth  => PortWidth,
 		buswidth  => BusWidth,
 		addrwidth  => AddrWidth,
@@ -263,8 +239,8 @@ ahostmot2: entity HostMot2
 		ibus =>  wdlatch,
 		obus => obus,
 		addr => seladd(AddrWidth-1 downto 2),
-		read => read32,
-		write => dwrite32,
+		readstb => read32,
+		writestb => dwrite32,
 		clklow => CLK,
 		clkhigh =>  fclk,
 --		int => INT, 
@@ -272,7 +248,7 @@ ahostmot2: entity HostMot2
 		leds => LEDS	
 		);
 
-	transmogrifier: entity atrans 
+	transmogrifier: entity work.atrans 
 	generic map (
 				width => AddrWidth,
 				depth =>  8)
@@ -327,7 +303,7 @@ ahostmot2: entity HostMot2
 
 	EPPInterface: process(clk, waitpipe, alatch, afilter, dfilter,  
 								 EPP_READ, EPP_DSTROBE, EPP_ASTROBE,
-								 depp_dstrobe, depp_astrobe)
+								 depp_dstrobe, depp_astrobe, dcycle, rfilter, acycle)
 	begin
 
 		if rising_edge(CLK) then
@@ -495,7 +471,7 @@ ahostmot2: entity HostMot2
 		
 	end process EPPInterface;
 
-	bus_shim32: process (CLK,alatch,EPP_DATABUS) -- 8 to 32 bit bus shim
+	bus_shim32: process (CLK,alatch,EPP_DATABUS, seladd, rdlatch, dwritete, dreadle, translateaddr) -- 8 to 32 bit bus shim
 	begin
 		if rising_edge(CLK) then
 			dwrite32 <= write32;
@@ -556,7 +532,7 @@ ahostmot2: entity HostMot2
 		end if;
 	end process;
 	
-	doreconfig: process (CLK,ReConfigreg)
+	doreconfig: process (CLK,ReConfigreg, alatch)
 	begin
 		if alatch = x"7F7F" then
 			ReconfigSel <= '1';
@@ -573,7 +549,7 @@ ahostmot2: entity HostMot2
 		RECONFIG <= not ReConfigreg;
 	end process doreconfig;
 	
-	BusDrive: process (aread,dread,idata,alatch)
+	BusDrive: process (aread,dread,idata,alatch,wasaddr)
 	begin
 		EPP_DATABUS <= "ZZZZZZZZ";
 		if dread = '1'  then 

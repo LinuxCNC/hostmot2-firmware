@@ -79,6 +79,7 @@ package i22_1000card is
 		constant IOPorts: integer := 4;
 		constant IOWidth: integer := 96;
 		constant PortWidth: integer := 24;
+		constant LIOWidth: integer := 0;
 		constant LEDCount: integer := 8;
 		constant	SepClocks: boolean := true;
 		constant OneWS: boolean := true;

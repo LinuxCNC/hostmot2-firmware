@@ -69,12 +69,7 @@ use UNISIM.vcomponents.all;
 --     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 --     POSSIBILITY OF SUCH DAMAGE.
 -- 
-
 use work.IDROMConst.all;	
-use work.NumberOfModules.all;	
-use work.MaxPinsPerModule.all;	
-use work.CountPinsInRange.all;
-use work.PinExists.all;
 
 -------------------- option selection area ----------------------------
 
@@ -84,22 +79,24 @@ use work.PinExists.all;
 --use work.i22_1000card.all;		-- needs 5i22.ucf and SP3 1000K 320 pin
 --use work.i22_1500card.all;		-- needs 5i22.ucf and SP3 1500K 320 pin
 --use work.i68card.all;				-- needs 4i68.ucf and SP3 400K 208 pin
---use work.i23card.all;				-- needs 5i23.ucf and SP3 400K 208 pin
-use work.x20_1000card.all;			-- needs 7I68.ucf and SP3 1000K 456 pin
+use work.i23card.all;				-- needs 5i23.ucf and SP3 400K 208 pin
+--use work.x20_1000card.all;		-- needs 7I68.ucf and SP3 1000K 456 pin
 --use work.x20_1500card.all;		-- needs 7I68.ucf and SP3 1500K 456 pin
 --use work.x20_2000card.all;		-- needs 7I68.ucf and SP3 2000K 456 pin. Note: ISE only
+--use work.i69_x16card.all;			-- needs 4i69.ucf and SP6 x16K 256 pin. 
 
 
 -----------------------------------------------------------------------
 
 
 -------------------- select (or add) one pinout ---------------------------------
-
--- 72 I/O pinouts for 4I68, 5I23:
+-- 72 I/O pinouts for 4I68, 4I69, 5I23:
 --use work.PIN_SVST8_4IM2_72.all;
 --use work.PIN_SVST8_4_72.all;
 --use work.PIN_SVST4_8_72.all;
+--use work.PIN_SVST4_8_ADO_72.all;
 --use work.PIN_SVST8_8IM2_72.all;
+--use work.PIN_SVST1_4_7I47_72.all;
 --use work.PIN_SVST2_4_7I47_72.all;
 --use work.PIN_ST12_72.all;
 --use work.PIN_SV12_72.all;
@@ -107,26 +104,35 @@ use work.x20_1000card.all;			-- needs 7I68.ucf and SP3 1000K 456 pin
 --use work.PIN_24XQCTRONLY_72.all;
 --use work.PIN_2X7I65_72.all;
 --use work.PIN_SV12IM_2X7I48_72.all;
+use work.PIN_SV6_7I49_72.all;
 --use work.PIN_SVUA8_4_72.all;
---use work.PIN_JDOSA_BLUE_72.all;
---use work.PIN_JDOSA_YELLOW_72.all;
+--use work.PIN_DA2_72.all;
+--use work.PIN_SVST4_8_ADO_72.all;
+--use work.PIN_SVSS8_8_72.all;
+--use work.PIN_SVSS8_44_72.all;
+--use work.PIN_RMSVSS6_6_8_72.all;
 
 -- 96 I/O pinouts for 5I22:
 --use work.PIN_SV16_96.all;
 --use work.PIN_SVST8_8_96.all;
 --use work.PIN_SVST8_24_96.all;
+--use work.PIN_ST36_96.all;
+--use work.PIN_ST48_96.all;
 --use work.PIN_SVSTSP8_12_6_96.all;
+--use work.PIN_SV12_2X7I49_96.all;
+--use work.PIN_SVST12_12_2X7I48_2X7I47_96.all;
+
 
 -- 144 I/O pinouts for 3X20
 -- use work.PIN_SV24_144.all;
-use work.PIN_SVST16_24_144.all;
+-- use work.PIN_SVST16_24_144.all;
 
 ------------------------------------------------------------------------
 
 
 -- dont change anything below unless you know what you are doing -------	
 
-entity Top9054HostMot2 is  -- for 5I22, 5I23, 4I68 PCI9054 based cards
+entity Top9054HostMot2 is  -- for 5I22, 5I23, 4I68, 4I69 PCI9054 based cards
   	generic						-- and 3X20 PEX8311 (PCI9056) based cards
 	(  	
 		ThePinDesc: PinDescType := PinDesc;
@@ -140,10 +146,10 @@ entity Top9054HostMot2 is  -- for 5I22, 5I23, 4I68 PCI9054 based cards
 		OffsetToPinDesc: integer := 448;
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
-		InstStride0: integer := 4;
-		InstStride1: integer := 16;
-		RegStride0: integer := 256;
-		RegStride1: integer := 256
+		InstStride0: integer := 4;		-- 0..3
+		InstStride1: integer := 64;	-- 0..3
+		RegStride0: integer := 256;	-- 4..7
+		RegStride1: integer := 64		-- 4..7
 		);
 	port 
    (
@@ -161,17 +167,21 @@ entity Top9054HostMot2 is  -- for 5I22, 5I23, 4I68 PCI9054 based cards
 	READY: out std_logic;
 	BTERM: out std_logic;
 	INT: out std_logic;
+	DREQ: out std_logic;
 	HOLD: in std_logic; 
 	HOLDA: inout std_logic;
 	CCS: out std_logic;
 --	RESET: in std_logic;
 	DISABLECONF: out std_logic;
 	
-   LAD: inout std_logic_vector (31 downto 0); 			-- data/address bus
--- 	LA: in std_logic_vector (8 downto 2); 				-- non-muxed address bus
---		LBE: in std_logic_vector (3 downto 0); 				-- byte enables
+   LAD: inout std_logic_vector (31 downto 0); 					-- data/address bus
+-- 	LA: in std_logic_vector (8 downto 2); 						-- non-muxed address bus
+--		LBE: in std_logic_vector (3 downto 0); 					-- byte enables
 
-	IOBITS: inout std_logic_vector (IOWidth -1 downto 0);			
+
+	IOBITS: inout std_logic_vector (IOWidth -1 downto 0);		-- external I/O bits		
+	LIOBITS: inout std_logic_vector (LIOWidth -1 downto 0);	-- local I/O bits		
+
 	LCLK: in std_logic;
 
 	-- led bits
@@ -195,33 +205,16 @@ signal Write: std_logic;
 signal Burst: std_logic;
 signal NextA: std_logic_vector (15 downto 2);
 signal ReadyFF: std_logic;
-	
+signal LDREQ: std_logic;
+signal DemandMode: std_logic;
 -- CLK multiplier DCM signals
 
 signal fclk : std_logic;
 signal clkfx: std_logic;
 signal clk0: std_logic;
 
-	-- Extract the number of modules of each type from the ModuleID
-constant StepGens: integer := NumberOfModules(TheModuleID,StepGenTag);
-constant QCounters: integer := NumberOfModules(TheModuleID,QCountTag);
-constant MuxedQCounters: integer := NumberOfModules(TheModuleID,MuxedQCountTag);			-- non-muxed index mask
-constant MuxedQCountersMIM: integer := NumberOfModules(TheModuleID,MuxedQCountMIMTag); -- muxed index mask
-constant PWMGens : integer := NumberOfModules(TheModuleID,PWMTag);
-constant TPPWMGens : integer := NumberOfModules(TheModuleID,TPPWMTag);
-constant SPIs: integer := NumberOfModules(TheModuleID,SPITag);
-constant BSPIs: integer := NumberOfModules(TheModuleID,BSPITag);
-constant DBSPIs: integer := NumberOfModules(TheModuleID,DBSPITag);
-constant SSSIs: integer := NumberOfModules(TheModuleID,SSSITag);   
-constant UARTs: integer := NumberOfModules(TheModuleID,UARTRTag);
-	-- extract the needed Stepgen table width from the max pin# used with a stepgen tag
-constant StepGenTableWidth: integer := MaxPinsPerModule(ThePinDesc,StepGenTag);
-	-- extract how many BSPI CS pins are needed
-constant BSPICSWidth: integer := CountPinsInRange(ThePinDesc,BSPITag,BSPICS0Pin,BSPICS7Pin);
-	-- extract how many DBSPI CS pins are needed
-constant DBSPICSWidth: integer := CountPinsInRange(ThePinDesc,DBSPITag,DBSPICS0Pin,DBSPICS7Pin);
-constant UseProbe: boolean := PinExists(ThePinDesc,QCountTag,QCountProbePin);
-constant UseMuxedProbe: boolean := PinExists(ThePinDesc,MuxedQCountTag,MuxedQCountProbePin);	
+	
+	
 begin
 
    ClockMult : DCM
@@ -261,32 +254,16 @@ begin
 
   -- End of DCM_inst instantiation
  
-ahostmot2: entity HostMot2
+ahostmot2: entity work.HostMot2
 	generic map (
 		thepindesc => ThePinDesc,
 		themoduleid => TheModuleID,
-		stepgens  => StepGens,
-		qcounters  => QCounters,
-		muxedqcounters => MuxedQCounters,
-		muxedqcountersmim => MuxedQCountersMIM,
-		useprobe => UseProbe,
-		usemuxedprobe => UseMuxedProbe,
-		pwmgens  => PWMGens,
-		spis  => SPIs,
-		bspis => BSPIs,
-		dbspis => DBSPIs,		
-		sssis  => SSSIs,
-		uarts  => UARTs,
-		tppwmgens  => TPPWMGens,		
-		pwmrefwidth  => PWMRefWidth,
-		stepgentablewidth  => StepGenTableWidth,
-		bspicswidth => BSPICSWidth,
-		dbspicswidth => DBSPICSWidth,
 		idromtype  => IDROMType,		
 	   sepclocks  => SepClocks,
 		onews  => OneWS,
 		usestepgenprescaler => UseStepGenPrescaler,
 		useirqlogic  => UseIRQLogic,
+		pwmrefwidth  => PWMRefWidth,
 		usewatchdog  => UseWatchDog,
 		offsettomodules  => OffsetToModules,
 		offsettopindesc  => OffsetToPinDesc,
@@ -298,6 +275,7 @@ ahostmot2: entity HostMot2
 		fpgapins  => FPGAPins,
 		ioports  => IOPorts,
 		iowidth  => IOWidth,
+		liowidth  => LIOWidth,
 		portwidth  => PortWidth,
 		buswidth  => BusWidth,
 		addrwidth  => AddrWidth,
@@ -311,12 +289,15 @@ ahostmot2: entity HostMot2
 		ibus =>  LADPipe,
 		obus => D,
 		addr => NextA,
-		read => Read,
-		write => Write,
+		readstb => Read,
+		writestb => Write,
 		clklow => LCLK,
 		clkhigh =>  FClk,
 		int => INT, 
-		iobits => IOBITS,			
+		dreq => LDREQ,
+		demandmode => DemandMode,
+		iobits => IOBITS,	
+		liobits => LIOBITS,	
 		leds => LEDS	
 		);
 
@@ -377,31 +358,49 @@ ahostmot2: entity HostMot2
 
 
 
-	Not4I68or3X20: if (BoardNameHigh /= BoardName4I68) and (BoardNameHigh /= BoardName3X20) generate  
-		DoHandshake: process (HOLD)
+	Is5I2x: if (BoardNameHigh = BoardName5I22) or (BoardNameHigh = BoardName5I23)  generate  
+		DoHandshake: process (HOLD,DemandMode, LDREQ)
 		begin
 			HOLDA <= HOLD;
 			CCS <= '1';
-			DISABLECONF <= '0';
+			DISABLECONF <= DemandMode;
 			BTERM <= '1';
+			DREQ <= not LDREQ;
 		end process DoHandShake;
 	end generate;
 
-	Is4I68: if BoardNameHigh = BoardName4I68 generate	-- because the standard 4I68 does not have CCS connected
-		DoHandshake: process (HOLD)
+	Is4I68: if (BoardNameHigh = BoardName4I68)  generate	-- because the standard 4I68 does not have CCS connected
+		DoHandshake: process (HOLD,DemandMode, LDREQ)
 		begin
 			HOLDA <= HOLD;
-			DISABLECONF <= 'Z';
+			if DemandMode = '1' then
+				DISABLECONF <= '1';
+			else
+				DISABLECONF <= 'Z';
+			end if;		
 			BTERM <= '1';
+			DREQ <= not LDREQ;
+		end process DoHandShake;
+	end generate;
+
+	Is4I69: if (BoardNameHigh = BoardName4I69)  generate	
+		DoHandshake: process (HOLD,DemandMode, LDREQ)
+		begin
+			HOLDA <= HOLD;
+			CCS <= '1';
+			DISABLECONF <= DemandMode;
+			BTERM <= '1';
+			DREQ <= not LDREQ;
 		end process DoHandShake;
 	end generate;
 	
 	Is3X20: if (BoardNameHigh = BoardName3X20) generate	-- because 3X20 does not have DISABLECONF connected
-		DoHandshake: process (HOLD) -- 3X20 has no DISABLECONF
+		DoHandshake: process (HOLD, LDREQ) -- 3X20 has no DISABLECONF
 		begin
 			HOLDA <= HOLD;
 			CCS <= '1';
 			BTERM <= '1';
+			DREQ <= not LDREQ;
 		end process DoHandShake;
 	end generate;	
 	
