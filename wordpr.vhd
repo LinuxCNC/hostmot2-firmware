@@ -111,6 +111,8 @@ begin
 								altdatasel, 
 								invertsel, 
 								altdata, 
+								tdata,
+								tsoutreg,
 								opendrainsel)
 	begin
 		if rising_edge(clk) then

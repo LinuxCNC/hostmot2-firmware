@@ -99,7 +99,7 @@ signal rate : std_logic;
 
 begin
 
-	PeriodicIRQlogic : process (clk,statusreg,irqff,readstatus, readdiv, divlatch)
+	PeriodicIRQlogic : process (clk,statusreg,irqff,readstatus,ratesource,readdiv, divlatch)
 	begin
 		if rising_edge(clk) then
 			rated  <= rated(0) & rate;

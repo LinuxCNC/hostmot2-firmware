@@ -71,10 +71,7 @@ use UNISIM.vcomponents.all;
 -- 
 -- dont change these:
 use work.IDROMConst.all;	
-use work.NumberOfModules.all;	
-use work.MaxPinsPerModule.all;	
-use work.CountPinsInRange.all;	
-use work.PinExists.all;
+
 -------------------- option selection area ----------------------------
 
 
@@ -86,8 +83,10 @@ use work.i20card.all;					-- needs 5i20.ucf and SP2 200K 208 pin
 
 
 -------------------- select (or add) one pinout ---------------------------------
+--use work.PIN_SVST2_8_GREG_72.all;
 --use work.PIN_SVST8_4IM2_72.all;
-use work.PIN_SVST8_4_72.all;
+--use work.PIN_SVST4_4IM2SI_72.all;
+--use work.PIN_SVST8_4_72.all;
 --use work.PIN_SVST8_4P_72.all;
 --use work.PIN_SVST8_3P_72.all;
 --use work.PIN_SVST2_4_7I47_72.all;
@@ -97,8 +96,18 @@ use work.PIN_SVST8_4_72.all;
 --use work.PIN_24XQCTRONLY_72.all;
 --use work.PIN_2X7I65_72.all;
 --use work.PIN_SV12IM_2X7I48_72.all;
+--use work.PIN_SV12_3X7I47_72.all;
 --use work.PIN_SVUA8_4_72.all;
 --use work.PIN_TPEN6_6_72.all;
+--use work.PIN_SVWG8_2IM2_72.all;
+--use work.PIN_SVTW8_24_24_72.all;
+--use work.PIN_SVTW4_1_10_72.all;
+--use work.PIN_SVST1_4_7I47_72.all;
+--use work.PIN_SVSS4_4_72.all;
+--use work.PIN_SVSS6_6_72.all;
+--use work.PIN_PW64_72.all;
+use work.PIN_SV6_7I49_72.all; -- fits????
+--use work.PIN_MG_72.all;
 ------------------------------------------------------------------------
 	
 	
@@ -110,12 +119,12 @@ entity Top9030HostMot2 is -- for 5I20 and 4I65 PCI 9030 based cards
 		ThePinDesc: PinDescType := PinDesc;
 		TheModuleID: ModuleIDType := ModuleID;
 		PWMRefWidth: integer := 13;	-- PWM resolution is PWMRefWidth-1 bits 
-		IDROMType: integer := 2;		
+		IDROMType: integer := 3;		
 		UseStepGenPrescaler : boolean := true;
 		UseIRQLogic: boolean := true;
 		UseWatchDog: boolean := true;
 		OffsetToModules: integer := 64;
-		OffsetToPinDesc: integer := 512;
+		OffsetToPinDesc: integer := 448;
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
 		InstStride0: integer := 4;			-- instance stride 0 = 4 bytes = 1 x 32 bit
@@ -169,9 +178,9 @@ signal DPipe: std_logic_vector (BusWidth-1 downto 0);						-- read pipeline reg
 signal LADPipe: std_logic_vector (BusWidth-1 downto 0);					-- write pipeline reg
 signal LW_RPipe: std_logic;
 signal A: std_logic_vector (15 downto 2);
-signal Read: std_logic;
+signal ReadStb: std_logic;
 signal ReadTSEn: std_logic;	
-signal Write: std_logic;
+signal WriteStb: std_logic;
 signal Burst: std_logic;
 signal BurstCount: std_logic_vector (7 downto 0);
 signal NextA: std_logic_vector (15 downto 2);
@@ -184,29 +193,9 @@ signal FClk: STD_LOGIC; 												-- high speed clock = 100 MHz
 signal Clk0: STD_LOGIC;
 signal CLK2X: STD_LOGIC;
 
-	-- Extract the number of modules of each type from the ModuleID
-constant StepGens: integer := NumberOfModules(TheModuleID,StepGenTag);
-constant QCounters: integer := NumberOfModules(TheModuleID,QCountTag);
-constant MuxedQCounters: integer := NumberOfModules(TheModuleID,MuxedQCountTag);			-- non-muxed index mask
-constant MuxedQCountersMIM: integer := NumberOfModules(TheModuleID,MuxedQCountMIMTag); -- muxed index mask
-constant PWMGens : integer := NumberOfModules(TheModuleID,PWMTag);
-constant TPPWMGens : integer := NumberOfModules(TheModuleID,TPPWMTag);
-constant SPIs: integer := NumberOfModules(TheModuleID,SPITag);
-constant BSPIs: integer := NumberOfModules(TheModuleID,BSPITag);
-constant DBSPIs: integer := NumberOfModules(TheModuleID,DBSPITag);
-constant SSSIs: integer := NumberOfModules(TheModuleID,SSSITag);   
-constant UARTs: integer := NumberOfModules(TheModuleID,UARTRTag);
-	-- extract the needed Stepgen table width from the max pin# used with a stepgen tag
-constant StepGenTableWidth: integer := MaxPinsPerModule(ThePinDesc,StepGenTag);
-	-- extract how many BSPI CS pins are needed
-constant BSPICSWidth: integer := CountPinsInRange(ThePinDesc,BSPITag,BSPICS0Pin,BSPICS7Pin);
-	-- extract how many DBSPI CS pins are needed
-constant DBSPICSWidth: integer := CountPinsInRange(ThePinDesc,DBSPITag,DBSPICS0Pin,DBSPICS7Pin);
-constant UseProbe: boolean := PinExists(ThePinDesc,QCountTag,QCountProbePin);
-constant UseMuxedProbe: boolean := PinExists(ThePinDesc,MuxedQCountTag,MuxedQCountProbePin);	
 begin
 
-  CombinedClock: if (not Sepclocks) and ((PWMGens >0) or UseIRQLogic) generate
+  CombinedClock: if (not Sepclocks) generate
   
      CLKDLL_inst : CLKDLL
    generic map (
@@ -230,7 +219,7 @@ begin
 	
 	end generate;
 
-  SeparateClock: if Sepclocks and ((PWMGens >0) or (TPPWMGens >0) or UseIRQLogic) generate
+  SeparateClock: if Sepclocks generate
   
     CLKDLL_inst : CLKDLL
    generic map (
@@ -260,28 +249,12 @@ ahostmot2: entity HostMot2
 	generic map (
 		thepindesc => ThePinDesc,
 		themoduleid => TheModuleID,
-		stepgens  => StepGens,
-		qcounters  => QCounters,
-		muxedqcounters => MuxedQCounters,
-		muxedqcountersmim => MuxedQCountersMIM,
-		useprobe => UseProbe,
-		usemuxedprobe => UseMuxedProbe,
-		pwmgens  => PWMGens,
-		spis  => SPIs,
-		bspis => BSPIs,
-		dbspis => DBSPIs,
-		sssis  => SSSIs,
-		uarts  => UARTs,
-		tppwmgens  => TPPWMGens,
-		pwmrefwidth  => PWMRefWidth,
-		stepgentablewidth  => StepGenTableWidth,
-		bspicswidth => BSPICSWidth,
-		dbspicswidth => DBSPICSWidth,
 		idromtype  => IDROMType,		
 	   sepclocks  => SepClocks,
 		onews  => OneWS,
 		usestepgenprescaler => UseStepGenPrescaler,
 		useirqlogic  => UseIRQLogic,
+		pwmrefwidth  => PWMRefWidth,
 		usewatchdog  => UseWatchDog,
 		offsettomodules  => OffsetToModules,
 		offsettopindesc  => OffsetToPinDesc,
@@ -293,6 +266,7 @@ ahostmot2: entity HostMot2
 		fpgapins  => FPGAPins,
 		ioports  => IOPorts,
 		iowidth  => IOWidth,
+		liowidth  => LIOWidth,
 		portwidth  => PortWidth,
 		buswidth  => BusWidth,
 		addrwidth  => AddrWidth,
@@ -306,8 +280,8 @@ ahostmot2: entity HostMot2
 		ibus =>  LADPipe,
 		obus => D,
 		addr => NextA,
-		read => Read,
-		write => Write,
+		readstb => ReadStb,
+		writeStb => WriteStb,
 		clklow => LCLK,
 		clkhigh =>  FClk,
 		int => INT, 
@@ -362,10 +336,10 @@ ahostmot2: entity HostMot2
 			end if;
 		end if;
 		
-		Write <= Burst and LW_RPipe and ReadyFF; 			-- A write is any time during burst when LW_R is high and ReadyFF is high
+		WriteStb <= Burst and LW_RPipe and ReadyFF; 			-- A write is any time during burst when LW_R is high and ReadyFF is high
 																		-- Note that write writes the data from the LADPipe register to the destination						
 		ReadTSEn <= Burst and not LW_RPipe;		         -- ReadTSEn is any time during burst when LW_R is low  = tri state enable on DPipe output			
-		Read <= Burst and not LW_RPipe and not ReadyFF;	-- A read is any time during burst when LW_R is low and ReadyFF is low = internal read data enable to DPipe input			
+		ReadStb <= Burst and not LW_RPipe and not ReadyFF;	-- A read is any time during burst when LW_R is low and ReadyFF is low = internal read data enable to DPipe input			
 		
 		READY <= not ReadyFF;									-- note: target only! 	
 	end process BusCycleGen;

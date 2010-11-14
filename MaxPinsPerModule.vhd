@@ -80,8 +80,8 @@ package body MaxPinsPerModule is
 		result := 0;
 		for i in 0 to MaxPins-1 loop
 			if Tag = PD(i)(15 downto 8) then       -- if GTag matches
-				if PD(i)(6 downto 0) > result then	-- drop MSB = output flag
-					result := conv_integer(PD(i)(6 downto 0));     -- find max pin 
+				if PD(i)(6 downto 0) > result then	-- drop MSB output flag
+					result := conv_integer(PD(i)(6 downto 0)); -- find max 
 				end if;	
 			end if;
 		end loop;

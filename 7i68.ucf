@@ -97,8 +97,8 @@
 #NET	"DACK1"      	LOC	=	"AB4"	;
 #NET	"DRQ1"       	LOC	=	"AA4"	;
 #NET	"DACK0"      	LOC	=	"AB5"	;
-#NET	"DRQ0"       	LOC	=	"AA5"	;
-#NET	"INTI"       	LOC	=	"AB7"	;
+NET	"DREQ"       	LOC	=	"AA5"	 | IOSTANDARD = LVTTL  | PULLUP  | SLEW = FAST ; 	# DRQ0 = 4I68/5I22/5I23 emulation
+#NET	"INTI"       	LOC	=	"Y7"	;
 #NET	"NC"         	LOC	=	"M6"	;
 #NET	"NC"         	LOC	=	"M5"	;
 #NET	"NC"         	LOC	=	"N6"	;
@@ -145,7 +145,8 @@ NET "BLAST"  LOC = "AA8" | IOSTANDARD = LVTTL  | PULLUP ;
 NET "CCS"  LOC = "AA7" | IOSTANDARD = LVTTL  | PULLUP ; 
 NET "HOLD"  LOC = "AB10" | IOSTANDARD = LVTTL  | PULLUP ; 
 NET "HOLDA"  LOC = "AA10" | IOSTANDARD = LVTTL ; 
-NET "INT"  LOC = "Y7" | IOSTANDARD = LVTTL ; 
+NET "INT"  LOC = "AB7" | IOSTANDARD = LVTTL ; 
+
 NET "IOBITS<0>"  LOC = "D11" | IOSTANDARD = LVTTL  | PULLUP  | SLEW = SLOW ; 
 NET "IOBITS<100>"  LOC = "P22" | IOSTANDARD = LVTTL  | PULLUP  | SLEW = SLOW ; 
 NET "IOBITS<101>"  LOC = "P21" | IOSTANDARD = LVTTL  | PULLUP  | SLEW = SLOW ; 

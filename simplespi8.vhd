@@ -103,7 +103,7 @@ signal CS : std_logic := '1';
 
 begin 
 
-	aspiinterface: process (clk, readdata, Go, DAV,
+	aspiinterface: process (clk, readdata, Go, DAV, spioutdel,
 									SPISreg, readcs, CS, ClockFF)
 	begin
 		if rising_edge(clk) then

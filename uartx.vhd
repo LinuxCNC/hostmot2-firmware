@@ -103,11 +103,11 @@ architecture Behavioral of uartx is
 
 -- uart interface related signals
 
-constant DDSWidth : integer := 16;
+constant DDSWidth : integer := 20;
 
 signal BitrateDDSReg : std_logic_vector(DDSWidth-1 downto 0);
 signal BitrateDDSAccum : std_logic_vector(DDSWidth-1 downto 0);
-alias  DDSMSB : std_logic is BitrateDDSAccum(15);
+alias  DDSMSB : std_logic is BitrateDDSAccum(DDSWidth-1);
 signal OldDDSMSB: std_logic;  
 signal SampleTime: std_logic; 
 signal BitCount : std_logic_vector(3 downto 0);

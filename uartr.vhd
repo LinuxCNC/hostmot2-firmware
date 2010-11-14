@@ -115,11 +115,11 @@ architecture Behavioral of uartr is
 
 -- uart interface related signals
 
-constant DDSWidth : integer := 16;
+constant DDSWidth : integer := 20;
 
 signal BitrateDDSReg : std_logic_vector(DDSWidth-1 downto 0);
 signal BitrateDDSAccum : std_logic_vector(DDSWidth-1 downto 0);
-alias  DDSMSB : std_logic is BitrateDDSAccum(15);
+alias  DDSMSB : std_logic is BitrateDDSAccum(DDSWidth-1);
 signal OldDDSMSB: std_logic;  
 signal SampleTime: std_logic; 
 signal BitCount : std_logic_vector(3 downto 0);
@@ -132,11 +132,11 @@ signal RXPipe : std_logic_vector(1 downto 0);
 signal Go: std_logic; 
 signal DAV: std_logic;
 signal ModeReg: std_logic_vector(5 downto 0);
-alias FalseStart: std_logic is ModeReg(0); 
-alias OverRun: std_logic is ModeReg(1);
-alias RXMaskEn: std_logic is ModeReg(3); 
-alias FIFOError: std_logic is ModeReg(4); 
-alias LostData: std_logic is ModeReg(5); 
+alias FalseStart: std_logic is ModeReg(0);-- started recieve but middle of start bit is '1' 
+alias OverRun: std_logic is ModeReg(1);	-- '0' where stop bit should be
+alias RXMaskEn: std_logic is ModeReg(3); 	-- enable TXEN of transmit side to disable receive
+alias FIFOError: std_logic is ModeReg(4); -- pop with no or not enough data
+alias LostData: std_logic is ModeReg(5); 	-- data overrun
 
   component SRL16E
 --
@@ -295,7 +295,7 @@ begin
 					
 					if BitCount = "1001" then	-- false start bit check
 						if RXPipe(1) = '1' then
-							Go <= '0';
+							Go <= '0';				-- abort receive
 							FalseStart <= '1';
 						end if;
 					end if;	

@@ -16,6 +16,12 @@ First ID stuff
 0x0108	Last 4 characters of configuration name
 0x010C	Offset to IDROM location (normally 0x00000400)
 
+LEDS
+
+0x0200	LEDS qre in MS byte
+
+Then the IDROM
+
 0x0400	Normal IDROM location
 
 0x400	IDROMType		2 for this type
@@ -150,6 +156,18 @@ Watchdog Cookie location
 0x5A written to 8 MSbs will reset watchdog to previously written 
 timeout value.
 
+
+Demand mode DMA logic
+
+Bit 0 = Enable Demand mode DMA
+Bit 1 = DRQ status, - = active request
+Bits 16..31 = DRQ mask for demand mode DMA modules 0..15
+
+Note this should be reset to 0x00000000 to enable re-configuration
+on 4I68, 5I23, 5I22, as DREQ/DACK are muxed with /PROGRAM and DONE 
+ 
+0x0F00 = DemandMode DMA enable register
+	    
 
 0x1000	I/O port  0..23
 0x1004  I/O port 24..47
@@ -353,6 +371,69 @@ Step generator addition rate is (ClockLow*MasterDDSVal/2^32)
 
 Probably just set to 0xffffffff for most applications.
 
+WaveGen: simple table driven waveform generator
+
+WaveGenRate
+
+32 bit register, sets rate of steps through table = WaveGenRate/2^32*ClockHigh 
+
+0x2A00 wavegen 0 rate
+0x2A04 wavegen 1 rate
+0x2A08 wavegen 2 rate
+0x2A0C wavegen 3 rate
+...
+
+WaveGenPDMRate
+
+8 bit register, sets PDM clock, PDM clock = ClockHigh/(WaveGenPDMRate+2)
+any rate with MSB set will divide by one (0x80 or >)
+
+0x2B00 wavegen 0 PDM rate
+0x2B00 wavegen 1 PDM rate
+0x2B00 wavegen 2 PDM rate
+0x2B00 wavegen 3 PDM rate
+...
+
+WaveGenLength
+
+10 bit register, sets table length (table pointer range is 0 --> WaveGenLength)
+
+0x2C00 wavegen 0 table length 
+0x2C04 wavegen 1 table length 
+0x2C08 wavegen 2 table length 
+0x2C0C wavegen 3 table length 
+...
+
+WaveGenTablePtr
+
+10 bit register for host access to table pointer, writes to table 
+must first write address pointer, and the write data.
+
+0x2D00 wavegen 0 table pointer
+0x2D04 wavegen 1 table pointer
+0x2D08 wavegen 2 table pointer
+0x2D0C wavegen 3 table pointer
+
+...
+ 
+16 bit register for host access to table data, writes to table 
+must first write address pointer, and the write data.
+
+0x2E00 wavegen 0 table data
+0x2E04 wavegen 1 table data
+0x2E08 wavegen 2 table data
+0x2E0C wavegen 3 table data 
+
+Table Data is 12 bit offset binary(2048 is '0") plus 4 trigger bits
+trigger bits are top 4 bits of data
+
+Bit 15    Trigger3         
+Bit 14    Trigger2
+Bit 13    Trigger1
+Bit 12    Trigger0
+Bit 11..0 Waveform data	
+
+
 QuadratureCounter Type 2 (with timestamp)
 32 bit register: bottom 16 bits are count, 
 top 16 bits are timestamp of last count change
@@ -389,22 +470,22 @@ bottom 16 bits is control register.
 
 Bit 31..16 = Latched count (Latch on index)
 
-Bit15	Quad Error: set if quadrature sequence error
-Bit14	AB mask polarity: A*B must be high for index gate
-Bit13	LatchOnProbe 1 = Latch count on probe (Version 3 counters only)
-Bit12	ProbePolarity 1 = active high         (Version 3 counters only)
-Bit11   Quad filter (0 = 3 clocks 1 = 15 clocks)
-Bit10	CounterMode 0 = Quadrature, 1 = up/down
-Bit9	UseIndexMask 1 = use mask
-Bit8	IndexMask Polarity 1=active high
-Bit7	ABgateIndex 1 = gate index signal with A,B
-Bit6	JustOnce 1 = ClearOnIndex, LatchOnIndex, LatchOnProbe happen only once
-Bit5	ClearOnIndex 1 = Clear count on index 
-Bit4	LatchOnIndex 1 = Latch count on index
-Bit3	IndexPol 1 = active high
-Bit2	read only realtime index signal
-Bit1	read only realtime B signal
-Bit0	read only realtime A signal
+Bit 15	Quad Error: set if quadrature sequence error
+Bit 14	AB mask polarity: A*B must be high for index gate
+Bit 13	LatchOnProbe 1 = Latch count on probe (Version 3 counters only)
+Bit 12	ProbePolarity 1 = active high         (Version 3 counters only)
+Bit 11  Quad filter (0 = 3 clocks 1 = 15 clocks)
+Bit 10	CounterMode 0 = Quadrature, 1 = up/down
+Bit 9	UseIndexMask 1 = use mask
+Bit 8	IndexMask Polarity 1=active high
+Bit 7	ABgateIndex 1 = gate index signal with A,B
+Bit 6	JustOnce 1 = ClearOnIndex, LatchOnIndex, LatchOnProbe happen only once
+Bit 5	ClearOnIndex 1 = Clear count on index 
+Bit 4	LatchOnIndex 1 = Latch count on index
+Bit 3	IndexPol 1 = active high
+Bit 2	read only realtime index signal
+Bit 1	read only realtime B signal
+Bit 0	read only realtime A signal
 
 0x3200  TSSDiv 16 bit time stamp programmable divider (in LSBs) (R\W)
 
@@ -458,22 +539,22 @@ bottom 16 bits is control register
 
 Bit 31..16 = Latched count (Latch on index)
 
-Bit15	Quad Error: set if quadrature sequence error
-Bit14	AB mask polarity: A*B must be high for index gate
-Bit13	LatchOnProbe 1 = Latch count on probe (Version 3 counters only)
-Bit12	ProbePolarity 1 = active high         (Version 3 counters only)
-Bit11   Quad filter (0 = 3 clocks 1 = 15 clocks)
-Bit10	CounterMode 0 = Quadrature, 1 = up/down
-Bit9	UseIndexMask 1 = use mask
-Bit8	IndexMask Polarity 1=active high
-Bit7	ABgateIndex 1 = gate index signal with A,B
-Bit6	JustOnce 1 = ClearOnIndex, LatchOnIndex, LatchOnProbe happen only once
-Bit5	ClearOnIndex 1 = Clear count on index 
-Bit4	LatchOnIndex 1 = Latch count on index
-Bit3	IndexPol 1 = active high
-Bit2	read only realtime index signal
-Bit1	read only realtime B signal
-Bit0	read only realtime A signal
+Bit 15	Quad Error: set if quadrature sequence error
+Bit 14	AB mask polarity: A*B must be high for index gate
+Bit 13	LatchOnProbe 1 = Latch count on probe (Version 3 counters only)
+Bit 12	ProbePolarity 1 = active high         (Version 3 counters only)
+Bit 11  Quad filter (0 = 3 clocks 1 = 15 clocks)
+Bit 10	CounterMode 0 = Quadrature, 1 = up/down
+Bit 9	UseIndexMask 1 = use mask
+Bit 8	IndexMask Polarity 1=active high
+Bit 7	ABgateIndex 1 = gate index signal with A,B
+Bit 6	JustOnce 1 = ClearOnIndex, LatchOnIndex, LatchOnProbe happen only once
+Bit 5	ClearOnIndex 1 = Clear count on index 
+Bit 4	LatchOnIndex 1 = Latch count on index
+Bit 3	IndexPol 1 = active high
+Bit 2	read only realtime index signal
+Bit 1	read only realtime B signal
+Bit 0	read only realtime A signal
 
 0x3700  MuxedTSSDiv 16 bit time stamp programmable divider (in LSBs) (R\W)
 
@@ -548,6 +629,55 @@ rate register is set to divide by 4 which gives a multiplex rate of
 The hardware default filter rate is set to divide by 1 for non-multiplexed 
 counters.
 
+
+Resolver Module, 6 Channel resolver input module for 7I49 and 7I51 
+daughter cards. Currently about 14-15 bit resolution, 10KHz, 5KHz and 2.5 KHz
+selectable frequencies.
+
+0x3A00	 Processor command register 
+This is for access to the resolver modules parameters, normally not needed
+except for debug and parameter tweaking or setting  resolver frequency
+
+Bit 15	    Write bit
+Bit 14	    Reset DSP/firmware download bit
+Bit 13	    Do-it bit	 
+Bits 11..0  Parameter address   
+
+Firmware is host side downloadable so neither bitfile recompilation nor 
+Xilinx blockram loading tools are required to try new firmware.
+
+0x3B00	 32 bit Processor data register
+This is for access to the resolver modules parameters, normally not needed
+except for debug and parameter tweaking or setting resolver frequency
+
+0x3C00  32 bit channel status register
+The channel status register indicates the validity of the resolver data
+Bits 5..0   Channel valid bits bit 0 - channel 0 valid etc
+
+
+0x3D00    32 bit velocity 0
+0x3D04    32 bit velocity 1
+0x3D08    32 bit velocity 2
+0x3D0C    32 bit velocity 3
+0x3D10    32 bit velocity 4
+0x3D14    32 bit velocity 5
+0x3D18    32 bit unused
+0x3D1C    32 bit unused
+Resolver velocity readout, updated at resolver frequency. 
+Units are 2^32 * resolver electrical rotations/resolver frequency
+
+
+0x3E00	  32 bit position 0
+0x3E04	  32 bit position 1
+0x3E08	  32 bit position 2
+0x3E0C	  32 bit position 3
+0x3E10	  32 bit position 4
+0x3E14	  32 bit position 5
+0x3E18	  32 bit unused
+0x3E1C	  32 bit unused
+
+Resolver position readout, updated at 256*resolver frequency
+Units are 2^32 * Resolver electrical rotations
 
 PWM generators (With FPGA compile time constant PWM width = 13)
 
@@ -700,6 +830,39 @@ waves (NPWM being inverted from PWM) with high times of 25 uS. With the same
 settings but 1 uS of deadtime, the PWM and NPWM outputs would both have high 
 times of 23 uS (25 - (2X 1 uS), 1 uS per edge) 
 
+
+Twiddler Module: Smart GPIO bit twiddler, 1 to 31 bits of GPIO 
+(input, output, or I/O) default 1K program ROM, 512 bytes of RAM
+internal hardware includes free running timer, (preset to 10 MHz)
+buffered I/O (update or sample all I/O at once) 8 bit 33 or 50 mips
+processor, doorbell registers to indicate host parameter write, 
+
+
+0x4C00	 Processor command register 
+This is for access to the smart twiddler modules parameters, allows reading 
+and writing parameters. Parameter access is just for setup and discovery.
+not realtime.
+
+Bit 15	    Write bit
+Bit 14	    Reset uProc/firmware download bit
+Bit 13	    Do-it bit	 
+Bits 11..0  Parameter address   
+
+Firmware is host side downloadable so neither bitfile recompilation nor 
+Xilinx blockram loading tools are required to try new firmware.
+
+0x4D00	 8 bit Processor data register
+This is for access to the twiddler modules parameters, normally not needed
+except for debug and parameter tweaking.
+
+0x4E00 	   32 bit read/write embedded processor communication register 0
+0x4E04 	   32 bit read/write embedded processor communication register 1
+0x4E08 	   32 bit read/write embedded processor communication register 2
+0x4E0C 	   32 bit read/write embedded processor communication register 3
+
+Default is four 32 bit read/write host communication registers
+
+
 Simple SPI inteface. The simple SPI interface is most suited for SPI devices
 with only one logical unit per SPI interface (like single channel ADCs, DACs or 
 SPI I/O ports)
@@ -746,6 +909,17 @@ Maximum rate (N=0) is 24 MHz (5I22 with 48 MHz clock) or 16.66 (5I20 with
 0x5210 SPI bit rate register 4
 0x5214 SPI bit rate register 5
 ...
+
+
+BinOsc utility
+
+The Binonsc interface is a simple binary counter with outputs that drive the 
+I/O pins. BinOsc only has one control register and one bit in the register 
+(enable)
+
+0x5300
+
+Bit 0	Enable		counter is cleared if 0 and free runs if 1
 
 
 Buffered SPI interface (BSPI)
@@ -922,6 +1096,86 @@ Bits 8..12    = Transmit FIFO data counter
 If FIFO count register is written (data is dont care), both FIFOs will be 
 cleared
 
+
+
+Smart Serial Module: Up to 15 channels of high speed UARTs with 33-50 mips
+embedded processor for buried protocol applications. Default 2K of 
+program ROM and 512 bytes of RAM
+
+SSERIAL Processor command register
+
+This is for access to the smart serial modules parameters, allows reading and 
+writing parameter. Parameter access is just for setup and discovery,
+not realtime.
+
+Firmware is host side downloadable so neither bitfile recompilation nor 
+Xilinx blockram loading tools are required to try new firmware.
+
+Bit 15	    Write bit          1 for writes, 0 for reads	     	    
+Bit 14	    Reset bit          Proc/firmware download bit
+Bit 13	    Request bit	       Must be set for parameter read or write
+Bit 12	    DoIt bit	       Set to start data transfer cycle with remotes 
+Bit 11	    Start/Stop bit     Set to indicate firmware start/stop command	       
+Bits 10..0  Parameter address for read/write commands  
+                        
+
+0x5B00	 SSERIAL 0 Processor command register 
+0x5B40	 SSERIAL 1 Processor command register 
+...
+
+
+0x5C00	 8 bit Processor data register
+This is for access to the smart serial modules parameters, allows reading and 
+writing parameters. Parameter access is just for setup and discovery, 
+not realtime.
+
+0x5C00	 SSERIAL 0 8 bit Processor data register
+0x5C40	 SSERIAL 1 8 bit Processor data register
+...
+
+SSERIAL 32 bit realtime registers
+
+The command status register is used for writing requests and reading 
+back status, it has a host-uProc doorbell for each channel so the 
+SSerial processor in notified of host writes
+
+0x5D00 	   SSERIAL 0 channel 0 command/status register
+0x5D04 	   SSERIAL 0 channel 1 command/status register
+0x5D08 	   SSERIAL 0 channel 2 command/status register
+0x5D0C 	   SSERIAL 0 channel 3 command/status register
+... 
+
+0x5D40 	   SSERIAL 1 channel 0 command/status register
+0x5D44 	   SSERIAL 1 channel 1 command/status register
+0x5D48 	   SSERIAL 1 channel 2 command/status register
+0x5D4C 	   SSERIAL 1 channel 3 command/status register
+
+
+0x5E00 	   SSERIAL 0 channel 0 user interface register 0 
+0x5E04 	   SSERIAL 0 channel 1 user interface register 0 
+0x5E08 	   SSERIAL 0 channel 2 user interface register 0 
+0x5E0C 	   SSERIAL 0 channel 3 user interface register 0 
+... 
+
+0x5E40 	   SSERIAL 1 channel 0 user interface register 0 
+0x5E44 	   SSERIAL 1 channel 1 user interface register 0 
+0x5E48 	   SSERIAL 1 channel 2 user interface register 0 
+0x5E4C 	   SSERIAL 1 channel 3 user interface register 0 
+
+
+0x5F00 	   SSERIAL 0 channel 0 user interface register 1 
+0x5F04 	   SSERIAL 0 channel 1 user interface register 1 
+0x5F08 	   SSERIAL 0 channel 2 user interface register 1 
+0x5F0C 	   SSERIAL 0 channel 3 user interface register 1 
+... 
+
+0x5F40 	   SSERIAL 1 channel 0 user interface register 1 
+0x5F44 	   SSERIAL 1 channel 1 user interface register 1 
+0x5F48 	   SSERIAL 1 channel 2 user interface register 1 
+0x5F4C 	   SSERIAL 1 channel 3 user interface register 1 
+
+
+
 UART TX data register
 Different offsets push different numbers of bytes on xmit FIFO
 Didn't use byte enables for compatibility with other (non PCI) 
@@ -958,8 +1212,8 @@ Writes to the FIFO count register clear the FIFO.
 0x610C UART TXFIFO Count 3
 ...
 
-TX Bitrate select register. TX bitrate is generated by a 16 bit 
-phase accumulator. Bitrate is: TXBitrate/65536*ClockLow
+TX Bitrate select register. TX bitrate is generated by a 20 bit 
+phase accumulator. Bitrate is: TXBitrate/1048576*ClockLow
 
 0x6200 UART TX Bitrate Register 0
 0x6204 UART TX Bitrate Register 1
@@ -1020,9 +1274,9 @@ Writes to the RX FIFO count register clear RX FIFO
 0x650C UART RXFIFO Count 3
 ...
 
-UART RX Bitrate select register. RX bitrate is generated by a 16 bit 
+UART RX Bitrate select register. RX bitrate is generated by a 20 bit 
 phase accumulator. 
-Bitrate is RXBitrate/65536*ClockLow
+Bitrate is RXBitrate/1048576*ClockLow
 
 0x6600 UART RX Bitrate Register 0
 0x6604 UART RX Bitrate Register 0
@@ -1111,6 +1365,50 @@ SSI channels), all SSI channels using the common clock must be programmed
 identically. That is, all bit count registers and bit rate registers of 
 SSI interfaces with common clocks must have the same values.
 
+
+
+DAQFIFO
+
+DAQFIFO is a simple data aquisition FIFO. Currently its external interface 
+is 16 bits wide. The Host side FIFO is 32 bits wide so two 16 bit pushes are 
+needed to push a full word onto the FIFO. If an odd number of pushes is 
+recieved, the host can push the "remainder" by writing to the FIFO
+
+DAQFIFO data register, reads read FIFO data, writes push odd word
+
+0x6C00  DAQFIFO 0 data port 	  
+0x6C40  DAQFIFO 1 data port	   	  
+0x6C80  DAQFIFO 2 data port 	  
+0x6CC0  DAQFIFO 3 data port 	  
+ 
+DAQFIFO count register, reads read FIFO count, writes clear FIFO count and 
+even/odd input flipflop
+
+Bit 0..15 = FIFO count
+Bit 24 = odd word waiting
+
+0x6D00  DAQFIFO 0 FIFO count 	  
+0x6D04  DAQFIFO 1 FIFO count 	  
+0x6D08  DAQFIFO 2 FIFO count 	  
+0x6D0C  DAQFIFO 3 FIFO count 	  
+
+
+DAQFIFO mode/status register
+
+Bit 0 = Strobe polarity, 0 for active low , 1 for active high
+Bit 1 = Underflow status, 0 normal, 1 indicates a host read from empty FIFO
+Bit 2 = Overflow status, 0 normal, 1 indicates a external push with a full FIFO
+Bit 3 = DRQ/IRQ status, 0 = no request, 1 = active request
+Bits 16..31 = request threshold set to 0 for software access, some 
+              larger number for DMA or interrupt service routine access
+
+0x6E00  DAQFIFO 0 mode/status register
+0x6E04  DAQFIFO 1 mode/status register
+0x6E08  DAQFIFO 2 mode/status register
+0x6E0C  DAQFIFO 3 mode/status register
+
+
+ 
 
 DPLL
 

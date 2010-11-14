@@ -138,8 +138,9 @@ begin
 								 quadfilter, countermode, doclear, quada2,
 								 quada1, quadb2, quadb1, index1, index2,
 								 useindexmask, readcount, timestamplatch, count,
-								 readccr, countlatch, quaderror, justonce,
-								 clearonindex, latchonindex)
+								 readccr, countlatch, quaderror, justonce, qcountdown,
+								 clearonindex, latchonindex, fixedindexmask, qcountup,
+								 udcountup,udcountdown)
 
 	begin
 		-- new index logic 02/09/2006 PCW
