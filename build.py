@@ -43,6 +43,14 @@ qcountersf.vhd simplespi8.vhd simplespix.vhd simplessi.vhd testram.vhd
 testrom.vhd threephasepwm.vhd timestamp.vhd uartr8.vhd uartr.vhd uartx8.vhd
 uartx.vhd ubrategen.vhd usbram.vhd usbrom.vhd watchdog.vhd wordpr.vhd
 wordrb.vhd
+
+MaxIOPinsPerModule.vhd MaxInputPinsPerModule.vhd MaxOutputPinsPerModule.vhd
+ModuleExists.vhd OutputInteg.vhd b32qcondmac2w.vhd binosc.vhd d8o8sq.vhd
+daqfifo16.vhd decodedstrobe.vhd dpram.vhd drqlogic.vhd kubstepgenzi.vhd
+log2.vhd oneofndecode.vhd resolver.vhd resolverdaq2.vhd resrom.vhd resroms.vhd
+sine16.vhd sserial.vhd sslbprom.vhd syncwavegen.vhd twiddle.vhd twidrom.vhd
+wavegen.vhd waveram.vhd
+
 hostmot2.vhd
 
  """.split()
