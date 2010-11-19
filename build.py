@@ -119,7 +119,8 @@ def help_pins(card):
             subsequent_indent=" "*8)) + "\n"
 
 def help_env():
-    return "\nYou must 'source .../Xilinx92i/settings.sh' before running this program\n"
+    return ("\nYou must 'source .../Xilinx92i/settings.sh' or put a settings.sh symlink"
+            " in this directory before running this program\n")
 
 def usage(hint='', card=''):
     usage =  __doc__ % sys.argv[0] + help_cards() + help_pins(card) + help_env()
@@ -143,17 +144,17 @@ def sq(a):
     return "'" + a.replace("'", "'\\''") + "'"
 
 def run(*args):
-    print "#", " ".join([sq(a) for a in args]); sys.stdout.flush()
-    r = os.spawnvp(os.P_WAIT, args[0], args)
+    cmd = " ".join(sq(a) for a in args)
+    if settings_sh: cmd = ". %s; %s" % (settings_sh, cmd)
+    print "#", cmd
+    sys.stdout.flush()
+    r = os.system(cmd)
     print "# exited with", r; sys.stdout.flush()
     if r:
         raise SystemExit, r
 
 def mkdir(a):
     if not os.path.isdir(a): os.mkdir(a)
-
-if 'XILINX' not in os.environ:
-    usage("Xilinx environment not availble")
 
 if len(sys.argv) != 3 and len(sys.argv) != 4:
     usage("Wrong # arguments")
@@ -171,6 +172,14 @@ if len(sys.argv) == 4:
     outfile = os.path.join(orgdir, sys.argv[3])
 else:
     outfile = os.path.join(orgdir, "%s_%s.BIT"% (card2card[card], pin))
+
+if os.path.isfile("settings.sh"):
+    settings_sh = sq(os.path.join(orgdir, "settings.sh"))
+else:
+    settings_sh = None
+
+if 'XILINX' not in os.environ and not settings_sh:
+    usage("Xilinx environment not available")
 
 d = os.path.splitext(outfile)[0] + "_work"
 print "# workdir", sq(d)
