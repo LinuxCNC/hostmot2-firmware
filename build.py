@@ -151,7 +151,7 @@ def run(*args):
     r = os.system(cmd)
     print "# exited with", r; sys.stdout.flush()
     if r:
-        raise SystemExit, r
+        raise SystemExit, os.WEXITSTATUS(r) or 1
 
 def mkdir(a):
     if not os.path.isdir(a): os.mkdir(a)
