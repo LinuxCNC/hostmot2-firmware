@@ -32,6 +32,7 @@ import string
 import sys
 import tempfile
 import textwrap
+import time
 
 common_vhdl = """
 IDROMConst.vhd
@@ -143,13 +144,18 @@ def sq(a):
         return a
     return "'" + a.replace("'", "'\\''") + "'"
 
+timing = []
+
 def run(*args):
     cmd = " ".join(sq(a) for a in args)
     if settings_sh: cmd = ". %s; %s" % (settings_sh, cmd)
     print "#", cmd
     sys.stdout.flush()
+    t0 = time.time()
     r = os.system(cmd)
     print "# exited with", r; sys.stdout.flush()
+    t1 = time.time()
+    timing.append((args[0], (t1-t0)))
     if r:
         raise SystemExit, os.WEXITSTATUS(r) or 1
 
@@ -224,22 +230,31 @@ prjf = open("prj", "w")
 for f in all_vhdl: prjf.write("vhdl work %s\n" % f)
 prjf.close()
 
-# Synthesis
-run("xst", "-ifn", "scr")
+def report_timing():
+    for k, v in timing:
+        m, s = divmod(v, 60)
+        print "%d:%04.1f-%-11s" % (m, s, k),
+    print
 
-# ngdbuild
-run("ngdbuild", "-uc", constraints, "work.ngc")
+try:
+    # Synthesis
+    run("xst", "-ifn", "scr")
 
-# Mapping
-run("map", "-r", "work.ngd")
+    # ngdbuild
+    run("ngdbuild", "-uc", constraints, "work.ngc")
 
-# Placing / routing
-run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
+    # Mapping
+    run("map", "-r", "work.ngd")
 
-# Bitgen
-bitgen_args = bitgen_extra.get(card2top[card], []) + ["work.ncd", "work.bit", "work.pcf"]
-run("bitgen", "-w", *bitgen_args) 
+    # Placing / routing
+    run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
 
-shutil.copy("work.bit", outfile)
+    # Bitgen
+    bitgen_args = bitgen_extra.get(card2top[card], []) + ["work.ncd", "work.bit", "work.pcf"]
+    run("bitgen", "-w", *bitgen_args) 
+
+    shutil.copy("work.bit", outfile)
+finally:
+    report_timing()
 
 # Copy out other interesting logfiles?
