@@ -1,17 +1,22 @@
 hostmot2-firmware: build assorted hostmot2 FPGA firmwares automatically
 
+== Overview ==
+
 This package includes the hostmot2 source files along with Makefiles and
 other scripts to automatically build all the desired variants of the
 firmwares.
 
-It requires the no-cost version of Xilinx ISE.  I have tested with ISE
-9.2.  This version supports all FPGAs on Mesa cards with the exception
-of the 3x20-2M.
+It requires the no-cost version of Xilinx ISE.  I build with ISE 9.2.  This
+version supports all FPGAs on Mesa cards with the exception of the 3x20-2M.
+Newer versions appear to work, but with caveats (see below)
 
 It also requires ghdl for building PIN and xml files.  The PIN file
 format is intended to be human readable (not machine readable) so it is
 not a requirement that it exactly match the format of existing PIN
 files.  There is also an experimental xml description format.
+
+
+== Building ==
 
 To build all bitfiles, pinfiles, and xmlfiles:
     . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
@@ -21,7 +26,9 @@ firmwares took about 75 minutes wall time with the -j4 setting shown
 above.
 
 To build just a subset of firmwares, edit 'firmwares.txt' before
-building.
+building.  For example, to build just the 'SV12' firmware for the '5i23' card,
+put just this line in 'firmwares.txt':
+    i23 SV12
 
 To build Debian packages:
     . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
@@ -34,6 +41,32 @@ To build tar packages (must be in a git checkout):
     make -j4                   # -j setting depends on RAM and # CPU cores
     make dist
     # or make dist-force if your working tree is dirty
+
+
+== Obtaining ISE 9.2 WebPack ==
+
+Xilinx still offers older versions of ISE free of charge.  At the time
+of writing, the location is
+    http://www.xilinx.com/webpack/classics/wpclassic/index.htm
+and can also be reached from the xilinx.com front page by going to
+"Products & Services", "Design Tools", "Logic Design Tools", "ISE
+Classics", "Previous versions of ISE WebPack".
+
+
+== Newer versions of ISE ==
+
+ISE 12.3 WebPack appears to work (generate bitfiles), but with caveats:
+ * ISE 11 and later remove support for Spartan-II chips, which means that
+   firmwares for 5i20 and 4i65 boards cannot be built
+ * ISE 11 and later remove support for the "-r" option of map.  At the present
+   time, the use of this option is hardcoded and must be edited out of 'build.py':
+        -run("map", "-r", "work.ngd")
+        +run("map", "work.ngd")
+ * Possibly due to the unsupported "-r" option, the i43_200/SVST4_6
+   configuration fails at the 'map' step when built with ISE12.3.
+
+
+== Testing ==
 
 A representative firmware for each supported board type has been tested:
  * 5i20, 5i22-1M, 5i23 (PCI)
