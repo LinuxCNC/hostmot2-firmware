@@ -129,6 +129,10 @@ signal hdatareg: std_logic_vector(7 downto 0);
 signal lloadcommand: std_logic;
 signal lreadcommandl: std_logic;
 signal lreadcommandh: std_logic;
+signal lclrhdoorbell: std_logic;
+signal lreadhdoorbell: std_logic;
+signal hdoorbell: std_logic;
+
 signal ldatareg: std_logic_vector(7 downto 0); 
 signal lloaddata: std_logic;
 signal lreaddata: std_logic;
@@ -213,12 +217,11 @@ signal lreadtimerl: std_logic;
 signal lreadtimerh: std_logic;
 signal lwritetimerl: std_logic;
 signal lwritetimerh: std_logic;
-signal timerrate: std_logic_vector(15 downto 0);
+signal timerdiv: std_logic_vector(15 downto 0);
 signal timeracc: std_logic_vector(15 downto 0);
 signal timerlatch: std_logic_vector(7 downto 0);
 signal timercount: std_logic_vector(15 downto 0);
 alias timermsb: std_logic is timeracc(15);
-signal oldtimermsb: std_logic;
 
 -- doorbell signals
 signal doorbellreg: std_logic_vector(InterfaceRegs-1 downto 0); 
@@ -271,11 +274,11 @@ begin
 	DataRam : entity work.dpram 
 	generic map (
 		width => 8,
-		depth => 512
+		depth => 1024
 				)
 	port map(
-		addra => mwadd(8 downto 0),
-		addrb => mradd(8 downto 0),
+		addra => mwadd(9 downto 0),
+		addrb => mradd(9 downto 0),
 		clk  => clk,
 		dina  => mobus,
 --		douta => 
@@ -435,7 +438,7 @@ begin
 	end process iobus;		
 
 
-	hostinterface : process (clk, hloaddata, romwrena, hreadcommand,
+	hostinterface : process (clk, hloaddata, romwrena, hreadcommand,lreadhdoorbell,hdoorbell,
 	                         hreaddata, ldatareg, romdata, lreadcommandl, 
 									 lreadcommandh, hcommandreg, lreaddata, hdatareg, ltestbit)
 	begin
@@ -444,6 +447,7 @@ begin
 			-- first host writes 
 			if hloadcommand = '1' then
 				hcommandreg <= ibus(15 downto 0);
+				hdoorbell <= '1';
 			end if;	
 
 			if hloaddata = '1' then 
@@ -455,6 +459,10 @@ begin
 				hcommandreg <= (others => '0');
 			end if;	
 
+			if lclrhdoorbell = '1' then
+				hdoorbell <= '0';
+			end if;
+			
 			if lloaddata = '1' then 
 				ldatareg <= mobus;				
 			end if;	
@@ -502,6 +510,11 @@ begin
 		
 		if lreaddata = '1' then
 			iodata <= hdatareg;
+		end if;
+
+		if lreadhdoorbell = '1' then
+			iodata(0) <= hdoorbell;
+			iodata(7 downto 1) <= (others => '0');	
 		end if;
 		
 		
@@ -572,22 +585,22 @@ begin
 	end process WidthShim;
 	
 	atimer: process(clk,lreadtimerl,lreadtimerh,lwritetimerl, 
-	                lwritetimerh, timeracc, timerlatch)
+	                lwritetimerh, timeracc, timerlatch, timercount)
 	begin
 		if rising_edge(clk) then
 			if lwritetimerl = '1' then
-				timerrate(7 downto 0) <= mobus;
+				timerdiv(7 downto 0) <= mobus;
 			end if;	
 			if lwritetimerh = '1' then
-				timerrate(15 downto 8) <= mobus;
+				timerdiv(15 downto 8) <= mobus;
 			end if;	
-			timeracc <= timeracc + timerrate;
-			oldtimermsb <= timermsb;
+			timeracc <= timeracc -1;
 			if lreadtimerl = '1' then
 				timerlatch <= timercount(15 downto 8);
 			end if;	
-			if timermsb = '0' and oldtimermsb = '1' then
+			if timermsb = '1' then
 				timercount <= timercount +1;
+				timeracc <= timerdiv;
 			end if;	
 		end if;
 		iodata <= (others => 'Z');
@@ -599,7 +612,7 @@ begin
 		end if;
 	end process;		
 
-	adoorbell : process (clk,ioradd,doorbellreg)			-- host to ucontroller doorbell (1 bit per interface reg)
+	adoorbell : process (clk,ioradd, doorbellreg, readdoorbell)			-- host to ucontroller doorbell (1 bit per interface reg)
 	begin																	-- set when host writes interface reg, cleared by ucontroller
 		if rising_edge(clk) then
 			for i in 0 to InterfaceRegs-1 loop
@@ -699,6 +712,8 @@ begin
 		lreadcommandh    		<= decodedstrobe(ioradd,x"401",mread);
 		lloaddata       		<= decodedstrobe(mwadd,x"402",mwrite);
 		lreaddata       		<= decodedstrobe(ioradd,x"402",mread);
+		lclrhdoorbell			<= decodedstrobe(mwadd,x"403",mwrite);
+		lreadhdoorbell       <= decodedstrobe(ioradd,x"403",mread);
 
 		lsettestbit     		<= decodedstrobe(mwadd,x"420",mwrite);
 		lclrtestbit     		<= decodedstrobe(mwadd,x"421",mwrite);
