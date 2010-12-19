@@ -1,3 +1,13 @@
+hostmot2-firmware (0.8) lucid; urgency=low
+
+  * new firmwares: 5i20/SV12_2X7I48 5i20/SVTP_7I39 ti23/SVTP6_7I39 
+  * new upstream vhdl files
+  * improved build process (some error exits were not detected)
+  * improved documentation for those who would like to build their own
+    firmwares
+
+ -- Jeff Epler <jepler@unpythonic.net>  Sun, 19 Dec 2010 10:25:52 -0600
+
 hostmot2-firmware (0.7) hardy; urgency=low
 
   * New firmware SVST2_4_7i47 for 5i20 (servo and stepper pinout for 7i47
