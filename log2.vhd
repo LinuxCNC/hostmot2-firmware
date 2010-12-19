@@ -81,9 +81,9 @@ package body log2 is
 			m := m * 2;
 			l := l + 1;
 		end loop;
-		if m > d then		-- for non binary d, round up
-			l := l+1;
-		end if;	
+--		if m > d then		-- for non binary d, round up
+--			l := l+1;
+--		end if;	
 		return(l);
 	end;	
 	
