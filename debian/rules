@@ -12,9 +12,13 @@ install: build
 	(cd fw; find -name "*.BIT" -or -name "*.xml" | cpio -o) \
 		| (cd debian/tmp/lib/firmware/hm2; cpio -i --make-directories)
 	while read a b; do \
-		(cd debian/tmp/lib/firmware/hm2; mkdir -p `dirname $$b`; \
-		[ -f $$a ] || exit 1; \
-		ln -sf ../$$a $$b); \
+		if [ -f $$a ]; then \
+			( \
+				cd debian/tmp/lib/firmware/hm2; \
+				mkdir -p `dirname $$b`; \
+				ln -sf ../$$a $$b; \
+			); \
+                fi; \
 	done < debian/compat_symlinks
 
 binary: binary-indep
