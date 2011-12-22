@@ -75,7 +75,7 @@ f.write("""\
 Source: hostmot2-firmware
 Section: misc
 Priority: extra
-Build-Depends: ghdl
+Build-Depends: debhelper, ghdl
 Maintainer: Jeff Epler <jepler@unpythonic.net>
 
 Package: hostmot2-firmware-all
