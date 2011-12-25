@@ -244,7 +244,7 @@ try:
     run("ngdbuild", "-uc", constraints, "work.ngc")
 
     # Mapping
-    run("map", "-r", "work.ngd")
+    run("map", "work.ngd")
 
     # Placing / routing
     run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
