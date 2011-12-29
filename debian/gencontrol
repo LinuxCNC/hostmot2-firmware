@@ -17,6 +17,7 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os
+import sys
 
 name = {
     'i20': 'Mesa 5i20',
@@ -51,6 +52,11 @@ path_compat = {
     'i22_1500': '5i22/*B.BIT',
 }
 
+if (len(sys.argv) > 1) and (sys.argv[1] == '--all-only'):
+    only_build_all_deb = True
+else:
+    only_build_all_deb = False
+
 all_chips = []
 for line in open("firmwares.txt"):
     line = line.strip()
@@ -59,16 +65,17 @@ for line in open("firmwares.txt"):
     chip = line[0]
     if chip not in all_chips: all_chips.append(chip)
 
-for chip in all_chips:
-    p = path[chip]
-    f = open("debian/hostmot2-firmware-%s.files" % p, "w")
-    f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
-    f.write("/lib/firmware/hm2/%s/*.xml\n" % p)
-    c = path_compat.get(chip, None)
-    if c:
-        f.write("/lib/firmware/hm2/%s\n" % c)
-    f = open("debian/hostmot2-firmware-%s.docs" % p, "w")
-    f.write("fw/%s/*.PIN\n" % p)
+if not only_build_all_deb:
+    for chip in all_chips:
+        p = path[chip]
+        f = open("debian/hostmot2-firmware-%s.files" % p, "w")
+        f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
+        f.write("/lib/firmware/hm2/%s/*.xml\n" % p)
+        c = path_compat.get(chip, None)
+        if c:
+            f.write("/lib/firmware/hm2/%s\n" % c)
+        f = open("debian/hostmot2-firmware-%s.docs" % p, "w")
+        f.write("fw/%s/*.PIN\n" % p)
 
 f = open("debian/control", "w")
 f.write("""\
@@ -93,8 +100,9 @@ Description: Meta-package to install all hostmot2 firmwares
 
 """ % ", ".join("hostmot2-firmware-%s" % path[chip] for chip in all_chips))
 
-for chip in all_chips:
-    f.write("""\
+if not only_build_all_deb:
+    for chip in all_chips:
+        f.write("""\
 Package: hostmot2-firmware-%(chip)s
 Conflicts: emc2-firmware-mesa-%(oldchip)s-hostmot2, emc2 (<< 2.3.5)
 Enhances: emc2 (>= 2.3.5)
