@@ -52,10 +52,18 @@ path_compat = {
     'i22_1500': '5i22/*B.BIT',
 }
 
-if (len(sys.argv) > 1) and (sys.argv[1] == '--all-only'):
-    only_build_all_deb = True
-else:
-    only_build_all_deb = False
+# this one turns *off* all the actual firmware packages, but does not turn off the "-all" package
+only_build_all_deb = False
+
+# this one turns *on* the "-all" package
+build_all_deb = True
+
+if len(sys.argv) > 1:
+    if sys.argv[1] == '--all-only':
+        only_build_all_deb = True
+
+    if sys.argv[1] == '--no-all':
+        build_all_deb = False
 
 all_chips = []
 for line in open("firmwares.txt"):
@@ -85,6 +93,10 @@ Priority: extra
 Build-Depends: debhelper, ghdl
 Maintainer: Jeff Epler <jepler@unpythonic.net>
 
+""")
+
+if build_all_deb:
+    f.write("""\
 Package: hostmot2-firmware-all
 Provides: emc2-firmware
 Replaces: emc2-firmware
