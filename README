@@ -18,8 +18,13 @@ files.  There is also an experimental xml description format.
 
 == Building ==
 
+First, you must create a set of symlinks to the required versions of ise.
+At this time, all firmwares can be built with ISE 10.1 plus ISE 13.3.
+For each major version, create a symlink, e.g.,
+    settings10.sh -> /opt/Xilinx10i/settings32.sh
+    settings13.sh -> /opt/Xilinx13i/settings32.sh
+
 To build all bitfiles, pinfiles, and xmlfiles:
-    . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
     make -j4                   # -j setting depends on RAM and # CPU cores
 On my system (quad core AMD Phenom 9600) building the full set of
 firmwares took about 75 minutes wall time with the -j4 setting shown
@@ -31,7 +36,6 @@ put just this line in 'firmwares.txt':
     i23 SV12
 
 To build Debian packages:
-    . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
     debian/gencontrol
     export MAKEFLAGS=-j4 dpkg-buildpackage
                                # -j setting depends on RAM and # CPU cores

@@ -84,6 +84,26 @@ card2top = {
     'x20_2000': '9054',
 }
 
+# list the preferred versions of ise for each card type
+# list entries can be the name of the settings.sh file to use (specify an
+# absolute path), or a Xilinx version number (and this build script will
+# try the default install location for that version)
+# ISE 10 is the last one that supports the Spartan2 FPGA (in the 5i20 and 4i65)
+# FIXME: should this be by chip type instead?
+card2ise = {  # have to fill out the rest of this stupid table...
+    'i20': (10, 9),
+    'i65': (10, 9),
+
+    'x20_2000': (13, 10),
+    'x20_1000': (13, 10, 9),
+    'i22_1500': (13, 10, 9),
+    'i22_1000': (13, 10, 9),
+    'i23':      (13, 10, 9),
+    'i68':      (13, 10, 9),
+    'i43_400':  (13, 10, 9),
+    'i43_200':  (13, 10, 9)
+}
+
 # done - 6
 # enable outputs - 5
 # release write enable - 4
@@ -119,12 +139,8 @@ def help_pins(card):
         textwrap.wrap("Available pinouts: " + " ".join(available),
             subsequent_indent=" "*8)) + "\n"
 
-def help_env():
-    return ("\nYou must 'source .../Xilinx92i/settings.sh' or put a settings.sh symlink"
-            " in this directory before running this program\n")
-
 def usage(hint='', card=''):
-    usage =  __doc__ % sys.argv[0] + help_cards() + help_pins(card) + help_env()
+    usage =  __doc__ % sys.argv[0] + help_cards() + help_pins(card)
     if hint: usage += "\n" + hint
     raise SystemExit, usage
 
@@ -148,7 +164,8 @@ timing = []
 
 def run(*args):
     cmd = " ".join(sq(a) for a in args)
-    if settings_sh: cmd = ". %s; %s" % (settings_sh, cmd)
+    # xilinx 13.3's settings32.sh uses bashisms
+    if settings_sh: cmd = "bash -c '. %s; %s'" % (settings_sh, cmd)
     print "#", cmd
     sys.stdout.flush()
     t0 = time.time()
@@ -179,13 +196,41 @@ if len(sys.argv) == 4:
 else:
     outfile = os.path.join(orgdir, "%s_%s.BIT"% (card2card[card], pin))
 
-if os.path.isfile("settings.sh"):
-    settings_sh = sq(os.path.join(orgdir, "settings.sh"))
+# Xilinx Webpack 10.1 and 13.3 both install into /opt/Xilinx/,
+# into 10.1/ and 13.3/.
+# 10.1's settings are in ISE/settings32.sh
+# 13.3's settings are in ISE_DS/settings32.sh
+if 'XILINX' in os.environ:
+    print "XILINX environment variable already set, not overriding"
 else:
-    settings_sh = None
+    for ise in card2ise[card]:
+        if os.path.exists(str(ise)):
+            settings_sh = str(ise)
+            break
 
-if 'XILINX' not in os.environ and not settings_sh:
-    usage("Xilinx environment not available")
+        files = glob.glob('/opt/Xilinx/%s/*/settings32.sh' % ise)
+        if len(files) > 1:
+            print "multiple settings files found!", files
+            raise SystemExit, 1
+        if len(files) == 1:
+            settings_sh = files[0]
+            break
+
+        files = glob.glob('/opt/Xilinx/%s.*/*/settings32.sh' % ise)
+        if len(files) == 1:
+            settings_sh = files[0]
+            break
+        if len(files) > 1:
+            # use the newest one: sort by minor version since the major versions are all the same
+            files = sorted(files, key=lambda f: int((f.split('/')[3]).split('.')[1]))
+            settings_sh = files[-1]
+            break
+
+    else:
+        usage("Firmware requires one of these ise major versions to build: %s"
+                % " ".join(map(str, card2ise[card])))
+
+    print "using Xilinx Webpack settings '%s'" % settings_sh
 
 d = os.path.splitext(outfile)[0] + "_work"
 print "# workdir", sq(d)
