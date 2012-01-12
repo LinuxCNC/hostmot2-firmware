@@ -4,7 +4,7 @@ check-root:
 	dh_testroot
 
 build:
-	$(MAKE)
+	$(MAKE) $(MAKEFLAGS)
 
 install: build
 	rm -rf debian/tmp
