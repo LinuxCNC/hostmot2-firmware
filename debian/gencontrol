@@ -102,7 +102,7 @@ Provides: emc2-firmware
 Replaces: emc2-firmware
 Conflicts: emc2-firmware
 Architecture: all
-Requires: %s
+Depends: %s
 Description: Meta-package to install all hostmot2 firmwares
  This is an empty package that depends on all the separately packaged
  firmware images used by EMC2.  If your configuration does not need
