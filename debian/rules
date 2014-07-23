@@ -20,6 +20,7 @@ install: build
 			); \
                 fi; \
 	done < debian/compat_symlinks
+	chmod -R u+rwX,g+rX-w,o+rX-w debian/tmp/lib
 
 binary: binary-indep
 binary-indep: check-root install debian/control
