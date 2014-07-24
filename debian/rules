@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-check-root:
-	dh_testroot
 
 build:
 	$(MAKE) $(MAKEFLAGS)
@@ -21,23 +19,19 @@ install: build
                 fi; \
 	done < debian/compat_symlinks
 
-binary: binary-indep
-binary-indep: check-root install debian/control
-	dh_movefiles
-	dh_installchangelogs
+override_dh_installdocs:
 	dh_installdocs -A README regmap
-	dh_fixperms
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+
+binary: binary-indep
+binary-indep: install debian/control
+	dh $@
 
 debian/control: debian/gencontrol firmwares.txt
 	debian/gencontrol
 
 clean:
-	dh_clean
+	dh $@
 	rm -rf fw firmwares.mk
 
-.PHONY: check-xst check-root build binary binary-indep clean
+.PHONY: check-xst build binary binary-indep clean
 # vim:sw=8:sts=8:ts=8:noet
