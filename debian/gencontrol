@@ -120,8 +120,8 @@ Conflicts: emc2-firmware-mesa-%(oldchip)s-hostmot2, emc2 (<< 2.3.5)
 Enhances: emc2 (>= 2.3.5)
 Architecture: all
 Description: HostMot2 firmware images for %(chipname)s
-  This package contains HostMot2 firmware images for the %(chipname)s
-  "Anything I/O" board.  If you don't use a %(chipname)s you can safely
-  remove this package.
+ This package contains HostMot2 firmware images for the %(chipname)s
+ "Anything I/O" board.  If you don't use a %(chipname)s you can safely
+ remove this package.
 
 """ % {'oldchip': path[chip].split("-")[0], 'chip': path[chip], 'chipname': name[chip]})
