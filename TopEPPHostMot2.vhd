@@ -76,18 +76,20 @@ use work.IDROMConst.all;
 
 
 -------------------- select one card type------------------------------
-
+--use work.@Card@.all;
 --use work.i43_200card.all; 	-- needs 7i43.ucf and SP3 200K 144 pin
-use work.i43_400card.all;   	-- needs 7i43.ucf and SP3 400K 144 pin
+--use work.i43_400card.all;   -- needs 7i43.ucf and SP3 400K 144 pin
 --use work.i61_x16card.all;   	-- needs 7i61p.ucf and SP6 x16 256 pin
 
 -----------------------------------------------------------------------
 
 
 -------------------- select (or add) one pinout -----------------------
+--use work.@PIN@.all;
 -- 48 I/O pinouts for 7I43:
 --use work.PIN_SV8_48.all;
 --use work.PIN_SVSPD6_2_48.all;
+--use work.PIN_SPSVST_7I47_7I65_48.all;
 --use work.PIN_SVSP6_2_48.all;
 --use work.PIN_SVST4_4_48.all;
 --use work.PIN_SVST4_6_48.all;
@@ -96,17 +98,43 @@ use work.i43_400card.all;   	-- needs 7i43.ucf and SP3 400K 144 pin
 --use work.PIN_SVSSP4_6_7I46_48.all;
 --use work.PIN_SVST2_4_7I47_48.all ;
 --use work.PIN_SVUA4_8_48.all;
-use work.PIN_SVSS4_8_48.all;
+--use work.PIN_SVSS4_8_48.all; -- 400K only
+--use work.PIN_SVSS4_4_48.all;
+--use work.PIN_SVSS6_6_48.all; -- 400K only
+--use work.PIN_SVSS6_4_48.all;
 --use work.PIN_SVTW4_24_24_48.all ;
 --use work.PIN_SVTP4_7I39_48.all;
+--use work.PIN_SVST6_6_7I48_48.all;
+--use work.PIN_SVRM6_48.all;
+--use work.PIN_SISVST6_2_3_7I47_48.all;
+--use work.PIN_BOSSV.all ;
+--use work.PIN_Enslavko_48.all;
+--use work.PIN_SVSTS47S_44_48.all;
+--use work.PIN_RLUKEN_48.all;
+--use work.PIN_SVSI8_48.all;
 
 -- 96 I/O pinouts for 7I61:
 --use work.PIN_SV16_96.all;
+--use work.PIN_SV12_7I48_7I49_96.all;
 --use work.PIN_SVST8_8_96.all;
 --use work.PIN_SVST8_24_96.all;
+--use work.PIN_ST36_96.all;
+--use work.PIN_ST48_96.all;
 --use work.PIN_SVSTSP8_12_6_96.all;
 --use work.PIN_SV12_2X7I49_96.all;
---use work.PIN_SVST12_12_2X7I48_2X7I47_96.all;
+--use work.PIN_SVSS6_8_96.all;
+--use work.PIN_SVST12_12_2X7I48_96.all;
+
+--use work.PIN_SSSVST8_1_5_7I47_96.all;
+--use work.PIN_SSSV6_36_96.all;
+--use work.PIN_SSSV8_48_96.all;
+--use work.PIN_SVSS8_16_96.all;
+--use work.PIN_SS32_96.all;
+--use work.PIN_SI36_3X7I47_96.all;
+--use work.PIN_SISS36_8_3X7I47_7I44_96.all;
+--use work.PIN_4x7I65_96.all;
+--use work.PIN_3x7I65_1x7I44_96.all;
+
 ----------------------------------------------------------------------
 	
 	
@@ -120,7 +148,7 @@ entity TopEPPHostMot2 is -- for 7I43 or 7I61 in EPP mode
 		PWMRefWidth: integer := 13;	-- PWM resolution is PWMRefWidth-1 bits 
 		IDROMType: integer := 3;		
 		UseStepGenPrescaler : boolean := true;
-		UseIRQLogic: boolean := true;
+		UseIRQLogic: boolean := false;
 		UseWatchDog: boolean := true;
 		OffsetToModules: integer := 64;
 		OffsetToPinDesc: integer := 448;
@@ -200,8 +228,13 @@ signal idata: std_logic_vector(7 downto 0);
 signal ReConfigreg : std_logic := '0';
 
 signal fclk : std_logic;
-signal clkfx: std_logic;
-signal clk0: std_logic;
+signal clkfx0: std_logic;
+signal clk0_0: std_logic;
+
+signal clkmed : std_logic;
+signal clkfx1: std_logic;
+signal clk0_1: std_logic;
+
 
 begin
 
@@ -219,6 +252,7 @@ ahostmot2: entity work.HostMot2
 		offsettomodules  => OffsetToModules,
 		offsettopindesc  => OffsetToPinDesc,
 		clockhigh  => ClockHigh,
+		clockmed => ClockMed,
 		clocklow  => ClockLow,
 		boardnamelow => BoardNameLow,
 		boardnamehigh => BoardNameHigh,
@@ -242,6 +276,7 @@ ahostmot2: entity work.HostMot2
 		readstb => read32,
 		writestb => dwrite32,
 		clklow => CLK,
+		clkmed  => clkmed,				-- Processor clock
 		clkhigh =>  fclk,
 --		int => INT, 
 		iobits => IOBITS,			
@@ -264,7 +299,7 @@ ahostmot2: entity work.HostMot2
 		doutb => translateaddr
 		);	
 		
-   ClockMult : DCM
+   ClockMultH : DCM
    generic map (
       CLKDV_DIVIDE => 2.0,
       CLKFX_DIVIDE => 2, 
@@ -278,14 +313,14 @@ ahostmot2: entity work.HostMot2
       DFS_FREQUENCY_MODE => "LOW",
       DLL_FREQUENCY_MODE => "LOW",
       DUTY_CYCLE_CORRECTION => TRUE,
-      FACTORY_JF => X"C080",
+      FACTORY_JF => X"8080",
       PHASE_SHIFT => 0, 
       STARTUP_WAIT => FALSE)
    port map (
  
-      CLK0 => clk0,   	-- 
-      CLKFB => clk0,  	-- DCM clock feedback
-		CLKFX => clkfx,
+      CLK0 => clk0_0,   	-- 
+      CLKFB => clk0_0,  	-- DCM clock feedback
+		CLKFX => clkfx0,
       CLKIN => CLK,    -- Clock input (from IBUFG, BUFG or DCM)
       PSCLK => '0',   	-- Dynamic phase adjust clock input
       PSEN => '0',     	-- Dynamic phase adjust enable input
@@ -293,10 +328,45 @@ ahostmot2: entity work.HostMot2
       RST => '0'        -- DCM asynchronous reset input
    );
   
-  BUFG_inst : BUFG
+  BUFG_inst0 : BUFG
    port map (
       O => fclk,    -- Clock buffer output
-      I => clkfx      -- Clock buffer input
+      I => clkfx0      -- Clock buffer input
+   );
+	
+   ClockMultM : DCM
+   generic map (
+      CLKDV_DIVIDE => 2.0,
+      CLKFX_DIVIDE => 2, 
+      CLKFX_MULTIPLY => 3,			-- 3/2 FOR 75 MHz
+      CLKIN_DIVIDE_BY_2 => FALSE, 
+      CLKIN_PERIOD => 20.0,          
+      CLKOUT_PHASE_SHIFT => "NONE", 
+      CLK_FEEDBACK => "1X",         
+      DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", 
+                                            
+      DFS_FREQUENCY_MODE => "LOW",
+      DLL_FREQUENCY_MODE => "LOW",
+      DUTY_CYCLE_CORRECTION => TRUE,
+      FACTORY_JF => X"8080",
+      PHASE_SHIFT => 0, 
+      STARTUP_WAIT => FALSE)
+   port map (
+ 
+      CLK0 => clk0_1,   	-- 
+      CLKFB => clk0_1,  	-- DCM clock feedback
+		CLKFX => clkfx1,
+      CLKIN => CLK,    -- Clock input (from IBUFG, BUFG or DCM)
+      PSCLK => '0',   	-- Dynamic phase adjust clock input
+      PSEN => '0',     	-- Dynamic phase adjust enable input
+      PSINCDEC => '0', 	-- Dynamic phase adjust increment/decrement
+      RST => '0'        -- DCM asynchronous reset input
+   );
+  
+  BUFG_inst1 : BUFG
+   port map (
+      O => clkmed,    -- Clock buffer output
+      I => clkfx1      -- Clock buffer input
    );
 
   -- End of DCM_inst instantiation
@@ -572,7 +642,7 @@ ahostmot2: entity work.HostMot2
 		SPIOUT <= '0';
 		USBRD <= '1';
 		USBWR <= '0';
---		LEDS <= not alatch(7 downto 0);
+--		LEDS <= not alatch(7 downto 0); -- except for debug, LEDS are owned by HostMot2
 	end process LooseEnds;	
 
 end;

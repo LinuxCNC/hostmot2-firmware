@@ -75,22 +75,40 @@ use work.IDROMConst.all;
 
 
 -------------------- select one card type------------------------------
-
+use work.@Card@.all;
 --use work.i43_200card.all; 	-- needs 7i43u.ucf and SP3 200K 144 pin
-use work.i43_400card.all;   -- needs 7i43u.ucf and SP3 400K 144 pin
+--use work.i43_400card.all;   -- needs 7i43u.ucf and SP3 400K 144 pin
 --use work.i61_x16card.all;   	-- needs 7i61u.ucf and SP6 x16 256 pin
-
+--use work.i61_x25card.all;   	-- needs 7i61u.ucf and SP6 x25 256 pin
 -----------------------------------------------------------------------
 
 
 -------------------- select (or add) one pinout -----------------------
 -- note that all the USB configurations drop the address translation
 -- as the LB Protocol has its own address system 
---use work.PIN_SVST4_4NA_48.all;
-use work.PIN_SVSP4_6_7I46NA_48.all;
---use work.PIN_SVST4_6NA_48.all;
---use work.PIN_SVST4_12NA_48.all;
---use work.PIN_SV8NA.all;
+use work.@Pin@.all;
+-- 48 I/O pinouts for the 7I43
+--use work.PIN_SV8_48.all;
+--use work.PIN_SVSPD6_2_48.all;
+--use work.PIN_SPSVST_7I47_7I65_48.all;
+--use work.PIN_SVSP6_2_48.all;
+--use work.PIN_SVST4_4_48.all;
+--use work.PIN_SVST4_6_48.all;
+--use work.PIN_SVST2_4_7I47_48.all;
+--use work.PIN_SVST4_12_48.all ;
+--use work.PIN_SVSSP4_6_7I46_48.all;
+--use work.PIN_SVST2_4_7I47_48.all ;
+--use work.PIN_SVUA4_8_48.all;
+--use work.PIN_SVSS4_8_48.all;
+--use work.PIN_SVSI8_48.all;
+--use work.PIN_SVFA8_48.all;
+--use work.PIN_SVTW4_24_24_48.all ;
+--use work.PIN_SVTP4_7I39_48.all;
+--use work.PIN_SVST6_6_7I48_48.all;
+--use work.PIN_SVRM6_48.all;
+--use work.PIN_SISVST6_2_3_7I47_48.all;
+--use work.PIN_BOSSV.all ;
+--use work.PIN_Enslavko_48.all;
 
 -- 96 I/O pinouts for 7I61:
 --use work.PIN_SV16_96.all;
@@ -131,7 +149,7 @@ entity TopUSBHostMot2 is -- for 7I43/7I61 in USB mode
 				IOBITS : inout std_logic_vector(IOWidth -1 downto 0);
 				DATABUS : inout std_logic_vector(7 downto 0);
 				USB_WRITE : out std_logic;
-				USB_RD :out std_logic;
+				USB_RD : out std_logic;
 				USB_TXE : in std_logic;
 				USB_RXF : in std_logic;
 				RECONFIG : out std_logic;
@@ -223,9 +241,6 @@ signal clk1fx : std_logic;
 signal clk1 : std_logic;
 signal hm2fastclock : std_logic;
 
-signal clk2fx : std_logic;
-signal clk2 : std_logic;
-signal hm2interfaceclock : std_logic;
 
 constant EIOCookie: std_logic_vector(7 downto 0) := x"EE"; 
 
@@ -246,6 +261,7 @@ ahostmot2: entity work.HostMot2
 		offsettomodules  => OffsetToModules,
 		offsettopindesc  => OffsetToPinDesc,
 		clockhigh  => ClockHigh,
+		clockmed => ClockMed,
 		clocklow  => ClockLow,
 		boardnamelow => BoardNameLow,
 		boardnamehigh => BoardNameHigh,
@@ -268,19 +284,22 @@ ahostmot2: entity work.HostMot2
 		addr => ExtAddress1(15 downto 2),
 		readstb => Read32,
 		writestb => Write32,
-		clklow => hm2interfaceclock,
+		clklow => CLK,
+		clkmed => procclk,
 		clkhigh =>  hm2fastclock,
 --		int => INT, 
-		iobits => IOBITS,			
-		leds => LEDS	
+		leds => LEDS,	
+		iobits => IOBITS			
+
 		);
 
- 	Is7I61: if (BoardNameHigh = BoardName7i61)  generate	 
+ 	Is7I61: if (BoardNameHigh = BoardName7i61)  generate
+	
    ClockMult0 : DCM
 		generic map (
 			CLKDV_DIVIDE => 2.0,
-			CLKFX_DIVIDE => 2, 
-			CLKFX_MULTIPLY =>3,			-- 3/4 FOR 75 MHz, 4/4 for 100 MHz, 8/10 for 80MHz, 7/8 for 87.5MHz
+			CLKFX_DIVIDE => 4, 
+			CLKFX_MULTIPLY =>2,			-- 4/2 for 100 MHz
 			CLKIN_DIVIDE_BY_2 => FALSE, 
 			CLKIN_PERIOD => 19.5,          
 			CLKOUT_PHASE_SHIFT => "NONE", 
@@ -309,52 +328,12 @@ ahostmot2: entity work.HostMot2
 			O => procclk,    		-- Clock buffer output
 			I => clk0fx      	-- Clock buffer input
 		);
-	end generate;
-	
- 	Isnot7I69: if (BoardNameHigh /= BoardName7i61)  generate	 
-		ClockMult0 : DCM
+		
+  ClockMult1 : DCM
 		generic map (
 			CLKDV_DIVIDE => 2.0,
 			CLKFX_DIVIDE => 2, 
-			CLKFX_MULTIPLY =>3,			-- 3/4 FOR 75 MHz, 4/4 for 100 MHz, 8/10 for 80MHz, 7/8 for 87.5MHz
-			CLKIN_DIVIDE_BY_2 => FALSE, 
-			CLKIN_PERIOD => 19.5,          
-			CLKOUT_PHASE_SHIFT => "NONE", 
-			CLK_FEEDBACK => "1X",         
-			DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", 
-															
-			DFS_FREQUENCY_MODE => "LOW",			
-			DLL_FREQUENCY_MODE => "LOW",
-			DUTY_CYCLE_CORRECTION => TRUE,
-			FACTORY_JF => X"C080",
-			PHASE_SHIFT => 0, 
-			STARTUP_WAIT => FALSE)
-		port map (
-	
-			CLK0 => clk0,   	-- 
-			CLKFB => clk0,  	-- DCM clock feedback
-			CLKFX => clk0fx,
-			CLKIN => CLK,    	-- External clock input (from IBUFG, BUFG or DCM) not possible on SP6 7I61 
-			PSCLK => '0',  	-- Dynamic phase adjust clock input
-			PSEN => '0',     	-- Dynamic phase adjust enable input
-			PSINCDEC => '0', 	-- Dynamic phase adjust increment/decrement
-			RST => '0'        -- DCM asynchronous reset input
-		);
-  
-	BUFG0_inst : BUFG
-		port map (
-			O => procclk,    		-- Clock buffer output
-			I => clk0fx      	-- Clock buffer input
-		);
-	end generate;
-	
-  -- End of DCM_inst instantiation
-
-   ClockMult1 : DCM
-		generic map (
-			CLKDV_DIVIDE => 2.0,
-			CLKFX_DIVIDE => 2, 
-			CLKFX_MULTIPLY =>4,			-- 3/2 *50 FOR 75 MHz, 4/2 for 100 MHz, 8/5 for 80MHz, 7/4 for 87.5MHz
+			CLKFX_MULTIPLY =>8,			-- 8/2 for 200 MHz
 			CLKIN_DIVIDE_BY_2 => FALSE, 
 			CLKIN_PERIOD => 19.5,          
 			CLKOUT_PHASE_SHIFT => "NONE", 
@@ -385,13 +364,51 @@ ahostmot2: entity work.HostMot2
 			I => clk1fx      	-- Clock buffer input
 		);
 
-  -- End of DCM_inst instantiation
+  -- End of DCM_inst instantiation		
+	end generate;
+	
+ 	Isnot7I61: if (BoardNameHigh /= BoardName7i61)  generate	 
 
-   ClockMult2 : DCM
+		ClockMult0 : DCM
 		generic map (
 			CLKDV_DIVIDE => 2.0,
-			CLKFX_DIVIDE => 3, 
-			CLKFX_MULTIPLY =>2,			-- 2/3 for 33 MHz 3/2 *50 FOR 75 MHz, 4/2 for 100 MHz, 8/5 for 80MHz, 7/4 for 87.5MHz
+			CLKFX_DIVIDE => 2, 
+			CLKFX_MULTIPLY =>3,			-- 3/2 FOR 75 MHz
+			CLKIN_DIVIDE_BY_2 => FALSE, 
+			CLKIN_PERIOD => 19.5,          
+			CLKOUT_PHASE_SHIFT => "NONE", 
+			CLK_FEEDBACK => "1X",         
+			DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", 
+															
+			DFS_FREQUENCY_MODE => "LOW",			
+			DLL_FREQUENCY_MODE => "LOW",
+			DUTY_CYCLE_CORRECTION => TRUE,
+			FACTORY_JF => X"C080",
+			PHASE_SHIFT => 0, 
+			STARTUP_WAIT => FALSE)
+		port map (
+	
+			CLK0 => clk0,   	-- 
+			CLKFB => clk0,  	-- DCM clock feedback
+			CLKFX => clk0fx,
+			CLKIN => CLK,    	-- External clock input (from IBUFG, BUFG or DCM) not possible on SP6 7I61 
+			PSCLK => '0',  	-- Dynamic phase adjust clock input
+			PSEN => '0',     	-- Dynamic phase adjust enable input
+			PSINCDEC => '0', 	-- Dynamic phase adjust increment/decrement
+			RST => '0'        -- DCM asynchronous reset input
+		);
+  
+	BUFG0_inst : BUFG
+		port map (
+			O => procclk,    		-- Clock buffer output
+			I => clk0fx      	-- Clock buffer input
+		);
+		
+  ClockMult1 : DCM
+		generic map (
+			CLKDV_DIVIDE => 2.0,
+			CLKFX_DIVIDE => 2, 
+			CLKFX_MULTIPLY =>4,			-- 4/2 for 100 MHz
 			CLKIN_DIVIDE_BY_2 => FALSE, 
 			CLKIN_PERIOD => 19.5,          
 			CLKOUT_PHASE_SHIFT => "NONE", 
@@ -406,9 +423,9 @@ ahostmot2: entity work.HostMot2
 			STARTUP_WAIT => FALSE)
 		port map (
 	
-			CLK0 => clk2,   	-- 
-			CLKFB => clk2,  	-- DCM clock feedback
-			CLKFX => clk2fx,
+			CLK0 => clk1,   	-- 
+			CLKFB => clk1,  	-- DCM clock feedback
+			CLKFX => clk1fx,
 			CLKIN => CLK,    	-- Clock input (from IBUFG, BUFG or DCM)
 			PSCLK => '0',    	-- Dynamic phase adjust clock input
 			PSEN => '0',     	-- Dynamic phase adjust enable input
@@ -416,19 +433,24 @@ ahostmot2: entity work.HostMot2
 			RST => '0'        -- DCM asynchronous reset input
 		);
   
-	BUFG2_inst : BUFG
+	BUFG1_inst : BUFG
 		port map (
-			O => hm2interfaceclock,    		-- Clock buffer output
-			I => clk2fx      						-- Clock buffer input
+			O => hm2fastclock,    		-- Clock buffer output
+			I => clk1fx      	-- Clock buffer input
 		);
 
-  -- End of DCM_inst instantiation
+  -- End of DCM_inst instantiation		
+	end generate;
+	
+
+ 
+
 
 	asimplspi: entity work.simplespi8
 		generic map
 		(
 			buswidth => 8,
-			div => 2,
+			div => 2,	-- for divide by 3
 			bits => 8
 		)	
 		port map 
@@ -594,25 +616,25 @@ ahostmot2: entity work.HostMot2
 			ReadUSBData <= '0';		
 		end if;	
 
-		if ExtAddress0 = x"007D" and WriteExtData = '1' and wiosel = '0' and mwrite = '1' then
+		if wseladd = x"007D" and wiosel = '0' and mwrite = '1' then
 			LoadSPICS <= '1';
 		else
 			LoadSPICS <= '0';		
 		end if;	
 
-		if ExtAddress0 = x"007D" and ReadExtData = '1' and riosel = '0' then
+		if rseladd = x"007D" and riosel = '0' then
 			ReadSPICS <= '1';
 		else
 			ReadSPICS <= '0';		
 		end if;	
 
-		if ExtAddress0 = x"007E" and WriteExtData = '1' and wiosel = '0' and mwrite = '1'then
+		if wseladd = x"007E" and wiosel = '0' and mwrite = '1'then
 			LoadSPIReg <= '1';
 		else
 			LoadSPIReg <= '0';		
 		end if;	
 
-		if ExtAddress0 = x"007E" and ReadExtData = '1' and riosel = '0' then
+		if rseladd = x"007E" and riosel = '0' then
 			ReadSPIReg <= '1';
 		else
 			ReadSPIReg <= '0';		
@@ -639,7 +661,7 @@ ahostmot2: entity work.HostMot2
 		HRECONFIG <= not ReConfigreg; -- for 7I43H
 	end process doreconfig;
 	
-	HM2InterfaceShim: process (procclk,hm2interfaceclock,startextreaddel,
+	HM2InterfaceShim: process (procclk,CLK,startextreaddel,
 	                           startextwritedel,readextdata,rseladd,
 										HM2ReadBuffer1,extaddress0,readextaddhigh,
 										extaddress0,readeiocookie,readextaddlow)
@@ -676,7 +698,7 @@ ahostmot2: entity work.HostMot2
 			
 		end if;	-- procclk
 		
-		if rising_edge(hm2interfaceclock) then
+		if rising_edge(CLK) then
 			HM2WriteBuffer1 <= HM2WriteBuffer0;
 			ExtAddress1 <= ExtAddress0;
 			StartExtReadDel <= StartExtReadDel(0) & StartExtReadRq;
@@ -730,6 +752,7 @@ ahostmot2: entity work.HostMot2
 		end if;
 -- 	LEDS <= HM2WriteBuffer1(7 downto 0); -- debug kludge
 	end process;	
+	
 	USBInterfaceDrive: process (procclk, USBDataReg, DATABUS, USB_TSEn, 
 										 ReadUSBData, ReadUSBStatus, USB_RXF, USB_TXE)
 	begin
@@ -763,7 +786,9 @@ ahostmot2: entity work.HostMot2
 		USB_RD <= USB_RdReg;
 		USB_WRITE <= USB_WriteReg;
 --		LEDS <= not LocalLEDs;				-- debug kludge
---		LEDS <= ExtAddress0(7 downto 0);	-- debug kludge		
+--		LEDS <= not ExtAddress0(7 downto 0);	-- debug kludge		
+--		LEDS <= not ExtAddress0(15 downto 8);	-- debug kludge		
+--		LEDS <= not HM2WriteBuffer0(7 downto 0);	-- debug kludge
 		PARACONFIG <= '0';
 	end process USBInterfaceDrive;	
 

@@ -71,6 +71,7 @@ use work.IDROMConst.all;
 package i68card is
 		-- 4I68 card specific info
 		constant ClockHigh: integer := ClockHigh68;
+		constant ClockMed: integer := ClockMed68;
 		constant ClockLow: integer := ClockLow68;
 		constant BoardNameLow : std_Logic_Vector(31 downto 0) := BoardNameMESA;
 		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName4i68;

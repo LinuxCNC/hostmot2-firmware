@@ -78,7 +78,7 @@ entity pwmpdmgenh is
 		refcount: in std_logic_vector (refwidth-1 downto 0);
 		ibus: in std_logic_vector (buswidth -1 downto 0);
 		loadpwmval: in std_logic;
-		pcrloadcmd: std_logic;
+		pcrloadcmd: in std_logic;
 		pdmrate : in std_logic;
 		pwmouta: out std_logic;
 		pwmoutb: out std_logic

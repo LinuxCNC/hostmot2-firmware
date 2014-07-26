@@ -71,7 +71,7 @@ use work.log2.all;
 
 entity binosc is								--	binary divider for simple clocks etc
     generic( width : integer);
-	 port (	clk : in  std_logic;
+	 port ( clk : in  std_logic;
            ibus0 : in  std_logic;
            loadena : in  std_logic;
            oscout : out std_logic_vector(width -1 downto 0));

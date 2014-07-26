@@ -73,7 +73,7 @@ package PIN_SVST12_12_2X7I48_2X7I47_96 is
 	constant ModuleID : ModuleIDType :=( 
 		(WatchDogTag,			x"00",	ClockLowTag,	x"01",	WatchDogTimeAddr&PadT,		WatchDogNumRegs,		x"00",	WatchDogMPBitMask),
 		(IOPortTag,				x"00",	ClockLowTag,	x"04",	PortAddr&PadT,					IOPortNumRegs,			x"00",	IOPortMPBitMask),
-		(MuxedQcountTag,		x"02",	ClockLowTag,	x"0C",	MuxedQcounterAddr&PadT,		MuxedQCounterNumRegs,x"00",	MuxedQCounterMPBitMask),
+		(MuxedQcountTag,		MQCRev,	ClockLowTag,	x"0C",	MuxedQcounterAddr&PadT,		MuxedQCounterNumRegs,x"00",	MuxedQCounterMPBitMask),
 		(MuxedQCountSelTag,	x"00",	ClockLowTag,	x"01",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(PWMTag,					x"00",	ClockHighTag,	x"0C",	PWMValAddr&PadT,				PWMNumRegs,				x"00",	PWMMPBitMask),
 		(QcountTag,				x"02",	ClockLowTag,	x"08",	QcounterAddr&PadT,			QcounterNumRegs,		x"00",	QCounterMPBitMask),
@@ -142,7 +142,7 @@ package PIN_SVST12_12_2X7I48_2X7I47_96 is
 		IOPortTag & x"05" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 31
 		IOPortTag & x"05" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 32
 		IOPortTag & x"05" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 33
-		IOPortTag & x"00" & MuxedQCountSelTag & MuxedQCountSel0Pin,	-- I/O 34
+		IOPortTag & x"06" & MuxedQCountSelTag & MuxedQCountSel0Pin,	-- I/O 34
 		IOPortTag & x"06" & PWMTag & PWMAOutPin,            			-- I/O 35
 		IOPortTag & x"06" & PWMTag & PWMBDirPin,            			-- I/O 36
 		IOPortTag & x"07" & PWMTag & PWMAOutPin,            			-- I/O 37	

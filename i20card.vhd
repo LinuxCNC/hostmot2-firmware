@@ -71,6 +71,7 @@ use work.IDROMConst.all;
 package i20card is
 		-- 5I20 card specific info
 		constant ClockHigh: integer := ClockHigh20;
+		constant ClockMed: integer := ClockMed20;
 		constant ClockLow: integer := ClockLow20;
 		constant BoardNameLow : std_Logic_Vector(31 downto 0) := BoardNameMESA;
 		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName5i20;

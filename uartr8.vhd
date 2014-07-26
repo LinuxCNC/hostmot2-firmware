@@ -160,7 +160,7 @@ begin
   	end generate;
 	
 	
-	afifo: process (clk,popdata,datacounter)
+	afifo: process (clk,popdata,datacounter,lfifoempty)
 	begin
 		if rising_edge(clk) then
 			
@@ -190,8 +190,10 @@ begin
 		fifohasdata <= not lfifoempty;		 
 	end process afifo;
 
-
-	asimpleuartrx: process (clk)
+	asimpleuartrx: process (clk,OldDDSMSB, BitrateDDSAccum, SReg, DAV, 
+	                        popfifo, clrfifo, readfifocount, datacounter, 
+									readbitratel, BitrateDDSReg, readbitratem, 
+									readbitrateh, popdata, readmode, ModeReg, rxmask, lfifoempty)
 	begin
 		if rising_edge(clk) then
 			RXPipe <= RXPipe(0) & rxdata;  			-- Two stage rx data pipeline to compensate for

@@ -73,7 +73,7 @@ package PIN_SV12IM_2X7I49_72 is
 	constant ModuleID : ModuleIDType :=( 
 		(WatchDogTag,			x"00",	ClockLowTag,	x"01",	WatchDogTimeAddr&PadT,		WatchDogNumRegs,		x"00",	WatchDogMPBitMask),
 		(IOPortTag,				x"00",	ClockLowTag,	x"03",	PortAddr&PadT,					IOPortNumRegs,			x"00",	IOPortMPBitMask),
-		(ResModTag,				x"00",	ClockLowTag,	x"02",	ResModDataAddr&PadT,			ResModNumRegs,			x"00",	ResModMPBitMask),
+		(ResModTag,				x"00",	ClockLowTag,	x"02",	ResModCommandAddr&PadT,		ResModNumRegs,			x"00",	ResModMPBitMask),
 		(PWMTag,					x"00",	ClockHighTag,	x"0C",	PWMValAddr&PadT,				PWMNumRegs,				x"00",	PWMMPBitMask),
 		(LEDTag,					x"00",	ClockLowTag,	x"01",	LEDAddr&PadT,					LEDNumRegs,				x"00",	LEDMPBitMask),
 		(NullTag,				x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),

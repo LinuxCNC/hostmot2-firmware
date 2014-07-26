@@ -71,17 +71,17 @@ entity SimpleSSI is
     Port ( clk : in std_logic;
 	 		  ibus : in std_logic_vector(31 downto 0);
            obus : out std_logic_vector(31 downto 0);
-           loadbitcount : in std_logic;
-           loadbitrate : in std_logic;
-			  lstart : in std_logic;
-			  tstart : in std_logic;
+           loadcontrol : in std_logic;
+ 			  lstart : in std_logic;
 			  pstart : in std_logic;
-           readdata : in std_logic;
-			  readbitcount : in std_logic;
-           readbitrate : in std_logic;
-			  busyout : out std_logic;
+			  timers : in std_logic_vector(4 downto 0);
+           readdata0 : in std_logic;
+			  readdata1 : in std_logic;
+			  readcontrol : in std_logic;
+ 			  busyout : out std_logic;
+			  davout : out std_logic;
            ssiclk : out std_logic;
-           ssiin : in std_logic
+           ssidata : in std_logic
           );
 end SimpleSSI;
 
@@ -92,23 +92,32 @@ signal BitrateDDSReg : std_logic_vector(15 downto 0);
 signal BitrateDDSAccum : std_logic_vector(15 downto 0);
 alias  DDSMSB : std_logic is BitrateDDSAccum(15);
 signal OldDDSMSB: std_logic;  
-signal BitcountReg : std_logic_vector(5 downto 0);
-signal BitCount : std_logic_vector(5 downto 0);
+signal BitcountReg : std_logic_vector(6 downto 0);
+signal BitCount : std_logic_vector(6 downto 0);
 signal SkewReg : std_logic_vector(3 downto 0);
-signal SSISreg: std_logic_vector(31 downto 0);
-signal SSILatch: std_logic_vector(31 downto 0);
+signal SSISreg: std_logic_vector(63 downto 0);
+signal SSILatch: std_logic_vector(63 downto 0);
 signal Go: std_logic; 
 signal Start: std_logic;
 signal BitZero: std_logic; 
 signal OldBitZero: std_logic;
 signal PStartmask: std_logic; 
 signal TStartmask: std_logic; 
+signal TimerSelect: std_logic_vector(2 downto 0);
+signal Timer: std_logic; 
+signal OldTimer: std_logic; 
+signal TStart: std_logic;
+
 signal MaskFirst: std_logic; 
 signal SampleTime: std_logic; 
+signal DAV: std_logic;
  
 begin
 
-	assiinterface: process (clk)
+	assiinterface: process (clk,go,lstart,pstartmask,tstartmask,bitcountreg,
+	                        readdata0,readdata1,ssilatch,readcontrol,Timer,Timers,
+									OldTimer,TimerSelect,TStart,PStart,OldDDSMSB,
+									BitRateDDSAccum,DAv,BitRateDDSReg)
 	begin
 		if clk'event and clk = '1' then
 
@@ -128,13 +137,13 @@ begin
 			
 			if SampleTime = '1' then
 				if MaskFirst = '1' then 
-					SSISreg <= SSISreg(30 downto 0) & ssiin;
+					SSISreg <= SSISreg(62 downto 0) & ssidata;
 				end if;
-				if BitCount /= "000000" then
+				if BitCount /= "0000000" then
 					BitCount <= BitCount -1;
 					MaskFirst <= '1';		-- first clock just latches data so dont shift in
 				end if;
-				if BitCount = "000001" then
+				if BitCount = "0000001" then
 					BitZero <= '1'; 		-- at bit count of zero, (delayed count of 1);
 				else
 					BitZero <= '0';
@@ -143,24 +152,42 @@ begin
 
 			if BitZero = '0' and OldBitZero = '1' then
 				Go <= '0';
+				DAV <= '1';
 				SSILatch <= SSISReg;
 			end if;
 
 			OldDDSMSB <= DDSMSB;
 			OldBitZero <= BitZero;
 
-			if loadbitcount =  '1' then 
-				BitCountReg <= ibus(5 downto 0);
-				PStartMask <= ibus(6);
-				TStartMask <= ibus(7);
+			if loadcontrol =  '1' then 
+				BitCountReg <= ibus(6 downto 0);
+				PStartMask <= ibus(8);
+				TStartMask <= ibus(9);
+				TimerSelect <= ibus(14 downto 12);
+				BitRateDDSReg <= ibus(31 downto 16);				 
 			end if;
-			if loadbitrate =  '1' then 
-				BitRateDDSReg <= ibus(15 downto 0);				 
-			end if;	
-
+			OldTimer <= Timer;
+			if readdata0 =  '1' then
+				DAV <= '0';
+			end if;
 		end if; -- clk
 
-		if lstart = '1' or (tstart = '1' and TStartMask = '1') or (pstart = '1' and PStartMask = '1')then
+		if Timer = '1' and OldTimer = '0' then 	-- rising edge of selected timer
+			TStart <= '1';
+		else
+			TStart <= '0';
+		end if;
+		
+		case TimerSelect is
+			when "000" => Timer <= timers(0);
+			when "001" => Timer <= timers(1);
+			when "010" => Timer <= timers(2);
+			when "011" => Timer <= timers(3);
+			when "100" => Timer <= timers(4);	
+			when others => Timer <= Timers(0);
+		end case;	
+
+		if lstart = '1' or (TStart = '1' and TStartMask = '1') or (pstart = '1' and PStartMask = '1')then
 			Start <= '1';
 		else
 			Start <= '0';
@@ -169,22 +196,28 @@ begin
 		SampleTime <= OldDDSMSB and not DDSMSB;
 
 		obus <= (others => 'Z');
-      if readdata =  '1' then
-			obus <= SSILatch;
+      if readdata0 =  '1' then
+			obus <= SSILatch(31 downto 0);
 		end if;
-		if	readbitcount =  '1' then
-			obus(5 downto 0) <= BitCountReg;
-			obus(30 downto 8) <= (others => '0');
-			obus(6) <= PStartMask;	
-			obus(7) <= TStartMask;			
-			obus(31) <= Go;
+      if readdata1 =  '1' then
+			obus <= SSILatch(63 downto 32);
 		end if;
-      if readbitrate =  '1' then
-			obus(15 downto 0) <= BitRateDDSReg;
-			obus(31 downto 0) <= (others => '0');
+		
+		if	readcontrol = '1' then
+			obus(6 downto 0) <= BitCountReg;
+			obus(7) <= '0';
+			obus(8) <= PStartMask;	
+			obus(9) <= TStartMask;			
+			obus(10) <= '0';
+			obus(11) <= Go;
+			obus(14 downto 12) <= TimerSelect; 
+			obus(15) <= DAV;
+			obus(31 downto 16) <= BitRateDDSReg;
 		end if;
+
 		ssiclk <= not DDSMSB; -- hold time is guaranteed by two directional propagation delay
-		busyout <= Go;
+		busyout <= Go or (not DAV);
+		davout <= DAV;
 	end process assiinterface;
 	
 end Behavioral;

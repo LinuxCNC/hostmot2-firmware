@@ -152,7 +152,8 @@ begin
 		); 
 
 
-	accumulator:  process(clk,acca,accb)		-- multi channel accumulator
+	accumulator:  process(clk,acca,accb, dspdin, hostread, 
+								 rawhostdout, dspread, rawdspdout, smwrite)		-- multi channel accumulator
 	begin
 		if rising_edge(clk) then
 			ratediv <= ratediv + ratereg;

@@ -79,7 +79,7 @@ use IEEE.STD_LOGIC_UNSIGNED.all;
 -- 9 basic memory reference instructions:
 -- OR, XOR, AND, ADD, ADDC, SUB, SUBB, LDA, STA
 -- 25 operate instructions, load immediate, rotate, index load/store: 
--- LDI, RCL, RCR, LDXL, LDYL, STXL, STYL, LDXH, LDYH, STXH, STYH, RTT, TTR, ADDIX, ADDIY  
+-- LDI, RCL, RCR, SHNL, SHNR, LDXL, LDYL, STXL, STYL, LDXH, LDYH, STXH, STYH, RTT, TTR, ADDIX, ADDIY  
 -- LDZL, LDTL, STZL, STTL, LDZH, LDTH, STZH, STXH, ADDIZ, ADDIT
 -- 2K words instruction space
 -- 4K words data space
@@ -162,7 +162,9 @@ architecture Behavioral of DumbAss8sq is
 -- accumulator operate type
 
   constant rotcl : std_logic_vector (4 downto 0) := "00100";  -- x20
+  constant shnl : std_logic_vector  (4 downto 0) := "00101";  -- x28
   constant rotcr : std_logic_vector (4 downto 0) := "00110";  -- x30
+  constant shnr : std_logic_vector  (4 downto 0) := "00111";  -- x38
   
 -- index register load/store in address order
   constant ldxl	: std_logic_vector (4 downto 0) := "01000"; -- x40
@@ -374,6 +376,10 @@ begin  -- the CPU
 				case opropcode2 is
 					when rotcl	=> accumcar <= rotcleft(accumcar);		-- rotate left through carry
 					when rotcr	=> accumcar <= rotcright(accumcar);	 	-- rotate right through carry				  
+					when shnl	=> accumcar(width downto 4)   <= accumcar(width-4 downto 0);
+										accumcar(width-4 downto 0) <= (others => '0');
+					when shnr	=> accumcar(width-4 downto 0) <= accumcar(width downto 4);
+										accumcar(width downto 4)   <= (others => '0');
 					when rtt		=> idtmp <= idret; -- return to temp
 					when ttr		=> idret <= idtmp; -- temp to return
 					when ldrl	=> idret(7 downto 0) <= accum; -- load return low
@@ -409,7 +415,7 @@ begin  -- the CPU
 
 					when addix	=> idx <= maddpipe2;		-- share the offset address adder for addix
 					when addiy	=> idy <= maddpipe2;		-- same for Y
-					when addiz	=> idz <= maddpipe2;		-- share the offset address adder for addiz
+					when addiz	=> idz <= maddpipe2;		-- same for Z
 					when addit	=> idt <= maddpipe2;		-- same for T
 					when others	=> null;
 				end case;		
@@ -444,7 +450,7 @@ end process accumproc;
 
   staproc : process (clk, accum, accumcar, id2)  -- sta decode  -- not much to do but enable mwrite
   begin
-	 mobus <= accum;
+	mobus <= accum;
 	if opcode2 = sta then
 	  mwrite <= '1';
 	else

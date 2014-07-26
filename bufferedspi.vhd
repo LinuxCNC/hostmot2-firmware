@@ -70,7 +70,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity bufferedspi is
     generic (
 		cswidth : integer := 4;
-		gatedcs : boolean
+		gatedcs : boolean := true
 		);    
 	port ( 
 		clk : in std_logic;
@@ -108,8 +108,9 @@ alias CPHA : std_logic is ModeReg(7);
 alias RateDivReg : std_logic_vector(DivWidth -1 downto 0) is ModeReg(15 downto 8);
 alias CSReg : std_logic_vector(cswidth -1 downto 0) is  ModeReg(cswidth-1 +16 downto 16);
 alias CSTimerReg : std_logic_vector(4 downto 0) is ModeReg(28 downto 24);
-alias DontEcho : std_logic is ModeReg(31);
+alias SampleLate : std_logic is ModeReg(29);
 alias DontClearFrame : std_logic is ModeReg(30);
+alias DontEcho : std_logic is ModeReg(31);
 signal BitCount : std_logic_vector(5 downto 0);
 signal ClockFF: std_logic; 
 signal SPISreg: std_logic_vector(31 downto 0);
@@ -117,6 +118,7 @@ signal LFrame: std_logic;
 signal EFrame: std_logic;
 signal Dav: std_logic; 
 signal SPIInLatch: std_logic;
+signal SPIData: std_logic;
 signal FirstLeadingEdge: std_logic;
 signal CSTimer: std_logic_vector(4 downto 0);
 alias CSTimerDone: std_logic is CSTimer(4);
@@ -339,12 +341,17 @@ begin
 				CSTimer <= CSTimer -1;
 			end if;	
 			
-			if LFrame = '1' then 										-- single shift register SPI
+			if LFrame = '1' then 									-- single shift register SPI
 				if RateDiv = 0 then									-- maybe update to dual later to allow
 					RateDiv <= RateDivReg;							-- receive data skew adjustment
-					SPIInLatch <= spiin;
-					if ClockFF = '0' then
-						if BitCount(5) = '1' then
+					SPIInLatch <= spiin;								-- spi in data latched on every edge
+					if SampleLate = '1' then
+						SPIData <= spiin;
+					else
+						SPIData <= SPIInLatch;
+					end if;	
+					if ClockFF = '0' then							-- clock was low
+						if BitCount(5) = '1' then					-- underflow so done
 							LFrame <= '0';								-- LFrame cleared 1/2 SPI clock after GO
 							if DontClearFrame = '0' then
 								EFrame <= '0';							-- EFrame only cleared if DontClearFrame is false
@@ -354,15 +361,15 @@ begin
 						else						
 							ClockFF <= '1';
 						end if;	
-						if CPHA = '1'  and FirstLeadingEdge = '0' then				-- shift out on leading edge for CPHA = 1 case
-							SPISreg <= SPISreg(30 downto 0) & (SPIInLatch);
+						if CPHA = '1'  and FirstLeadingEdge = '0' then		-- shift out on leading edge for CPHA = 1 case
+							SPISreg <= SPISreg(30 downto 0) & SPIData;	-- shift in data is from previous faling edge
 						end if;
 						FirstLeadingEdge <= '0';						
-					else										-- clock was high
+					else													-- clock was high
 						ClockFF <= '0';
 						BitCount <= BitCount -1;	
-						if CPHA = '0' then				-- shift out on trailing edge for CPHA = 0 case
-							SPISreg <= SPISreg(30 downto 0) & (SPIInLatch);
+						if CPHA = '0' then											-- shift out on trailing edge for CPHA = 0 case
+							SPISreg <= SPISreg(30 downto 0) & SPIData; 	-- shift in data is from previous rising edge
 						end if;	
 					end if;	
 				else					
@@ -382,6 +389,12 @@ begin
 			end if;
 			
 		end if; -- clk
+		
+		if SampleLate = '1' then
+			SPIData <= spiin;
+		else
+			SPIData <= SPIInLatch;
+		end if;	
 
 		opushdata <= addr & ibus;					--  push address to select descriptor at far end of FIFO
 		descptr <= opopdata(35 downto 32);		--  here!
