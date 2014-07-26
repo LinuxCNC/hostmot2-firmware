@@ -34,27 +34,75 @@ import tempfile
 import textwrap
 import time
 
-common_vhdl = """
-IDROMConst.vhd
-atrans.vhd boutreg.vhd bufferedspi.vhd
-PinExists.vhd CountPinsInRange.vhd d8o8.vhd dpll.vhd hostmotid.vhd
-idrom.vhd irqlogic.vhd kubstepgenz.vhd MaxPinsPerModule.vhd
-NumberOfModules.vhd pwmpdmgenh.vhd pwmrefh.vhd qcounterate.vhd qcountersfp.vhd
-qcountersf.vhd simplespi8.vhd simplespix.vhd simplessi.vhd testram.vhd
-testrom.vhd threephasepwm.vhd timestamp.vhd uartr8.vhd uartr.vhd uartx8.vhd
-uartx.vhd ubrategen.vhd usbram.vhd usbrom.vhd watchdog.vhd wordpr.vhd
-wordrb.vhd
+common_vhdl = [
+    'IDROMConst.vhd',
 
-MaxIOPinsPerModule.vhd MaxInputPinsPerModule.vhd MaxOutputPinsPerModule.vhd
-ModuleExists.vhd OutputInteg.vhd b32qcondmac2w.vhd binosc.vhd d8o8sq.vhd
-daqfifo16.vhd decodedstrobe.vhd dpram.vhd drqlogic.vhd kubstepgenzi.vhd
-log2.vhd oneofndecode.vhd resolver.vhd resolverdaq2.vhd resrom.vhd resroms.vhd
-sine16.vhd sserial.vhd sslbprom.vhd syncwavegen.vhd twiddle.vhd twidrom.vhd
-wavegen.vhd waveram.vhd
+    'atrans.vhd',
+    'boutreg.vhd',
+    'bufferedspi.vhd',
+    'PinExists.vhd',
+    'CountPinsInRange.vhd',
+    'd8o8.vhd',
+    'dpll.vhd',
+    'hostmotid.vhd',
+    'idrom.vhd',
+    'irqlogic.vhd',
+    'kubstepgenz.vhd',
+    'MaxPinsPerModule.vhd',
+    'NumberOfModules.vhd',
+    'pwmpdmgenh.vhd',
+    'pwmrefh.vhd',
+    'qcounterate.vhd',
+    'qcountersfp.vhd',
+    'qcountersf.vhd',
+    'simplespi8.vhd',
+    'simplespix.vhd',
+    'simplessi.vhd',
+    'testram.vhd',
+    'testrom.vhd',
+    'threephasepwm.vhd',
+    'timestamp.vhd',
+    'uartr8.vhd',
+    'uartr.vhd',
+    'uartx8.vhd',
+    'uartx.vhd',
+    'ubrategen.vhd',
+    'usbram.vhd',
+    'usbrom.vhd',
+    'watchdog.vhd',
+    'wordpr.vhd',
+    'wordrb.vhd',
 
-hostmot2.vhd
+    'MaxIOPinsPerModule.vhd',
+    'MaxInputPinsPerModule.vhd',
+    'MaxOutputPinsPerModule.vhd',
+    'ModuleExists.vhd',
+    'OutputInteg.vhd',
+    'b32qcondmac2w.vhd',
+    'binosc.vhd',
+    'd8o8sq.vhd',
+    'daqfifo16.vhd',
+    'decodedstrobe.vhd',
+    'dpram.vhd',
+    'drqlogic.vhd',
+    'kubstepgenzi.vhd',
+    'log2.vhd',
+    'oneofndecode.vhd',
+    'resolver.vhd',
+    'resolverdaq2.vhd',
+    'resrom.vhd',
+    'resroms.vhd',
+    'sine16.vhd',
+    'sserial.vhd',
+    'sslbprom.vhd',
+    'syncwavegen.vhd',
+    'twiddle.vhd',
+    'twidrom.vhd',
+    'wavegen.vhd',
+    'waveram.vhd',
 
- """.split()
+    'hostmot2.vhd'
+]
 
 card2chip = {
     'i20': '2s200pq208',
