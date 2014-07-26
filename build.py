@@ -47,6 +47,7 @@ common_vhdl = [
     'd8o8.vhd',
     'dpll.vhd',
     'fanucabs.vhd',
+    'hmtimers.vhd',
     'hostmotid.vhd',
     'idrom.vhd',
     'irqlogic.vhd',
