@@ -69,8 +69,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity wordpr is
     generic (
-	 		size : integer := 24;
-			buswidth : integer := 32
+	 		size : integer;
+			buswidth : integer
 			);
 	 port (		
 	   	clear: in STD_LOGIC;
@@ -91,11 +91,11 @@ end wordpr;
 architecture behavioral of wordpr is
 
 signal outreg: std_logic_vector (size-1 downto 0);
-signal ddrreg: std_logic_vector (size-1 downto 0);
+signal ddrreg: std_logic_vector (size-1 downto 0):= (others => '0');
 signal tsoutreg: std_logic_vector (size-1 downto 0);
-signal opendrainsel: std_logic_vector (size-1 downto 0);
-signal altdatasel: std_logic_vector (size-1 downto 0);
-signal invertsel: std_logic_vector (size-1 downto 0);
+signal opendrainsel: std_logic_vector (size-1 downto 0):= (others => '0');
+signal altdatasel: std_logic_vector (size-1 downto 0):= (others => '0');
+signal invertsel: std_logic_vector (size-1 downto 0):= (others => '0') ;
 signal tdata: std_logic_vector (size-1 downto 0);
 signal tddr: std_logic_vector (size-1 downto 0);
 

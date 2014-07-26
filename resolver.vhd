@@ -169,7 +169,7 @@ signal ltestbit: std_logic;
 signal lsettestbit: std_logic;
 signal lclrtestbit: std_logic;
 
-constant UseSmallROM : boolean := true; -- need to promote to generic
+constant UseSmallROM : boolean := false; -- need to promote to generic
 
 begin
 
@@ -218,11 +218,11 @@ aproc: entity work.Big32v2 -- normally b32qcondmac2.vhd
 	DataRam : entity work.dpram 
 	generic map (
 		width => 32,
-		depth => 256 -- 512
+		depth => 512 --256
 				)
 	port map(
-		addra => mwadd(7 downto 0), --8
-		addrb => mradd(7 downto 0), --8
+		addra => mwadd(8 downto 0), --7
+		addrb => mradd(8 downto 0), --7
 		clk  => clk,
 		dina  => mobus,
 --		douta => 
@@ -294,7 +294,8 @@ aproc: entity work.Big32v2 -- normally b32qcondmac2.vhd
 		spiframe => spics,
 		channelsel0 => chan0,
 		channelsel1 => chan1,
-		channelsel2 => chan2
+		channelsel2 => chan2,
+		testout => testbit
 		
        );
 
@@ -332,7 +333,7 @@ aproc: entity work.Big32v2 -- normally b32qcondmac2.vhd
 
 	hostinterface : process (clk,lpwren, hloaddata, romwrena, hreadcommand, lcommandreg, hostreq, 
 	                         hreaddata, ldatareg, romdata, readvel, velramdata, lreadcommand, 
-									 hcommandreg, lreaddata, hdatareg, lstatusreg)
+									 hcommandreg, lreaddata, hdatareg, lstatusreg, hreadstatus, lreadccount, lcyclecount)
 	begin
 		-- first the writes
 		if rising_edge(clk) then
@@ -381,6 +382,7 @@ aproc: entity work.Big32v2 -- normally b32qcondmac2.vhd
 			end if;	
 
 			oldstartburst <= startburst;
+--			testbit <= startburst;
 		end if; -- clk
 		pwren <= not lpwren;											-- resolver drive power enable
 		
@@ -427,7 +429,7 @@ aproc: entity work.Big32v2 -- normally b32qcondmac2.vhd
 			iodata(7 downto 0) <= lcyclecount;
 			iodata(31 downto 8) <= (others => '0');
 		end if;
-		testbit <= ltestbit;
+--		testbit <= ltestbit;
 	end process hostinterface;	
 
 	localdecode : process (mradd,mwadd,ioradd,mwrite,mread)
@@ -463,7 +465,7 @@ aproc: entity work.Big32v2 -- normally b32qcondmac2.vhd
 		lloadvel        <= decodedstrobe(mwadd(11 downto 3),"010000010",mwrite);-- 0x410 to 0x417
 
 		lloadveli       <= decodedstrobe(mwadd(11 downto 3), "010000011",mwrite);-- 0x418 to 0x41F
-		lreadpos      	 <= decodedstrobe(ioradd(11 downto 3),"010000100",mread);-- 0x420 to 0x427
+		lreadpos      	 <= decodedstrobe(ioradd(11 downto 3),"010000100",'1');-- 0x420 to 0x427
 		
 	end process localdecode;	
 

@@ -189,10 +189,10 @@ begin
 			);	
   	end generate;
 
-	astepgen: process (clk,stepdirout, steprate, nextaccum, stepaccum,
-	                   dirholdwait, pulsewait, dpulsewait,
-							 dirsetupwait, pulsewidthcount, dirshcount, dirhold,
-							 readaccum, tabledata, stepmode, steppulse, stepmsbs)
+	astepgen: process (clk,stepdirout, steprate, nextaccum, stepaccum,dirshwait,
+	                   dirholdwait, pulsewait, dpulsewait,dirchange,wewouldcount,waitforpulse,
+							 dirsetupwait, pulsewidthcount, dirshcount, dirhold, waitforhold,
+							 readaccum, tabledata, stepmode, steppulse, stepmsbs,localout)
 	begin
 		if rising_edge(clk) then
 

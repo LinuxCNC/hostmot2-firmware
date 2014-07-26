@@ -1,8 +1,8 @@
-
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
+use ieee.numeric_std.all;
 use ieee.std_logic_unsigned.all;
+use ieee.math_real.all;
 --
 -- Copyright (C) 2007, Peter C. Wallace, Mesa Electronics
 -- http://www.mesanet.com
@@ -69,7 +69,7 @@ use ieee.std_logic_unsigned.all;
 -- 
 
 entity qcounterate is
-    generic ( defaultrate : std_logic_vector(11 downto 0));
+    generic ( clock : integer);
 	 port ( ibus : in  std_logic_vector (11 downto 0);
            loadrate : in  std_logic;
            rateout : out  std_logic;
@@ -78,13 +78,15 @@ entity qcounterate is
 end qcounterate;
 
 architecture Behavioral of qcounterate is
-signal rate: std_logic_vector (11 downto 0) := defaultrate; -- divides by n+2, 0x800 for divide by 1 
+constant defaultdivisor : real := round((real(clock)/16000000.0)) -2.0;
+signal rate: std_logic_vector(11 downto 0) := std_logic_vector(to_unsigned(integer(defaultdivisor),12)); 
 signal count: std_logic_vector (11 downto 0); 
 alias  countmsb: std_logic is  count(11);
 
 begin
 	arate: process (clk,count)
 	begin
+		report("Encoder rate divisor: "& real'image(defaultdivisor));
 		if rising_edge(clk) then	
 			if countmsb= '0' then 
 				count <= count -1;

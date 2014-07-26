@@ -76,38 +76,61 @@ use work.IDROMConst.all;
 
 
 -------------------- select one card type------------------------------
-use work.i20card.all;					-- needs 5i20.ucf and SP2 200K 208 pin
+use work.@Card@.all;
+--use work.i20card.all;					-- needs 5i20.ucf and SP2 200K 208 pin
 --use work.i65card.all;					-- needs 4i65.ucf and SP2 200K 208 pin
 
 -----------------------------------------------------------------------
 
 
 -------------------- select (or add) one pinout ---------------------------------
---use work.PIN_SVST2_8_GREG_72.all;
+use work.@Pin@.all;
+
 --use work.PIN_SVST8_4IM2_72.all;
---use work.PIN_SVST4_4IM2SI_72.all;
 --use work.PIN_SVST8_4_72.all;
---use work.PIN_SVST8_4P_72.all;
---use work.PIN_SVST8_3P_72.all;
+--use work.PIN_SVST6_6_7I48_72.all;
 --use work.PIN_SVST2_4_7I47_72.all;
+--use work.PIN_SSSVST2_2_4_7I47_72.all; -- mshaver
 --use work.PIN_SVST2_8_72.all;
 --use work.PIN_SV12_72.all;
---use work.PIN_SVSP8_6_7I46_72.all;
---use work.PIN_24XQCTRONLY_72.all;
 --use work.PIN_2X7I65_72.all;
 --use work.PIN_SV12IM_2X7I48_72.all;
---use work.PIN_SV12_3X7I47_72.all;
---use work.PIN_SVUA8_4_72.all;
 --use work.PIN_TPEN6_6_72.all;
---use work.PIN_SVWG8_2IM2_72.all;
---use work.PIN_SVTW8_24_24_72.all;
---use work.PIN_SVTW4_1_10_72.all;
---use work.PIN_SVST1_4_7I47_72.all;
+--use work.PIN_SVST1_4_7I47S_72.all;
 --use work.PIN_SVSS4_4_72.all;
 --use work.PIN_SVSS6_6_72.all;
+--use work.PIN_SVST6_6_7I52S_72.all;
+--use work.PIN_SVSS8_8_72.all;
+--use work.PIN_SVSS4_8_72.all;
+--use work.PIN_SVSS6_8_72.all;
+--use work.PIN_SVTP6_7I39_72.all;
+--use work.PIN_SVST6_1_72.all;
+--use work.PIN_SV6_7I52S_72.all;
+--use work.PIN_SVST1_4_7I47DA_72.all;
+--use work.PIN_7I65_7I44_72.all;
+--use work.PIN_7I77_72.all;			-- 7i77 with adapter
+--use work.PIN_SV4_7I47S_72.all;
+
+-- custom and specials
+--use work.PIN_SS8_72.all;
+--use work.PIN_SV12_3X7I47_72.all;
+--use work.PIN_SVSP8_6_7I46_72.all;
+--use work.PIN_SVST8_4P_72.all;
+--use work.PIN_SVST8_3P_72.all;
+--use work.PIN_SVST4_4IM2SI_72.all;
+--use work.PIN_SVTW4_1_10_72.all;
+--use work.PIN_SVUA8_4_72.all;
+--use work.PIN_UASVST2_2_4_7I47_72.all;
+--use work.PIN_24XQCTRONLY_72.all;
+--use work.PIN_SVTW8_24_24_72.all;
+--use work.PIN_SVWG8_2IM2_72.all;
 --use work.PIN_PW64_72.all;
-use work.PIN_SV6_7I49_72.all; -- fits????
 --use work.PIN_MG_72.all;
+--use work.PIN_SV6_7I49_72.all; -- no fit without high magic
+--use work.PIN_SVST2_8_GREG_72.all;
+--use work.PIN_SVST6_6_RUDY_72.all;
+--use work.PIN_SVST6_4_7I52S_72.all;
+--use work.PIN_SVSTSS5_4_3_72.all;
 ------------------------------------------------------------------------
 	
 	
@@ -128,9 +151,9 @@ entity Top9030HostMot2 is -- for 5I20 and 4I65 PCI 9030 based cards
 		BusWidth: integer := 32;
 		AddrWidth: integer := 16;
 		InstStride0: integer := 4;			-- instance stride 0 = 4 bytes = 1 x 32 bit
-		InstStride1: integer := 64;		-- instance stride 1 = 64 bytes = 16 x 32 bit registers
+		InstStride1: integer := 64;		-- instance stride 1 = 64 bytes = 16 x 32 bit registers (UART needs 16)
 		RegStride0: integer := 256;		-- register stride 0 = 256 bytes = 64 x 32 bit registers
-		RegStride1: integer := 256      -- register stride 1 = 256 bytes - 64 x 32 bit
+		RegStride1: integer := 256      	-- register stride 1 = 256 bytes - 64 x 32 bit
 
 		);
 	port 
@@ -189,15 +212,17 @@ signal EnableHS:  std_logic;
 	
 -- CLK multiplier DLL signals
 
-signal FClk: STD_LOGIC; 												-- high speed clock = 100 MHz
-signal Clk0: STD_LOGIC;
-signal CLK2X: STD_LOGIC;
+signal FClk: std_logic; 												-- high speed clock = 100 MHz
+signal Clk0: std_logic;
+signal CLK2X: std_logic;
+signal clkmed: std_logic;
+
 
 begin
 
   CombinedClock: if (not Sepclocks) generate
   
-     CLKDLL_inst : CLKDLL
+     CLKDLL_inst3 : CLKDLL
    generic map (
       CLKDV_DIVIDE => 2.0, --  Divide by: 1.5,2.0,2.5,3.0,4.0,5.0,8.0 or 16.0
       DUTY_CYCLE_CORRECTION => TRUE, --  Duty cycle correction, TRUE or FALSE
@@ -211,17 +236,23 @@ begin
       RST => '0'        -- DLL asynchronous reset input
    );
   
-  BUFG_inst : BUFG
+  BUFG_inst3 : BUFG
    port map (
-      O => FClk,    -- Clock buffer output
-      I => CLK2X      -- Clock buffer input
+      O => FClk,			-- HS Clock buffer output
+      I => CLK2X			-- Clock buffer input
+   );
+
+  BUFG_inst1 : BUFG
+   port map (
+      O => clkmed,		-- Processor Clock buffer output
+      I => CLK0			-- Clock buffer input
    );
 	
 	end generate;
 
   SeparateClock: if Sepclocks generate
   
-    CLKDLL_inst : CLKDLL
+    CLKDLL_inst3 : CLKDLL
    generic map (
       CLKDV_DIVIDE => 2.0, --  Divide by: 1.5,2.0,2.5,3.0,4.0,5.0,8.0 or 16.0
       DUTY_CYCLE_CORRECTION => TRUE, --  Duty cycle correction, TRUE or FALSE
@@ -229,16 +260,22 @@ begin
       STARTUP_WAIT => FALSE)  --  Delay config DONE until DLL LOCK, TRUE/FALSE
    port map (
       CLK0 => CLK0,     -- 0 degree DLL CLK output
-		CLKFB =>FClk,		-- DLL feedback
+                CLKFB =>clkmed,          -- DLL feedback
 		CLK2X => CLK2X,   -- 2X DLL CLK output
       CLKIN => SYNCLK,  -- Clock input (from IBUFG, BUFG or DLL)
       RST => '0'        -- DLL asynchronous reset input
    );
   
-  BUFG_inst : BUFG
+  BUFG_inst3 : BUFG
    port map (
-      O => FClk,    -- Clock buffer output
-      I => CLK2X      -- Clock buffer input
+      O => FClk,			-- HS Clock buffer output
+      I => CLK2X			-- Clock buffer input
+   );
+
+  BUFG_inst1 : BUFG
+   port map (
+      O => clkmed,		-- Processor Clock buffer output
+      I => CLK0			-- Clock buffer input
    );
 	
 	end generate;
@@ -259,6 +296,7 @@ ahostmot2: entity HostMot2
 		offsettomodules  => OffsetToModules,
 		offsettopindesc  => OffsetToPinDesc,
 		clockhigh  => ClockHigh,
+		clockmed => ClockMed,
 		clocklow  => ClockLow,
 		boardnamelow => BoardNameLow,
 		boardnamehigh => BoardNameHigh,
@@ -282,26 +320,41 @@ ahostmot2: entity HostMot2
 		addr => NextA,
 		readstb => ReadStb,
 		writeStb => WriteStb,
-		clklow => LCLK,
-		clkhigh =>  FClk,
+		clklow => LCLK,					-- local bus clock 33.3 MHz
+                clkmed  => clkmed,                                       -- processor clock 50 MHz
+		clkhigh =>  FClk,					-- high speed clock 100 MHz
 		int => INT, 
 		iobits => IOBITS,			
 		leds => LEDS	
 		);
-
-	LADDrivers: process (DPipe,ReadTSEn,LCLK)
-	begin 
-		if rising_edge(LCLK) then
-			DPipe <= D;
-			LADPipe <= LAD;
-		end if;
 		
-		if ReadTSEn ='1' then	
-			LAD <= DPipe;
-		else
-			LAD <= "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";			
-		end if;
-	end process LADDrivers;
+   OneWaitStateDPath: if OneWS generate
+		WSLADDrivers: process (DPipe,ReadTSEn,LCLK)
+		begin 
+			if rising_edge(LCLK) then
+				DPipe <= D;
+				LADPipe <= LAD;
+			end if;
+		
+			if ReadTSEn ='1' then	
+				LAD <= DPipe;
+			else
+				LAD <= "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";			
+			end if;
+		end process WSLADDrivers;
+	end generate;
+
+   NoWaitStateDPath: if not OneWS generate	
+		NoWSLADDrivers: process (D)
+		begin 		
+			LADPipe <= LAD;
+			if ReadTSEn ='1' then	
+				LAD <= D;
+			else
+				LAD <= "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";			
+			end if;
+		end process NoWSLADDrivers;
+	end generate;
 
 	BusCycleGen: process (LCLK,ADS, LAD, ReadyFF, A, Burst, LW_RPipe)				-- added 1 wait state (read/write)
 	begin
@@ -309,6 +362,7 @@ ahostmot2: entity HostMot2
 			A <= NextA;								-- always update our latched address
 	  		if ADS = '0' then						-- if *ADS then latch address & indicate start of burst
 				Burst <= '1';
+				ReadyFF <= '0';					-- always start off not ready
 			end if;
 
 			if BLAST = '0' and ReadyFF= '1' then	  			-- end of burst
@@ -318,11 +372,9 @@ ahostmot2: entity HostMot2
 			if OneWS then			
 				if Burst = '1' then
 					ReadyFF <= not ReadyFF; 		-- just one wait state so toggle ReadyFF
-				else
-					ReadyFF <= '0';					-- idle not ready
 				end if;
 			else
-				ReadyFF <= '1';						-- always ready if OneWS not used
+				ReadyFF <= '1';						-- always ready if OneWS not used (not complete)
 			end if;
 			LW_RPipe <= LW_R;
 		end if; -- lclk
@@ -339,7 +391,12 @@ ahostmot2: entity HostMot2
 		WriteStb <= Burst and LW_RPipe and ReadyFF; 			-- A write is any time during burst when LW_R is high and ReadyFF is high
 																		-- Note that write writes the data from the LADPipe register to the destination						
 		ReadTSEn <= Burst and not LW_RPipe;		         -- ReadTSEn is any time during burst when LW_R is low  = tri state enable on DPipe output			
-		ReadStb <= Burst and not LW_RPipe and not ReadyFF;	-- A read is any time during burst when LW_R is low and ReadyFF is low = internal read data enable to DPipe input			
+
+		if OneWS then
+			ReadStb <= Burst and not LW_RPipe and not ReadyFF;	-- A read is any time during burst when LW_R is low and ReadyFF is low = internal read data enable to DPipe input			
+		else
+			ReadStb <= ReadTSEn;
+		end if;
 		
 		READY <= not ReadyFF;									-- note: target only! 	
 	end process BusCycleGen;

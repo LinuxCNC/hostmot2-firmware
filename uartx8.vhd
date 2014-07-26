@@ -163,7 +163,7 @@ begin
 
 	
 
-	afifo: process (clk,popdata,datacounter)
+	afifo: process (clk,popdata,datacounter,lfifoempty)
 	begin
 		if rising_edge(clk) then
 			
@@ -196,8 +196,11 @@ begin
 		fifohasdata <= not lfifoempty;		 
 	end process afifo;
 
-
-	asimpleuarttx: process (clk)
+	asimpleuarttx: process (clk,OldDDSMSB, BitrateDDSAccum, ibus, pushfifo,
+									clrfifo, DriveDelayCount, DriveEnable, DriveEnAuto,
+									Go, pop, fifohasdata, txen, ModeReg, readfifocount,
+									datacounter, readbitratel, BitrateDDSReg, readbitratem, 
+									readbitrateh, readmode, SReg, lfifoempty, waitingfordrive )
 	begin
 		if rising_edge(clk) then
 			if Go = '1' then 

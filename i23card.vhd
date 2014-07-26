@@ -71,6 +71,7 @@ use work.IDROMConst.all;
 package i23card is
 		-- 5i23 card specific info
 		constant ClockHigh: integer := ClockHigh23;
+		constant ClockMed: integer := ClockMed23;
 		constant ClockLow: integer := ClockLow23;
 		constant BoardNameLow : std_Logic_Vector(31 downto 0) := BoardNameMESA;
 		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName5i23;

@@ -71,6 +71,7 @@ use work.IDROMConst.all;
 package i22_1500card is
 		-- 5I22_1500 card specific info
 		constant ClockHigh: integer := ClockHigh22;
+		constant ClockMed: integer := ClockMed22;
 		constant ClockLow: integer := ClockLow22;
 		constant BoardNameLow : std_Logic_Vector(31 downto 0) := BoardNameMESA;
 		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName5i22;

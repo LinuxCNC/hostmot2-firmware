@@ -170,6 +170,10 @@ architecture Behavioral of Big32v2 is
   constant ldmacb : std_logic_vector (3 downto 0) := x"9";
   constant ldmact : std_logic_vector (3 downto 0) := x"A";
   constant ashr   : std_logic_vector (3 downto 0) := x"B";
+-- constant bitset?
+-- constant bitclr?  
+-- constant setbit
+-- constant	clrbit
   
 -- index register load/store in address order 	-- 8IXXXXh
   constant ldx   : std_logic_vector (3 downto 0) := x"0";
@@ -199,7 +203,7 @@ architecture Behavioral of Big32v2 is
   signal maskedcarry : std_logic;
   signal macc : std_logic_vector (macwidth-1 downto 0);  -- macccumulator
   alias mmsb : std_logic is macc(macwidth-1);
-  alias mnmsbs : std_logic_vector(7 downto 0) is macc(macwidth-2 downto macwidth-8);
+  alias mnmsbs : std_logic_vector(6 downto 0) is macc(macwidth-2 downto macwidth-8);
   signal macnext : std_logic;
 
   signal pc        : std_logic_vector (paddwidth -1 downto 0); -- program counter - 12 bits = 4k
@@ -421,7 +425,7 @@ begin  -- the CPU
 						when rotcl     => accumcar <= rotcleft(accumcar);		-- rotate left through carry
 						when rotcr     => accumcar <= rotcright(accumcar); 	-- rotate right through carry
 						when ashr      => accumcar(width-2 downto 0) <= accumcar(width-1 downto 1);    
-											   accumcar(width) <= accumcar(0);		-- shift right arithmetic (through carry
+											   accumcar(width-1) <= accumcar(width-1);		-- shift right arithmetic (fixed 7/24/12)
 						when wswp      => accum <= wordswap(accum); 				-- word swap
 						when sxw			=> accum <= signextendword(accum);		-- sign extend 16 bit value in low half
 						when clrmac		=> macc <= (others => '0');				-- clear the macc

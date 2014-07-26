@@ -71,6 +71,7 @@ use work.IDROMConst.all;
 package i43_200card is
 		-- 7i43_200 card specific info
 		constant ClockHigh: integer := ClockHigh43;
+		constant ClockMed: integer := ClockMed43;
 		constant ClockLow: integer := ClockLow43;
 		constant BoardNameLow : std_Logic_Vector(31 downto 0) := BoardNameMESA;
 		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName7I43;

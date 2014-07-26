@@ -191,7 +191,7 @@ signal lreadclock: std_logic;
 signal baseclockslv: std_logic_vector(31 downto 0);
 begin
 
-	processor: entity work.DumbAss8sq	
+	processor: entity work.DumbAss8sqw	
 	port map (
 		clk		 => clk,
 		reset	  => romwrena,

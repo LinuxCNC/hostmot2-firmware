@@ -73,9 +73,9 @@ package PIN_SVSS6_6_72 is
 	constant ModuleID : ModuleIDType :=( 
 		(WatchDogTag,	x"00",	ClockLowTag,	x"01",	WatchDogTimeAddr&PadT,		WatchDogNumRegs,		x"00",	WatchDogMPBitMask),
 		(IOPortTag,		x"00",	ClockLowTag,	x"03",	PortAddr&PadT,					IOPortNumRegs,			x"00",	IOPortMPBitMask),
-		(MuxedQcountTag,		x"02",	ClockLowTag,	x"06",	MuxedQcounterAddr&PadT,		MuxedQCounterNumRegs,x"00",	MuxedQCounterMPBitMask),
+		(MuxedQcountTag,		MQCRev,	ClockLowTag,	x"06",	MuxedQcounterAddr&PadT,		MuxedQCounterNumRegs,x"00",	MuxedQCounterMPBitMask),
 		(MuxedQCountSelTag,	x"00",	ClockLowTag,	x"01",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
-		(SSerialTag,	x"00",	ClockLowTag,	x"01",	SSerialCommandAddr&PadT,	SSerialNumRegs,		x"00",	SSerialMPBitMask),
+		(SSerialTag,	x"00",	ClockLowTag,	x"01",	SSerialCommandAddr&PadT,	SSerialNumRegs,		x"10",	SSerialMPBitMask),
 		(LEDTag,			x"00",	ClockLowTag,	x"01",	LEDAddr&PadT,					LEDNumRegs,				x"00",	LEDMPBitMask),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
@@ -107,30 +107,31 @@ package PIN_SVSS6_6_72 is
 		
 	constant PinDesc : PinDescType :=(
 -- 	Base func  sec unit sec func 	 sec pin		
-		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 00
-		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 01
-		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 02
-		IOPortTag & x"01" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 03
-		IOPortTag & x"01" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 04
-		IOPortTag & x"01" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 05
-		IOPortTag & x"02" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 06
-		IOPortTag & x"02" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 07
-		IOPortTag & x"02" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 08
-		IOPortTag & x"00" & MuxedQCountSelTag & MuxedQCountSel0Pin,	-- I/O 09
-		IOPortTag & x"00" & NullTag & x"00",       						-- I/O 10
-		IOPortTag & x"00" & NullTag & x"00",       						-- I/O 11
- 		IOPortTag & x"00" & SSerialTag & SSerialRX0Pin, 				-- I/O 12
- 		IOPortTag & x"00" & SSerialTag & SSerialRX1Pin, 				-- I/O 13
- 		IOPortTag & x"00" & SSerialTag & SSerialRX2Pin, 				-- I/O 14
- 		IOPortTag & x"00" & SSerialTag & SSerialRX3Pin, 				-- I/O 15
- 		IOPortTag & x"00" & SSerialTag & SSerialRX4Pin, 				-- I/O 16
- 		IOPortTag & x"00" & SSerialTag & SSerialRX5Pin,					-- I/O 17
- 		IOPortTag & x"00" & SSerialTag & SSerialTX0Pin,					-- I/O 18
-		IOPortTag & x"00" & SSerialTag & SSerialTX1Pin,					-- I/O 19
- 		IOPortTag & x"00" & SSerialTag & SSerialTX2Pin,					-- I/O 20
-		IOPortTag & x"00" & SSerialTag & SSerialTX3Pin,					-- I/O 21
-		IOPortTag & x"00" & SSerialTag & SSerialTX4Pin,					-- I/O 22
-		IOPortTag & x"00" & SSerialTag & SSerialTX5Pin,					-- I/O 23
+		IOPortTag & x"00" & SSerialTag & SSerialTXEN3Pin, 				-- I/O 00
+		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 01
+		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 02
+		IOPortTag & x"00" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 03
+		IOPortTag & x"01" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 04
+		IOPortTag & x"01" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 05
+		IOPortTag & x"01" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 06
+		IOPortTag & x"02" & MuxedQCountTag & MuxedQCountQAPin,		-- I/O 07
+		IOPortTag & x"02" & MuxedQCountTag & MuxedQCountQBPin,		-- I/O 08
+		IOPortTag & x"02" & MuxedQCountTag & MuxedQCountIDXPin,		-- I/O 09
+		IOPortTag & x"00" & MuxedQCountSelTag & MuxedQCountSel0Pin,	-- I/O 10
+		IOPortTag & x"00" & SSerialTag & SSerialTX5Pin,					-- I/O 11
+ 		IOPortTag & x"00" & SSerialTag & SSerialRX5Pin,					-- I/O 12
+		IOPortTag & x"00" & SSerialTag & SSerialTX4Pin,            	-- I/O 13
+		IOPortTag & x"00" & SSerialTag & SSerialRX4Pin,            	-- I/O 14
+		IOPortTag & x"00" & SSerialTag & SSerialTX3Pin,	           	-- I/O 15
+ 		IOPortTag & x"00" & SSerialTag & SSerialRX3Pin,            	-- I/O 16
+ 		IOPortTag & x"00" & SSerialTag & SSerialTX2Pin,            	-- I/O 17
+ 		IOPortTag & x"00" & SSerialTag & SSerialRX2Pin,            	-- I/O 18
+		IOPortTag & x"00" & SSerialTag & SSerialTX1Pin,            	-- I/O 19
+ 		IOPortTag & x"00" & SSerialTag & SSerialRX1Pin,            	-- I/O 20
+ 		IOPortTag & x"00" & SSerialTag & SSerialTX0Pin,  		      -- I/O 21
+		IOPortTag & x"00" & SSerialTag & SSerialRX0Pin,            	-- I/O 22
+		IOPortTag & x"00" & SSerialTag & SSerialTXEN0Pin,          	-- I/O 23
+
 					
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 24
 		IOPortTag & x"00" & NullTag & x"00",					-- I/O 25

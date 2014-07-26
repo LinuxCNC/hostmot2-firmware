@@ -71,9 +71,10 @@ use work.IDROMConst.all;
 package i22_1000card is
 		-- 5I22_1000 card specific info
 		constant ClockHigh: integer := ClockHigh22;
+		constant ClockMed: integer := ClockMed22;
 		constant ClockLow: integer := ClockLow22;
 		constant BoardNameLow : std_Logic_Vector(31 downto 0) := BoardNameMESA;
-		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName5i22;
+		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName5I22;
 		constant FPGASize: integer := 1000;
 		constant FPGAPins: integer := 320;
 		constant IOPorts: integer := 4;

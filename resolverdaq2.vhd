@@ -76,6 +76,7 @@ entity resolverdaq2 is -- specific SPI DAQ subsystem for AD7265 type A-D chips f
 		ioradd0: in std_logic;
 		readram : in std_logic;
 		loadmode : in std_logic;
+--		readmode : in std_logic;
 		clear : in std_logic;
 		readstat: in std_logic;
 		startburst: in std_logic;
@@ -85,7 +86,8 @@ entity resolverdaq2 is -- specific SPI DAQ subsystem for AD7265 type A-D chips f
 		spiframe: out std_logic;
 		channelsel0: out std_logic;
 		channelsel1: out std_logic;
-		channelsel2: out std_logic
+		channelsel2: out std_logic;
+		testout: out std_logic
 		
        );
 end resolverdaq2;
@@ -99,12 +101,12 @@ constant DivWidth: integer := 4;
 
 signal RateDiv : std_logic_vector(DivWidth -1 downto 0);
 signal ModeReg : std_logic_vector(31 downto 0);
-alias  BitcountReg : std_logic_vector(4 downto 0) is ModeReg(4 downto 0);
+alias  BitcountReg : std_logic_vector(4 downto 0) is ModeReg(4 downto 0); -- bits are N+1
 alias	SwapMem : std_logic is ModeReg(5);
 alias CPOL : std_logic is ModeReg(6);
 alias CPHA : std_logic is ModeReg(7);
-alias RateDivReg : std_logic_vector(DivWidth -1 downto 0) is ModeReg(11 downto 8);  -- sets SPI shift clock rate
-alias  BurstDivReg : std_logic_vector(11 downto 0) is ModeReg(23 downto 12);	-- sets A-D conversion rate during burst
+alias RateDivReg : std_logic_vector(DivWidth -1 downto 0) is ModeReg(11 downto 8);  -- sets SPI shift clock rate CLK/(2*(N+1))
+alias  BurstDivReg : std_logic_vector(11 downto 0) is ModeReg(23 downto 12);	-- sets A-D conversion rate during burst CLK/(N+2);
 alias  BurstCountReg : std_logic_vector(7 downto 0) is ModeReg(31 downto 24); -- sets length of A-D burst
 signal fixaddr0 : std_logic;
 signal burstcount: std_logic_vector(7 downto 0);
@@ -113,11 +115,11 @@ alias burstcountmsb : std_logic is burstcount(7);
 signal oldburstcountmsb: std_logic; 
 alias burstdivmsb : std_logic is burstdiv(11);
 signal BitCount : std_logic_vector(4 downto 0);
-alias BitCountMSB : std_logic is BitCOunt(4);
+alias BitCountMSB : std_logic is BitCount(4);
 signal ClockFF: std_logic; 
 signal SPISReg0: std_logic_vector(15 downto 0);
 signal SPISReg1: std_logic_vector(15 downto 0);
-signal LFrame: std_logic; 
+signal LFrame: std_logic := '0'; 
 signal Dav: std_logic; 
 signal SPIIn0Latch: std_logic;
 signal SPIIn1Latch: std_logic;
@@ -156,7 +158,8 @@ begin
 		);
 
 	aresolverdaq2: process (clk,SPISReg1, SPISReg0, Channel, ClockFF, 
-	                       ModeReg, LFrame, readram, hostaddr, hostdata)
+	                       ModeReg, LFrame, readram, hostaddr, hostdata,
+								   BitCount, ioradd0, readstat, daqaddr)
 	begin
 		if rising_edge(clk) then
 			if loadmode = '1' then
@@ -188,7 +191,7 @@ begin
 			end if;
 			
 			if burstcountmsb = '1' and oldburstcountmsb = '0' then -- set ptr reset request at end of burst
-					daqreset <= '1';
+				daqreset <= '1';
 			end if;						
 		
 			if startburst = '1' and oldstartburst = '0' then
@@ -230,7 +233,7 @@ begin
 							SPISreg1 <= SPISreg1(14 downto 0) & (SPIIn1Latch);
 						end if;
 						FirstLeadingEdge <= '0';						
-					else										-- clock was high
+					else										-- clockff is '1'
 						ClockFF <= '0';
 						BitCount <= BitCount -1;	
 						if CPHA = '0' then				-- shift out on trailing edge for CPHA = 0 case
@@ -255,7 +258,7 @@ begin
 			oldburstcountmsb <= burstcountmsb;
 		end if; -- clk
 		
-		if bitcount = x"A" then  -- change mux 3 clocks into conversion
+		if bitcount(3 downto 0) = x"A" then  -- change mux 3 clocks into conversion
 			muxtime <= '1';
 		else
 			muxtime <= '0';
@@ -274,7 +277,7 @@ begin
 		if readram = '1' then
 			-- all this mungeology is to take the signed 12 bit A-D data
 			-- and present it to the processor as 12 bit number sign extended to 32 bits
-			-- it may get removed if theres enough time at 10 KHz sample frequency
+			-- it may get removed if there's enough time at 10 KHz sample frequency
 			if fixaddr0 = '0' then
 				obus(11 downto 0) <= hostdata(11 downto 0);  -- for 7265/66
 			else
@@ -291,7 +294,7 @@ begin
 		if readstat = '1' then
 			obus(8 downto 0) <= daqaddr;
 		end if;
-		
+		testout <= bitcount(2);
 	end process aresolverdaq2;
 	
 end Behavioral;

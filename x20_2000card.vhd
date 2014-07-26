@@ -71,6 +71,7 @@ use work.IDROMConst.all;
 package x20_2000card is
 		-- 3x20_2000 card specific info. Note: ISE only! Webpack users are out in the cold
 		constant ClockHigh: integer := ClockHighx20;
+		constant ClockMed: integer := ClockMedx20;
 		constant ClockLow: integer := ClockLowx20;
 		constant BoardNameLow : std_Logic_Vector(31 downto 0) := BoardNameMESA;
 		constant BoardNameHigh : std_Logic_Vector(31 downto 0) := BoardName3x20;
