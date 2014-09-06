@@ -282,8 +282,10 @@ if 'XILINX' in os.environ:
     print "XILINX environment variable already set, not overriding"
 else:
     for ise in card2ise[card]:
-        if os.path.exists(str(ise)):
-            settings_sh = str(ise)
+        localsettings = os.path.abspath("settings%d.sh" % ise)
+        if os.path.exists(localsettings):
+            if os.path.islink(localsettings): localsettings = os.readlink(localsettings)
+            settings_sh = localsettings
             break
 
         files = glob.glob('/opt/Xilinx/%s/*/settings32.sh' % ise)
