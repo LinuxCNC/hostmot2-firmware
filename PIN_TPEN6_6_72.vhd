@@ -182,6 +182,9 @@ package PIN_TPEN6_6_72 is
 		IOPortTag & x"00" & NullTag & NullPin,       	-- I/O 70
 		IOPortTag & x"00" & NullTag & NullPin,       	-- I/O 71
 		
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
+		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
+
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
