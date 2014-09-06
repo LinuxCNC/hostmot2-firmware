@@ -33,6 +33,7 @@ import sys
 import tempfile
 import textwrap
 import time
+import cards
 
 common_vhdl = [
     'IDROMConst.vhd',
@@ -120,93 +121,8 @@ common_vhdl = [
     'hostmot2.vhd'
 ]
 
-card2chip = {
-    'i20': '2s200pq208',
-    'i22_1000': '3s1000fg320',
-    'i22_1500': '3s1500fg320',
-    'i23': '3s400pq208',
-    'i43_200': '3s200tq144',
-    'i43_400': '3s400tq144',
-    'i65': '2s200pq208',
-    'i68': '3s400pq208',
-    'x20_1000': '3s1000fg456',
-    'x20_1500': '3s1500fg456',
-    'x20_2000': '3s2000fg456',
-}
-
-topmodule = {
-    'i20': 'Top9030HostMot2',
-    'i22_1000': 'Top9054HostMot2',
-    'i22_1500': 'Top9054HostMot2',
-    'i23': 'Top9054HostMot2',
-    'i43_200': 'TopEPPHostMot2',
-    'i43_400': 'TopEPPHostMot2',
-    'i65': 'Top9030HostMot2',
-    'i68': 'Top9054HostMot2',
-    'x20_1000': 'Top9054HostMot2',
-    'x20_1500': 'Top9054HostMot2',
-    'x20_2000': 'Top9054HostMot2',
-}
-
-card2top = {
-    'i20': 'Top9030HostMot2.vhd',
-    'i22_1000': 'Top9054HostMot2.vhd',
-    'i22_1500': 'Top9054HostMot2.vhd',
-    'i23': 'Top9054HostMot2.vhd',
-    'i43_200': 'TopEPPHostMot2.vhd',
-    'i43_400': 'TopEPPHostMot2.vhd',
-    'i65': 'Top9030HostMot2.vhd',
-    'i68': 'Top9054HostMot2.vhd',
-    'x20_1000': 'Top9054HostMot2.vhd',
-    'x20_1500': 'Top9054HostMot2.vhd',
-    'x20_2000': 'Top9054HostMot2.vhd',
-}
-
-# list the preferred versions of ise for each card type
-# list entries can be the name of the settings.sh file to use (specify an
-# absolute path), or a Xilinx version number (and this build script will
-# try the default install location for that version)
-# ISE 10 is the last one that supports the Spartan2 FPGA (in the 5i20 and 4i65)
-# FIXME: should this be by chip type instead?
-card2ise = {  # have to fill out the rest of this stupid table...
-    'i20': (10, 9),
-    'i65': (10, 9),
-
-    'x20_2000': (13, 10),
-    'x20_1000': (13, 10, 9),
-    'i22_1500': (13, 10, 9),
-    'i22_1000': (13, 10, 9),
-    'i23':      (13, 10, 9),
-    'i68':      (13, 10, 9),
-    'i43_400':  (13, 10, 9),
-    'i43_200':  (13, 10, 9)
-}
-
-# done - 6
-# enable outputs - 5
-# release write enable - 4
-bitgen_extra = {
-    'epp': ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4', '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait'],
-    '9054': ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4', '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait'],
-    '9030': ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4', '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait'],
-}
-
-card2card = {
-    'i20': '5i20',
-    'i22_1000': '5i22',
-    'i22_1500': '5i22',
-    'i23': '5i23',
-    'i43_200': '7i43',
-    'i43_400': '7i43',
-    'i65': '4i65',
-    'i68': '4i68',
-    'x20_1000': '7i68',
-    'x20_1500': '7i68',
-    'x20_2000': '7i68',
-}
-
 def help_cards():
-    available = sorted(card2card.keys())
+    available = sorted(card.__name__ for card in cards.__dict__.values() if hasattr(card, 'name'))
     return "\n" + "\n".join(
         textwrap.wrap("Available cards: " + " ".join(available),
             subsequent_indent=" "*8)) + "\n"
@@ -262,8 +178,10 @@ if len(sys.argv) != 3 and len(sys.argv) != 4:
     usage()
 
 card, pin = sys.argv[1:3]
-if card not in card2card:
-    usage("Uknown card %r" % card)
+try:
+    card = cards.get_card(card)
+except KeyError:
+    usage("Unknown card %r" % card)
 
 if not os.path.exists("PIN_" + pin + ".vhd"):
     usage("Unknown pin configuration %r" % pin, card)
@@ -272,7 +190,7 @@ orgdir = os.getcwd()
 if len(sys.argv) == 4:
     outfile = os.path.join(orgdir, sys.argv[3])
 else:
-    outfile = os.path.join(orgdir, "%s_%s.BIT"% (card2card[card], pin))
+    outfile = os.path.join(orgdir, "%s_%s.BIT"% (card.card, pin))
 
 # Xilinx Webpack 10.1 and 13.3 both install into /opt/Xilinx/,
 # into 10.1/ and 13.3/.
@@ -281,7 +199,7 @@ else:
 if 'XILINX' in os.environ:
     print "XILINX environment variable already set, not overriding"
 else:
-    for ise in card2ise[card]:
+    for ise in card.iseversions:
         localsettings = os.path.abspath("settings%d.sh" % ise)
         if os.path.exists(localsettings):
             if os.path.islink(localsettings): localsettings = os.readlink(localsettings)
@@ -308,7 +226,7 @@ else:
 
     else:
         usage("Firmware requires one of these ise major versions to build: %s"
-                % " ".join(map(str, card2ise[card])))
+                % " ".join(map(str, card.iseversions)))
 
     print "using Xilinx Webpack settings '%s'" % settings_sh
 
@@ -320,11 +238,11 @@ orgdir = os.getcwd()
 def s(*x): return os.path.join(orgdir, *x)
 def p(*x): return os.path.join(d, *x)
 
-constraints = s("%s.ucf" % card2card[card])
+constraints = s("%s.ucf" % card.card)
 
-cardvhdl = card+"card"
+cardvhdl = card.name+"card"
 pinvhdl = "PIN_" + pin
-topfile_in = card2top[card]
+topfile_in = (getattr(card, 'topvhdl', '') or getattr(card, 'topmodule', '')) + ".vhd"
 topfile_out = os.path.splitext(outfile)[0] + ".vhd"
 subst(topfile_in, topfile_out, CARD=cardvhdl, PIN=pinvhdl);
 
@@ -348,7 +266,7 @@ run
 -top %s
 -ofmt ngc -ofn work.ngc
 -p %s
-""" % (topmodule[card], card2chip[card]))
+""" % (card.topmodule, card.chip))
 
 # top, card, pin
 prjf = open("prj", "w")
@@ -375,7 +293,7 @@ try:
     run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
 
     # Bitgen
-    bitgen_args = bitgen_extra.get(card2top[card], []) + ["work.ncd", "work.bit", "work.pcf"]
+    bitgen_args = card.bitgen_extra + ["work.ncd", "work.bit", "work.pcf"]
     run("bitgen", "-w", *bitgen_args) 
 
     shutil.copy("work.bit", outfile)

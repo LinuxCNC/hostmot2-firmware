@@ -19,31 +19,8 @@
 import os
 import sys
 
-name = {
-    'i20': 'Mesa 5i20',
-    'i22_1000': 'Mesa 5i22-1',
-    'i22_1500': 'Mesa 5i22-1.5',
-    'i23': 'Mesa 5i23',
-    'i43_200': 'Mesa 7i43-2',
-    'i43_400': 'Mesa 7i43-4',
-    'i65': 'Mesa 4i65',
-    'i68': 'Mesa 4i68',
-    'x20_1000': 'Mesa 3x20-1',
-    'x20_1500': 'Mesa 3x20-1.5',
-}
-
-path = {
-    'i20': '5i20',
-    'i22_1000': '5i22-1',
-    'i22_1500': '5i22-1.5',
-    'i23': '5i23',
-    'i43_200': '7i43-2',
-    'i43_400': '7i43-4',
-    'i65': '4i65',
-    'i68': '4i68',
-    'x20_1000': '3x20-1',
-    'x20_1500': '3x20-1.5',
-}
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.normpath(__file__))))
+import cards
 
 path_compat = {
     'i43_200': '7i43/*S.BIT',
@@ -65,21 +42,22 @@ if len(sys.argv) > 1:
     if sys.argv[1] == '--no-all':
         build_all_deb = False
 
-all_chips = []
+all_cards = []
 for line in open("firmwares.txt"):
     line = line.strip()
     if not line or line.startswith("#"): continue
     line = line.split()
-    chip = line[0]
-    if chip not in all_chips: all_chips.append(chip)
+    card = line[0]
+    if card not in all_cards: all_cards.append(card)
 
 if not only_build_all_deb:
-    for chip in all_chips:
-        p = path[chip]
+    for card in all_cards:
+        card = cards.get_card(card)
+        p = card.path
         f = open("debian/hostmot2-firmware-%s.files" % p, "w")
         f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
         f.write("/lib/firmware/hm2/%s/*.xml\n" % p)
-        c = path_compat.get(chip, None)
+        c = path_compat.get(card, None)
         if c:
             f.write("/lib/firmware/hm2/%s\n" % c)
         f = open("debian/hostmot2-firmware-%s.docs" % p, "w")
@@ -110,18 +88,19 @@ Description: Meta-package to install all hostmot2 firmwares
  specific hostmot2-firmware-* package you need, you can remove this package
  and install just the one you need.
 
-""" % ", ".join("hostmot2-firmware-%s" % path[chip] for chip in all_chips))
+""" % ", ".join("hostmot2-firmware-%s" % cards.get_card(card).path for card in all_cards))
 
 if not only_build_all_deb:
-    for chip in all_chips:
+    for card in all_cards:
+        card = cards.get_card(card)
         f.write("""\
-Package: hostmot2-firmware-%(chip)s
-Conflicts: emc2-firmware-mesa-%(oldchip)s-hostmot2, emc2 (<< 2.3.5)
+Package: hostmot2-firmware-%(card)s
+Conflicts: emc2-firmware-mesa-%(oldcard)s-hostmot2, emc2 (<< 2.3.5)
 Enhances: emc2 (>= 2.3.5)
 Architecture: all
-Description: HostMot2 firmware images for %(chipname)s
- This package contains HostMot2 firmware images for the %(chipname)s
- "Anything I/O" board.  If you don't use a %(chipname)s you can safely
+Description: HostMot2 firmware images for %(cardname)s
+ This package contains HostMot2 firmware images for the %(cardname)s
+ "Anything I/O" board.  If you don't use a %(cardname)s you can safely
  remove this package.
 
-""" % {'oldchip': path[chip].split("-")[0], 'chip': path[chip], 'chipname': name[chip]})
+""" % {'oldcard': card.path.split("-")[0], 'card': card.path, 'cardname': card.humanname})

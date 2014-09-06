@@ -69,23 +69,23 @@ clean:
 	rm -rf fw
 # No whitespace is acceptable in args to FIRMWARE_template
 define FIRMWARE_template
-$(1).BIT: $(TOP_$(2)) PIN_$(3).vhd $(COMMON_VHDL) build.py
+$(1).BIT: $(TOP_$(2)) PIN_$(3).vhd $(COMMON_VHDL) build.py cards.py
 	@mkdir -p $(dir $(1))
 	./build.py $(2) $(3) $(1).BIT
 $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in idrom_tools.vhd pin.py
 	@mkdir -p $(dir $(1))
-	./pin.py $(3) $(2) > $(1).PIN.tmp
+	./pin.py $(2) $(3) > $(1).PIN.tmp
 	mv $(1).PIN.tmp $(1).PIN
 $(1).xml: PIN_$(3).vhd IDROMConst.vhd xmlrom.vhd.in idrom_tools.vhd pinxml.py
 	@mkdir -p $(dir $(1))
-	./pinxml.py $(3) $(2) > $(1).xml.tmp
+	./pinxml.py $(2) $(3) > $(1).xml.tmp
 	mv $(1).xml.tmp $(1).xml
 bitfiles: $(1).BIT
 pinfiles: $(1).PIN $(1).xml
 dist/hostmot2-firmware-bin-$(4)-$(VERSION).tar.gz: $(1).BIT $(1).PIN $(1).xml
 endef
 
-define CHIP_template
+define CARD_template
 dist-bin-force: dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz:
 	@mkdir -p $$(dir $$@)
@@ -96,6 +96,6 @@ endef
 
 -include firmwares.mk
 Makefile: firmwares.mk
-firmwares.mk: firmwares.py firmwares.txt
+firmwares.mk: firmwares.py firmwares.txt cards.py
 	./firmwares.py > firmwares.mk.tmp
 	mv -f firmwares.mk.tmp firmwares.mk

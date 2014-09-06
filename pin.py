@@ -23,9 +23,12 @@ import string
 import sys
 import re
 import tempfile
+import cards
 
-pinvhdl = sys.argv[1]
-cardvhdl = sys.argv[2] + "card"
+card = sys.argv[1]
+card = cards.get_card(card)
+pinvhdl = sys.argv[2]
+cardvhdl = card.name + "card"
 
 _sq_whitelist = string.lowercase + string.uppercase + string.digits + ".-_/"
 def sq(a):

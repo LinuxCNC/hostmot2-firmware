@@ -18,54 +18,31 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os
 
-sz = {
-    'i20': 72,
-    'i22_1000': 96,
-    'i22_1500': 96,
-    'i23': 72,
-    'i43_200': 48,
-    'i43_400': 48,
-    'i65': 72,
-    'i68': 72,
-    'x20_1000': 144,
-    'x20_1500': 144,
-    'x20_2000': 144,
-}
+import cards
 
-path = {
-    'i20': '5i20',
-    'i22_1000': '5i22-1',
-    'i22_1500': '5i22-1.5',
-    'i23': '5i23',
-    'i43_200': '7i43-2',
-    'i43_400': '7i43-4',
-    'i65': '4i65',
-    'i68': '4i68',
-    'x20_1000': '3x20-1',
-    'x20_1500': '3x20-1.5',
-    'x20_2000': '3x20-2',
-}
 def existing(*names):
     for n in names:
         if os.path.isfile(n): return n
     raise IOError, "Could not find a candidate from %r" % (names,)
 
-def pin(chip, fw):
+def pin(card, fw):
     if fw.endswith("B") or fw.endswith("S"): fw = fw[:-1]
-    return existing("PIN_%s.vhd" % fw, "PIN_%s_%d.vhd" % (fw, sz[chip]))[4:-4]
+    return existing("PIN_%s.vhd" % fw, "PIN_%s_%d.vhd" % (fw, card.pins))[4:-4]
 
-def gen(chip, fw):
+def gen(card, fw):
     print "$(eval $(call FIRMWARE_template,fw/%s/%s,%s,%s,%s))" % (
-        path[chip], fw, chip, pin(chip, fw), path[chip])
-all_chips = []
+        card.path, fw, card.__name__, pin(card, fw), card.path)
+all_cards = []
 for line in open("firmwares.txt"):
     line = line.strip()
     if not line or line.startswith("#"): continue
     line = line.split()
-    chip = line[0]
-    if chip not in all_chips: all_chips.append(chip)
+    card = line[0]
+    if card not in all_cards: all_cards.append(card)
+    card = getattr(cards, card)
     for fw in line[1:]:
-        gen(chip, fw)
+        gen(card, fw)
 
-for chip in all_chips:
-    print "$(eval $(call CHIP_template,%s))" % path[chip]
+for card in all_cards:
+    card = cards.get_card(card)
+    print "$(eval $(call CARD_template,%s))" % card.path
