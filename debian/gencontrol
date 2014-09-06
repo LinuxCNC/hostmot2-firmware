@@ -76,9 +76,6 @@ Maintainer: Jeff Epler <jepler@unpythonic.net>
 if build_all_deb:
     f.write("""\
 Package: hostmot2-firmware-all
-Provides: emc2-firmware
-Replaces: emc2-firmware
-Conflicts: emc2-firmware
 Architecture: all
 Depends: %s
 Description: Meta-package to install all hostmot2 firmwares
@@ -95,8 +92,7 @@ if not only_build_all_deb:
         card = cards.get_card(card)
         f.write("""\
 Package: hostmot2-firmware-%(card)s
-Conflicts: emc2-firmware-mesa-%(oldcard)s-hostmot2, emc2 (<< 2.3.5)
-Enhances: emc2 (>= 2.3.5)
+Enhances: linuxcnc, linuxcnc-uspace
 Architecture: all
 Description: HostMot2 firmware images for %(cardname)s
  This package contains HostMot2 firmware images for the %(cardname)s
