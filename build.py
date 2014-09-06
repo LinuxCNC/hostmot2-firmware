@@ -284,20 +284,20 @@ def report_timing():
 
 try:
     # Synthesis
-    run("xst", "-ifn", "scr")
+    run("xst", '-intstyle', 'ise', "-ifn", "scr")
 
     # ngdbuild
-    run("ngdbuild", "-uc", constraints, "work.ngc")
+    run("ngdbuild", '-intstyle', 'ise', "-uc", constraints, "work.ngc")
 
     # Mapping
-    run("map", "work.ngd")
+    run("map", '-intstyle', 'ise', "work.ngd")
 
     # Placing / routing
-    run("par", "-w", "work.ncd", "work.ncd", "work.pcf")
+    run("par", '-intstyle', 'ise', "-w", "work.ncd", "work.ncd", "work.pcf")
 
     # Bitgen
     bitgen_args = card.bitgen_extra + ["work.ncd", "work.bit", "work.pcf"]
-    run("bitgen", "-w", *bitgen_args) 
+    run("bitgen", '-intstyle', 'ise', "-w", *bitgen_args) 
 
     shutil.copy("work.bit", outfile)
 finally:
