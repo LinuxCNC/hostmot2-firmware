@@ -6,3 +6,4 @@
 /debian/files
 /debian/hostmot2-firmware-*
 /debian/tmp
+*.py[co]
