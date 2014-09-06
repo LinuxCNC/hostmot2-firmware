@@ -212,7 +212,7 @@ def subst(in_, out, **kw):
     def rfn(m):
         g = m.group(1)
         if g == '': return '@'
-        return kw[g]
+        return kw[g.upper()]
     r = re.compile("@([^@]*)@")
     s = open(in_).read()
     s = r.sub(rfn, s)
