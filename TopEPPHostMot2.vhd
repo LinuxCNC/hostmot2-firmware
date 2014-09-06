@@ -76,7 +76,7 @@ use work.IDROMConst.all;
 
 
 -------------------- select one card type------------------------------
---use work.@Card@.all;
+use work.@Card@.all;
 --use work.i43_200card.all; 	-- needs 7i43.ucf and SP3 200K 144 pin
 --use work.i43_400card.all;   -- needs 7i43.ucf and SP3 400K 144 pin
 --use work.i61_x16card.all;   	-- needs 7i61p.ucf and SP6 x16 256 pin
@@ -85,7 +85,7 @@ use work.IDROMConst.all;
 
 
 -------------------- select (or add) one pinout -----------------------
---use work.@PIN@.all;
+use work.@PIN@.all;
 -- 48 I/O pinouts for 7I43:
 --use work.PIN_SV8_48.all;
 --use work.PIN_SVSPD6_2_48.all;
