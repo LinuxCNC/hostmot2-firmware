@@ -11,7 +11,7 @@ COMMON_VHDL := IDROMConst.vhd \
     qcountersf.vhd simplespi8.vhd simplespix.vhd simplessi.vhd testram.vhd \
     testrom.vhd threephasepwm.vhd timestamp.vhd uartr8.vhd uartr.vhd uartx8.vhd \
     uartx.vhd ubrategen.vhd usbram.vhd usbrom.vhd watchdog.vhd wordpr.vhd \
-    wordrb.vhd \
+    wordrb.vhd fixicap.vhd d16w.vhd etherhm2.vhd \
     hostmot2.vhd
 
 TOP_i20 := Top9030HostMot2.vhd

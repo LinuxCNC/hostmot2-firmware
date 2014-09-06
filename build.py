@@ -117,6 +117,9 @@ common_vhdl = [
     'twidrom.vhd',
     'wavegen.vhd',
     'waveram.vhd',
+    'fixicap.vhd',
+    'd16w.vhd',
+    'etherhm2.vhd',
 
     'hostmot2.vhd'
 ]
