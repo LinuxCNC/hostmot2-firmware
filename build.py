@@ -292,6 +292,9 @@ try:
     # ngdbuild
     run("ngdbuild", '-intstyle', 'ise', "-uc", constraints, "work.ngc")
 
+    if os.path.exists('work.ncd'):
+        os.unlink('work.ncd')
+
     # Mapping
     run("map", '-intstyle', 'ise', "work.ngd")
 
