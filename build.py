@@ -134,18 +134,32 @@ card2chip = {
     'x20_2000': '3s2000fg456',
 }
 
+topmodule = {
+    'i20': 'Top9030HostMot2',
+    'i22_1000': 'Top9054HostMot2',
+    'i22_1500': 'Top9054HostMot2',
+    'i23': 'Top9054HostMot2',
+    'i43_200': 'TopEPPHostMot2',
+    'i43_400': 'TopEPPHostMot2',
+    'i65': 'Top9030HostMot2',
+    'i68': 'Top9054HostMot2',
+    'x20_1000': 'Top9054HostMot2',
+    'x20_1500': 'Top9054HostMot2',
+    'x20_2000': 'Top9054HostMot2',
+}
+
 card2top = {
-    'i20': '9030',
-    'i22_1000': '9054',
-    'i22_1500': '9054',
-    'i23': '9054',
-    'i43_200': 'epp',
-    'i43_400': 'epp',
-    'i65': '9030',
-    'i68': '9054',
-    'x20_1000': '9054',
-    'x20_1500': '9054',
-    'x20_2000': '9054',
+    'i20': 'Top9030HostMot2.vhd',
+    'i22_1000': 'Top9054HostMot2.vhd',
+    'i22_1500': 'Top9054HostMot2.vhd',
+    'i23': 'Top9054HostMot2.vhd',
+    'i43_200': 'TopEPPHostMot2',
+    'i43_400': 'TopEPPHostMot2',
+    'i65': 'Top9030HostMot2.vhd',
+    'i68': 'Top9054HostMot2.vhd',
+    'x20_1000': 'Top9054HostMot2.vhd',
+    'x20_1500': 'Top9054HostMot2.vhd',
+    'x20_2000': 'Top9054HostMot2.vhd',
 }
 
 # list the preferred versions of ise for each card type
@@ -308,7 +322,7 @@ constraints = s("%s.ucf" % card2card[card])
 
 cardvhdl = card+"card"
 pinvhdl = "PIN_" + pin
-topfile_in = '%s.vhd.in' % card2top[card]
+topfile_in = card2top[card]
 topfile_out = os.path.splitext(outfile)[0] + ".vhd"
 subst(topfile_in, topfile_out, CARD=cardvhdl, PIN=pinvhdl);
 
@@ -329,10 +343,10 @@ set -xsthdpdir ./work_syn
 run
 -opt_mode Speed -opt_level 1
 -ifmt mixed -ifn prj
--top top
+-top %s
 -ofmt ngc -ofn work.ngc
 -p %s
-""" % card2chip[card])
+""" % (topmodule[card], card2chip[card]))
 
 # top, card, pin
 prjf = open("prj", "w")

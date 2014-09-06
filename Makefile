@@ -14,17 +14,17 @@ COMMON_VHDL := IDROMConst.vhd \
     wordrb.vhd \
     hostmot2.vhd
 
-TOP_i20 := 9030
-TOP_i22_1500 := 9054
-TOP_i22_1000 := 9054
-TOP_i23 := 9054
-TOP_i43_200 := epp
-TOP_i43_400 := epp
-TOP_i65 := 9030
-TOP_i68 := 9054
-TOP_x20_1000 := 9054
-TOP_x20_1500 := 9054
-TOP_x20_2000 := 9054
+TOP_i20 := Top9030HostMot2.vhd
+TOP_i22_1500 := Top9054HostMot2.vhd
+TOP_i22_1000 := Top9054HostMot2.vhd
+TOP_i23 := Top9054HostMot2.vhd
+TOP_i43_200 := TopEPPHostMot2.vhd
+TOP_i43_400 := TopEPPHostMot2.vhd
+TOP_i65 := Top9030HostMot2.vhd
+TOP_i68 := Top9054HostMot2.vhd
+TOP_x20_1000 := Top9054HostMot2.vhd
+TOP_x20_1500 := Top9054HostMot2.vhd
+TOP_x20_2000 := Top9054HostMot2.vhd
 
 .PHONY: dist dist-src dist-src-force dist-bin dist-bin-force default clean bitfiles pinfiles
 default: bitfiles pinfiles
@@ -69,7 +69,7 @@ clean:
 	rm -rf fw
 # No whitespace is acceptable in args to FIRMWARE_template
 define FIRMWARE_template
-$(1).BIT: $(TOP_$(2)).vhd.in PIN_$(3).vhd $(COMMON_VHDL) build.py
+$(1).BIT: $(TOP_$(2)) PIN_$(3).vhd $(COMMON_VHDL) build.py
 	@mkdir -p $(dir $(1))
 	./build.py $(2) $(3) $(1).BIT
 $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in idrom_tools.vhd pin.py
