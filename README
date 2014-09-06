@@ -62,10 +62,6 @@ Classics", "Previous versions of ISE WebPack".
 ISE 12.3 WebPack appears to work (generate bitfiles), but with caveats:
  * ISE 11 and later remove support for Spartan-II chips, which means that
    firmwares for 5i20 and 4i65 boards cannot be built
- * ISE 11 and later remove support for the "-r" option of map.  At the present
-   time, the use of this option is hardcoded and must be edited out of 'build.py':
-        -run("map", "-r", "work.ngd")
-        +run("map", "work.ngd")
  * Possibly due to the unsupported "-r" option, the i43_200/SVST4_6
    configuration fails at the 'map' step when built with ISE12.3.
 
