@@ -274,9 +274,12 @@ for f in all_vhdl: prjf.write("vhdl work %s\n" % f)
 prjf.close()
 
 def report_timing():
+    t = 0
     for k, v in timing:
+        t += v
         m, s = divmod(v, 60)
         print "%d:%04.1f-%-11s" % (m, s, k),
+    print "%d:%04.1f-total" % (m, s)
     print
 
 try:
