@@ -49,6 +49,21 @@ class BitgenSpecialOrder(Card):
     bitgen_extra = ['-g', 'DONE_cycle:6', '-g', 'GWE_cycle:4',
          '-g', 'GTS_cycle:5', '-g', 'LCK_cycle:NoWait']
 
+# Options used by Spartan 6 based designs with fallback space in eeprom
+class BitgenCanFallback(Card):
+    bitgen_extra = ['-g', 'next_config_register_write:disable',
+        '-g', 'DebugBitstream:No', '-g', 'Binary:no', '-g', 'CRC:Enable',
+        '-g', 'Reset_on_err:Yes', '-g', 'ConfigRate:26', '-g', 'ProgPin:PullUp',
+        '-g', 'TckPin:PullUp', '-g', 'TdiPin:PullUp', '-g', 'TdoPin:PullUp',
+        '-g', 'TmsPin:PullUp', '-g', 'UnusedPin:PullDown',
+        '-g', 'UserID:0xFFFFFFFF', '-g', 'ExtMasterCclk_en:No',
+        '-g', 'SPI_buswidth:1', '-g', 'TIMER_CFG:0xFFFF',
+        '-g', 'multipin_wakeup:No', '-g', 'StartUpClk:CClk',
+        '-g', 'DONE_cycle:6', '-g', 'GTS_cycle:5', '-g', 'GWE_cycle:4',
+        '-g', 'LCK_cycle:NoWait', '-g', 'Security:None', '-g', 'DonePipe:No',
+        '-g', 'DriveDone:No', '-g', 'en_sw_gsr:No', '-g', 'drive_awake:No',
+        '-g', 'sw_clk:Startupclk', '-g', 'sw_gwe_cycle:5', '-g', 'sw_gts_cycle:4']
+
 
 ########################################################################
 # Different toplevel files
@@ -60,6 +75,16 @@ class Top9054(BitgenSpecialOrder):
 
 class TopEPP(BitgenSpecialOrder):
     topmodule = 'TopEPPHostMot2'
+
+class TopEPPS(Card):
+    topmodule = 'TopEPPSHostMot2'
+
+class TopSPI(Card):
+    topmodule = 'TopGCSPIHostMot2'
+
+class TopEth(Card):
+    topmodule = 'TopEthernetHostMot2'
+    topvhdl = 'TopEthernet16HostMot2'
 
 ########################################################################
 # Different connector configurations
@@ -78,6 +103,14 @@ class HDx4(Card):
 class HDx6(Card):
     connectors = 6
     pins = 24*connectors
+
+class DBx2(Card):
+    connectors = 2
+    pins = 17*connectors
+
+class DBx4(Card):
+    connectors = 4
+    pins = 17*connectors
 
 ########################################################################
 # Different FPGA chips
@@ -115,6 +148,18 @@ class Spartan3_1500_456(Card):
 
 class Spartan3_2000(Card):
     chip = "3s2000fg456"
+    iseversions = (13,)
+
+class Spartan6_9_144(Card):
+    chip = "xc6slx9-2tqg144"
+    iseversions = (13,)
+
+class Spartan6_16_256(Card):
+    chip = "xc6slx16-ftg256-2"
+    iseversions = (13,)
+
+class Spartan6_25_256(Card):
+    chip = "xc6slx25-ftg256-2"
     iseversions = (13,)
 
 ########################################################################
@@ -184,6 +229,42 @@ class i65(Top9030, HDx3, Spartan2_200):
     name = "i65"
     card = "4i65"
     humanname = "Mesa 4i65"
+
+class i80hd25(TopEth, HDx3, Spartan6_25_256, BitgenCanFallback):
+    path = "7i80hd25"
+    name = "i80hd_x25"
+    card = "7i80hd"
+    humanname = "Mesa 7i80 HD"
+
+class i80db25(TopEth, DBx4, Spartan6_25_256, BitgenCanFallback):
+    path = "7i80db25"
+    name = "i80db_x25"
+    card = "7i80db"
+    humanname = "Mesa 7i80 DB"
+
+class i80hd16(TopEth, HDx3, Spartan6_16_256, BitgenCanFallback):
+    path = "7i80hd16"
+    name = "i80hd_x16"
+    card = "7i80hd"
+    humanname = "Mesa 7i80 HD"
+
+class i80db16(TopEth, DBx4, Spartan6_16_256, BitgenCanFallback):
+    path = "7i80db16"
+    name = "i80db_x16"
+    card = "7i80db"
+    humanname = "Mesa 7i80 DB"
+
+class i90epp(TopEPPS, HDx3, Spartan6_9_144, BitgenCanFallback):
+    path = "7i90epp"
+    name = "i90_x9"
+    card = "7i90"
+    humanname = "Mesa 7i90 HD EPP"
+
+class i90spi(TopSPI, HDx3, Spartan6_9_144, BitgenCanFallback):
+    path = "7i90spi"
+    name = "i90_x9"
+    card = "7i90spi"
+    humanname = "Mesa 7i90 HD SPP"
 
 def get_card(name):
     return globals()[name]()
