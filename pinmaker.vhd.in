@@ -77,13 +77,13 @@ begin
 
 
 	for i in 0 to IOWidth-1 loop
-            if((i mod 24) = 0) then
+            if((i mod PortWidth) = 0) then
                 writeline(output_file, so);
                 write(so, string'("PIN   IO# Module         Chan Func"));
                 writeline(output_file, so);
             end if;
             pr := GetPinDesc(i);
-            write(so, Conn(BoardNameLow, BoardNameHigh, i));
+            write(so, Conn(BoardNameLow, BoardNameHigh, i, PortWidth));
             write(so, string'("-"));
             write(so, conv_integer(i) mod 24*2+1, LEFT, 2);
             write(so, ' ', RIGHT, 1);

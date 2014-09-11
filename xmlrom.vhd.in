@@ -91,7 +91,7 @@ begin
         WriteTagHex(output_file, string'("board"),
             conv_integer(signed(BoardNameHigh)));
         WriteTag(output_file, string'("boardname"),
-            BoardName(BoardNameLow, BoardNameHigh));
+            BoardName(BoardNameLow, BoardNameHigh, PortWidth));
         WriteTag(output_file, string'("fpgasize"), conv_integer(fpgasize));
         WriteTag(output_file, string'("fpgapins"), conv_integer(fpgapins));
         WriteTag(output_file, string'("ioports"), conv_integer(ioports));
@@ -153,9 +153,14 @@ begin
             pr := GetPinDesc(i);
 
             WriteTag(output_file, string'("connector"),
-                Conn(BoardNameLow, BoardNameHigh, i));
-            WriteTag(output_file, string'("pinno"),
-                conv_integer(i) mod 24*2+1);
+                Conn(BoardNameLow, BoardNameHigh, i, PortWidth));
+            if(PortWidth = 24) then
+                WriteTag(output_file, string'("pinno"),
+                    conv_integer(i) mod 24*2+1);
+            elsif(PortWidth = 17) then
+                WriteTag(output_file, string'("pinno"),
+                    conv_integer(i) mod 17+1);
+            end if;
             WriteTag(output_file, "secondarymodule", conv_integer(pr.SecFunc));
             WriteTag(output_file, "secondarymodulename", TagToName(pr.SecFunc));
             WriteTag(output_file, "secondaryfunction", conv_integer(pr.SecPin));

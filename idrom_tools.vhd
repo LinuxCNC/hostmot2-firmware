@@ -12,9 +12,11 @@ function BoardVendor(
     name_low: std_logic_vector(31 downto 0)) return string;
 function BoardName(
     name_low: std_logic_vector(31 downto 0);
-    name_high: std_logic_vector(31 downto 0)) return string;
+    name_high: std_logic_vector(31 downto 0);
+    width: integer) return string;
 function Conn(vendor: std_logic_vector(31 downto 0);
-	board: std_logic_vector(31 downto 0); idx: integer) return string;
+	board: std_logic_vector(31 downto 0); idx: integer;
+        portwidth: integer) return string;
 function TagToName(tag : std_logic_vector(7 downto 0)) return string;
 function MakePinRecord(pv : std_logic_vector(31 downto 0)) return PinDescRecord;
 function Funct(tag: std_logic_vector(7 downto 0);
@@ -32,28 +34,41 @@ end function;
 
 function BoardName(
     name_low: std_logic_vector(31 downto 0);
-    name_high: std_logic_vector(31 downto 0)) return string is
+    name_high: std_logic_vector(31 downto 0);
+    width: integer) return string is
 begin
     if(name_low = BoardNameMesa) then
         if(name_high = BoardName4i65) then return "4i65"; end if;
         if(name_high = BoardName4i68) then return "4i68"; end if;
+        if(name_high = BoardName4i74) then return "4i74"; end if;
         if(name_high = BoardName5i20) then return "5i20"; end if;
         if(name_high = BoardName5i22) then return "5i22"; end if;
         if(name_high = BoardName5i23) then return "5i23"; end if;
+        if(name_high = BoardName5i24) then return "5i24"; end if;
+        if(name_high = BoardName5i25) then return "5i25"; end if;
+        if(name_high = BoardName6i25) then return "6i25"; end if;
         if(name_high = BoardName7i43) then return "7i43"; end if;
         if(name_high = BoardName7i60) then return "7i60"; end if;
+        if(name_high = BoardName7i61) then return "7i61"; end if;
+        if(name_high = BoardName7i62) then return "7i62"; end if;
+        if(name_high = BoardName7i80HD and width = 24) then return "7i80HD"; end if;
+        if(name_high = BoardName7i80DB and width = 17) then return "7i80DB"; end if;
+        if(name_high = BoardName7i76E) then return "7i76E"; end if;
+        -- if(name_high = BoardName7i77) then return "7i77"; end if;
         if(name_high = BoardName3x20) then return "3x20"; end if;
+        if(name_high = BoardName3x21) then return "3x21"; end if;
+        if(name_high = BoardName7i90) then return "7i90"; end if;
     end if;
     return "unknown";
 end function;
 
 -- XXX: this function must be kept in synch with the one in pinmaker
 -- (someone should fix this)
-function Conn(vendor: std_logic_vector(31 downto 0); board: std_logic_vector(31 downto 0); idx: integer)
+function Conn(vendor: std_logic_vector(31 downto 0); board: std_logic_vector(31 downto 0); idx: integer; portwidth: integer)
 return string is
     variable pp : integer;
 begin
-    pp := idx / 24;
+    pp := idx / portwidth;
     if(vendor = BoardNameMesa) then
 	if(board = BoardName4i65) then
 	    if(pp = 0) then return "P1"; end if;
@@ -63,6 +78,11 @@ begin
 	if(board = BoardName4i68) then
 	    if(pp = 0) then return "P1"; end if;
 	    if(pp = 1) then return "P2"; end if;
+	    if(pp = 2) then return "P4"; end if;
+	end if;
+	if(board = BoardName4i74) then
+	    if(pp = 0) then return "P1"; end if;
+	    if(pp = 1) then return "P3"; end if;
 	    if(pp = 2) then return "P4"; end if;
 	end if;
 	if(board = BoardName5i20) then
@@ -81,9 +101,38 @@ begin
 	    if(pp = 1) then return "P3"; end if;
 	    if(pp = 2) then return "P4"; end if;
 	end if;
+	if(board = BoardName5i24) then
+	    if(pp = 0) then return "P2"; end if;
+	    if(pp = 1) then return "P3"; end if;
+	    if(pp = 2) then return "P4"; end if;
+	end if;
+	if(board = BoardName5i25) then
+	    if(pp = 0) then return "P3"; end if;
+	    if(pp = 1) then return "P2"; end if;
+	end if;
+	if(board = BoardName6i25) then
+	    if(pp = 0) then return "P3"; end if;
+	    if(pp = 1) then return "P2"; end if;
+	end if;
 	if(board = BoardName7i43) then
 	    if(pp = 0) then return "P4"; end if;
 	    if(pp = 1) then return "P3"; end if;
+	end if;
+	if(board = BoardName7i76E) then
+	    if(pp = 0) then return "on-card"; end if;
+	    if(pp = 1) then return "P1"; end if;
+	    if(pp = 2) then return "P2"; end if;
+	end if;
+	if(board = BoardName7i80DB and portwidth = 17) then
+	    if(pp = 0) then return "J2"; end if;
+	    if(pp = 1) then return "J3"; end if;
+	    if(pp = 2) then return "J4"; end if;
+	    if(pp = 3) then return "J5"; end if;
+	end if;
+	if(board = BoardName7i80HD and portwidth = 24) then
+	    if(pp = 0) then return "P1"; end if;
+	    if(pp = 1) then return "P2"; end if;
+	    if(pp = 2) then return "P3"; end if;
 	end if;
 	if(board = BoardName3X20) then
 	    if(pp = 0) then return "P4"; end if;
@@ -118,6 +167,7 @@ begin
     if(tag = MuxedQCountMIMTag) then return "MuxedQCountMIM"; end if;
     if(tag = TPPWMTag)	    then return "TPPWM"; end if;
     if(tag = LEDTag)	    then return "LED"; end if;
+    if(tag = SSerialTag)    then return "SSerial"; end if;
     return "unknown";
 end;
 
@@ -174,6 +224,26 @@ begin
     elsif(tag = MuxedQCountSelTag) then
         if(pin = MuxedQCountSel0Pin)   then return "Muxed Encoder Select 0 (out)";
         elsif(pin = MuxedQCountSel1Pin) then return "Muxed Encoder Select 1 (out)"; end if;
+    elsif(tag = SSerialTag) then
+        if(pin = SSerialTX0Pin)       then return "Serial Transmit 0 (out)";
+        elsif(pin = SSerialTX1Pin)    then return "Serial Transmit 1 (out)";
+        elsif(pin = SSerialTX2Pin)    then return "Serial Transmit 2 (out)";
+        elsif(pin = SSerialTX3Pin)    then return "Serial Transmit 3 (out)";
+        elsif(pin = SSerialTX4Pin)    then return "Serial Transmit 4 (out)";
+        elsif(pin = SSerialTX5Pin)    then return "Serial Transmit 5 (out)";
+        elsif(pin = SSerialTXEN0Pin)    then return "Serial Transmit Enable 0 (in)";
+        elsif(pin = SSerialTXEN1Pin)    then return "Serial Transmit Enable 1 (in)";
+        elsif(pin = SSerialTXEN2Pin)    then return "Serial Transmit Enable 2 (in)";
+        elsif(pin = SSerialTXEN3Pin)    then return "Serial Transmit Enable 3 (in)";
+        elsif(pin = SSerialTXEN4Pin)    then return "Serial Transmit Enable 4 (in)";
+        elsif(pin = SSerialTXEN5Pin)    then return "Serial Transmit Enable 5 (in)";
+        elsif(pin = SSerialRX0Pin)    then return "Serial Receive 0 (in)";
+        elsif(pin = SSerialRX1Pin)    then return "Serial Receive 1 (in)";
+        elsif(pin = SSerialRX2Pin)    then return "Serial Receive 2 (in)";
+        elsif(pin = SSerialRX3Pin)    then return "Serial Receive 3 (in)";
+        elsif(pin = SSerialRX4Pin)    then return "Serial Receive 4 (in)";
+        elsif(pin = SSerialRX5Pin)    then return "Serial Receive 5 (in)";
+        end if;
     end if;
     return "???";
 end function;
