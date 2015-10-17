@@ -30,9 +30,10 @@ On my system (quad core AMD Phenom 9600) building the full set of
 firmwares took about 75 minutes wall time with the -j4 setting shown
 above.
 
-To build just a subset of firmwares, edit 'firmwares.txt' before
-building.  For example, to build just the 'SV12' firmware for the '5i23' card,
-put just this line in 'firmwares.txt':
+To build just a subset of firmwares, create a file `firmwares-local.txt` to list the firmware(s) you want to build.
+This list is used instead of the list in `firmwares.txt`.
+The first word in each line specifies the hostmot2 card, and the remaining words specify the pinfiles.
+For example, to build just the 'SV12' firmware for the '5i23' card, put just this line in 'firmwares-local.txt':
     i23 SV12
 
 To build Debian packages:

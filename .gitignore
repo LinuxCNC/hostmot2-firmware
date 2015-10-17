@@ -1,4 +1,6 @@
 /firmwares.mk
+/firmwares-local.mk
+/firmwares-local.txt
 /fw
 /dist
 /debian/control

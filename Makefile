@@ -94,8 +94,11 @@ dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz:
 dist-force-$(1): dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 endef
 
--include firmwares.mk
-Makefile: firmwares.mk
-firmwares.mk: firmwares.py firmwares.txt cards.py
-	./firmwares.py > firmwares.mk.tmp
-	mv -f firmwares.mk.tmp firmwares.mk
+FIRMWARES_TXT := $(word 1,$(wildcard firmwares-local.txt) firmwares.txt)
+FIRMWARES_MK := ${FIRMWARES_TXT:.txt=.mk}
+$(info Note: Using firmwares listed in $(FIRMWARES_TXT))
+-include $(FIRMWARES_MK)
+Makefile: $(FIRMWARES_MK)
+$(FIRMWARES_MK): firmwares.py $(FIRMWARES_TXT) cards.py
+	./firmwares.py > $(FIRMWARES_MK).tmp
+	mv -f $(FIRMWARES_MK).tmp $(FIRMWARES_MK)
