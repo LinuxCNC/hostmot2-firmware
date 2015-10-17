@@ -96,7 +96,9 @@ endef
 
 FIRMWARES_TXT := $(word 1,$(wildcard firmwares-local.txt) firmwares.txt)
 FIRMWARES_MK := ${FIRMWARES_TXT:.txt=.mk}
-$(info Note: Using firmwares listed in $(FIRMWARES_TXT))
+ifneq ($(FIRMWARES_TXT),firmwares.txt)
+$(warning Note: Using firmwares listed in $(FIRMWARES_TXT))
+endif
 -include $(FIRMWARES_MK)
 Makefile: $(FIRMWARES_MK)
 $(FIRMWARES_MK): firmwares.py $(FIRMWARES_TXT) cards.py
