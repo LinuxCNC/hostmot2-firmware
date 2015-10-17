@@ -15,14 +15,28 @@ format is intended to be human readable (not machine readable) so it is
 not a requirement that it exactly match the format of existing PIN
 files.  There is also an experimental xml description format.
 
+== ISE Version Requirements
+
+Refer to `cards.py` for information about required ISE versions for
+particular cards.  Currently, by installing ISE 13.4 and ISE 9.2, firmware
+can be built for all supported cards.
+
+=== Obtaining ISE 9.2 WebPack ===
+
+Xilinx still offers older versions of ISE free of charge.  At the time
+of writing, the location is
+    http://www.xilinx.com/webpack/classics/wpclassic/index.htm
+and can also be reached from the xilinx.com front page by going to
+"Products & Services", "Design Tools", "Logic Design Tools", "ISE
+Classics", "Previous versions of ISE WebPack".
 
 == Building ==
 
-First, you must create a set of symlinks to the required versions of ise.
-At this time, all firmwares can be built with ISE 10.1 plus ISE 13.3.
-For each major version, create a symlink, e.g.,
-    settings10.sh -> /opt/Xilinx10i/settings32.sh
-    settings13.sh -> /opt/Xilinx13i/settings32.sh
+If necessary, create a set of symlinks to the required versions of ise.  For
+32-bit versions up to 13.3 installed to /opt, settings will generally be found
+automatically.  If they are not, you can create symlinks e.g.,
+    settings9.sh -> /opt/Xilinx19/settings32.sh
+    settings13.sh -> /opt/Xilinx13.4/settings32.sh
 
 To build all bitfiles, pinfiles, and xmlfiles:
     make -j4                   # -j setting depends on RAM and # CPU cores
@@ -42,29 +56,10 @@ To build Debian packages:
                                # -j setting depends on RAM and # CPU cores
 
 To build tar packages (must be in a git checkout):
-    . ~/Xilinx92i/settings.sh  # depends on ISE version and install path
     make -j4                   # -j setting depends on RAM and # CPU cores
     make dist
     # or make dist-force if your working tree is dirty
 
-
-== Obtaining ISE 9.2 WebPack ==
-
-Xilinx still offers older versions of ISE free of charge.  At the time
-of writing, the location is
-    http://www.xilinx.com/webpack/classics/wpclassic/index.htm
-and can also be reached from the xilinx.com front page by going to
-"Products & Services", "Design Tools", "Logic Design Tools", "ISE
-Classics", "Previous versions of ISE WebPack".
-
-
-== Newer versions of ISE ==
-
-ISE 12.3 WebPack appears to work (generate bitfiles), but with caveats:
- * ISE 11 and later remove support for Spartan-II chips, which means that
-   firmwares for 5i20 and 4i65 boards cannot be built
- * Possibly due to the unsupported "-r" option, the i43_200/SVST4_6
-   configuration fails at the 'map' step when built with ISE12.3.
 
 
 == Testing ==
