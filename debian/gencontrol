@@ -54,12 +54,12 @@ if not only_build_all_deb:
     for card in all_cards:
         card = cards.get_card(card)
         p = card.path
-        f = open("debian/hostmot2-firmware-%s.files" % p, "w")
+        f = open("debian/hostmot2-firmware-%s.install" % p, "w")
         f.write("/lib/firmware/hm2/%s/*.BIT\n" % p)
         f.write("/lib/firmware/hm2/%s/*.xml\n" % p)
         c = path_compat.get(card, None)
         if c:
-            f.write("/lib/firmware/hm2/%s\n" % c)
+            f.write("lib/firmware/hm2/%s\n" % c)
         f = open("debian/hostmot2-firmware-%s.docs" % p, "w")
         f.write("fw/%s/*.PIN\n" % p)
 

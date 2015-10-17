@@ -5,12 +5,14 @@ build:
 	$(MAKE) $(MAKEFLAGS)
 
 install: build
-	rm -rf debian/tmp
+	dh $@
+
+override_dh_install:
 	mkdir -p debian/tmp/lib/firmware/hm2
 	(cd fw; find -name "*.BIT" -or -name "*.xml" | cpio -o) \
 		| (cd debian/tmp/lib/firmware/hm2; cpio -i --make-directories)
 	while read a b; do \
-		if [ -f $$a ]; then \
+		if [ -f debian/tmp/lib/firmware/hm2/$$a ]; then \
 			( \
 				cd debian/tmp/lib/firmware/hm2; \
 				mkdir -p `dirname $$b`; \
@@ -18,6 +20,7 @@ install: build
 			); \
                 fi; \
 	done < debian/compat_symlinks
+	dh_install
 
 override_dh_installdocs:
 	dh_installdocs -A README regmap
