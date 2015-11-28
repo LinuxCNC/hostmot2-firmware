@@ -86,6 +86,10 @@ class TopEth(Card):
     topmodule = 'TopEthernetHostMot2'
     topvhdl = 'TopEthernet16HostMot2'
 
+class TopPCI(Card):
+    topmodule = 'TopPCIHostMot2'
+    topvhdl = 'TopPCIHostMot2'
+
 ########################################################################
 # Different connector configurations
 class HDx2(Card):
@@ -264,7 +268,19 @@ class i90spi(TopSPI, HDx3, Spartan6_9_144, BitgenCanFallback):
     path = "7i90spi"
     name = "i90_x9"
     card = "7i90spi"
-    humanname = "Mesa 7i90 HD SPP"
+    humanname = "Mesa 7i90 HD SPI"
+
+class i24(TopPCI, HDx3, Spartan6_16_256, BitgenCanFallback):
+    path = "5i24"
+    name = "i24_x16"
+    card = "5i24"
+    humanname = "Mesa 5i24"
+
+class i25(TopPCI, DBx2, Spartan6_9_144, BitgenCanFallback):
+    path = "5i25"
+    name = "i25_x9"
+    card = "5i25"
+    humanname = "Mesa 5i25"
 
 def get_card(name):
     return globals()[name]()
