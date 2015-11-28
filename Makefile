@@ -101,6 +101,6 @@ $(warning Note: Using firmwares listed in $(FIRMWARES_TXT))
 endif
 -include $(FIRMWARES_MK)
 Makefile: $(FIRMWARES_MK)
-$(FIRMWARES_MK): firmwares.py $(FIRMWARES_TXT) cards.py
-	./firmwares.py > $(FIRMWARES_MK).tmp
+$(FIRMWARES_MK): $(FIRMWARES_TXT) firmwares.py cards.py
+	./firmwares.py $< > $(FIRMWARES_MK).tmp
 	mv -f $(FIRMWARES_MK).tmp $(FIRMWARES_MK)

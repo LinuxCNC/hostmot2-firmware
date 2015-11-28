@@ -17,6 +17,7 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os
+import sys
 
 import cards
 
@@ -33,7 +34,7 @@ def gen(card, fw):
     print "$(eval $(call FIRMWARE_template,fw/%s/%s,%s,%s,%s))" % (
         card.path, fw, card.__name__, pin(card, fw), card.path)
 all_cards = []
-for line in open("firmwares.txt"):
+for line in open(sys.argv[1]):
     line = line.strip()
     if not line or line.startswith("#"): continue
     line = line.split()
