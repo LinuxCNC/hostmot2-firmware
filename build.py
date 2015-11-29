@@ -86,6 +86,8 @@ common_vhdl = [
     'watchdog.vhd',
     'wordpr.vhd',
     'wordrb.vhd',
+    'parity.vhd',
+    'decodedstrobe2.vhd',
 
     'MaxIOPinsPerModule.vhd',
     'MaxInputPinsPerModule.vhd',

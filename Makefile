@@ -12,6 +12,7 @@ COMMON_VHDL := IDROMConst.vhd \
     testrom.vhd threephasepwm.vhd timestamp.vhd uartr8.vhd uartr.vhd uartx8.vhd \
     uartx.vhd ubrategen.vhd usbram.vhd usbrom.vhd watchdog.vhd wordpr.vhd \
     wordrb.vhd fixicap.vhd d16w.vhd etherhm2.vhd \
+    parity.vhd decodedstrobe2.vhd \
     hostmot2.vhd
 
 TOP_i20 := Top9030HostMot2.vhd
@@ -25,6 +26,8 @@ TOP_i68 := Top9054HostMot2.vhd
 TOP_x20_1000 := Top9054HostMot2.vhd
 TOP_x20_1500 := Top9054HostMot2.vhd
 TOP_x20_2000 := Top9054HostMot2.vhd
+TOP_i24 := TopPCIHostMot2.vhd
+TOP_i25 := TopPCIHostMot2.vhd
 
 .PHONY: dist dist-src dist-src-force dist-bin dist-bin-force default clean bitfiles pinfiles
 default: bitfiles pinfiles
