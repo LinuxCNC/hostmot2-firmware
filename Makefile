@@ -77,11 +77,11 @@ $(1).BIT: $(TOP_$(2)) PIN_$(3).vhd $(COMMON_VHDL) build.py cards.py
 	./build.py $(2) $(3) $(1).BIT
 $(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in idrom_tools.vhd pin.py
 	@mkdir -p $(dir $(1))
-	./pin.py $(2) $(3) > $(1).PIN.tmp
+	./pin.py $(2) $(3) pinmaker.vhd.in $(1).PIN.tmp
 	mv $(1).PIN.tmp $(1).PIN
-$(1).xml: PIN_$(3).vhd IDROMConst.vhd xmlrom.vhd.in idrom_tools.vhd pinxml.py
+$(1).xml: PIN_$(3).vhd IDROMConst.vhd xmlrom.vhd.in idrom_tools.vhd pin.py
 	@mkdir -p $(dir $(1))
-	./pinxml.py $(2) $(3) > $(1).xml.tmp
+	./pin.py $(2) $(3) xmlrom.vhd.in $(1).xml.tmp
 	mv $(1).xml.tmp $(1).xml
 bitfiles: $(1).BIT
 pinfiles: $(1).PIN $(1).xml

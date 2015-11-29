@@ -68,7 +68,7 @@ f.write("""\
 Source: hostmot2-firmware
 Section: misc
 Priority: extra
-Build-Depends: debhelper, ghdl
+Build-Depends: debhelper
 Maintainer: Jeff Epler <jepler@unpythonic.net>
 
 """)

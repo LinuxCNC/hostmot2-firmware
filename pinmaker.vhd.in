@@ -31,7 +31,7 @@ end;
 end pinmaker_@PIN@;
 
 architecture bbb of pinmaker_@PIN@ is
-    file output_file : TEXT open write_mode is in "/dev/stdout";
+    file output_file : TEXT open write_mode is in "@OUT@";
 begin
     process
         variable so: line;

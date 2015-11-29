@@ -10,10 +10,9 @@ It requires the no-cost version of Xilinx ISE.  I build with ISE 9.2.  This
 version supports all FPGAs on Mesa cards with the exception of the 3x20-2M.
 Newer versions appear to work, but with caveats (see below)
 
-It also requires ghdl for building PIN and xml files.  The PIN file
-format is intended to be human readable (not machine readable) so it is
-not a requirement that it exactly match the format of existing PIN
-files.  There is also an experimental xml description format.
+The PIN file format is intended to be human readable (not machine readable) so
+it is not a requirement that it exactly match the format of existing PIN files.
+There is also an experimental xml description format.
 
 == ISE Version Requirements
 
