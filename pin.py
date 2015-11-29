@@ -24,24 +24,12 @@ import sys
 import re
 import tempfile
 import cards
+from iselib import *
 
 card = sys.argv[1]
 card = cards.get_card(card)
 pinvhdl = sys.argv[2]
 cardvhdl = card.name + "card"
-
-_sq_whitelist = string.lowercase + string.uppercase + string.digits + ".-_/"
-def sq(a):
-    if not a.strip(_sq_whitelist):
-        return a
-    return "'" + a.replace("'", "'\\''") + "'"
-
-def run(*args):
-    print >>sys.stderr, "#", " ".join([sq(a) for a in args])
-    r = os.spawnvp(os.P_WAIT, args[0], args)
-    print >>sys.stderr, "# exited with", r
-    if r:
-        raise SystemExit, r
 
 def p(*x): return os.path.join(d, *x)
 
@@ -59,20 +47,20 @@ d = tempfile.mkdtemp(prefix='hm2')
 print >>sys.stderr, "# tempdir", sq(d)
 atexit.register(shutil.rmtree, d)
 
-shutil.copy("IDROMConst.vhd", p("IDROMConst.vhd"))
-shutil.copy("idrom_tools.vhd", p("idrom_tools.vhd"))
-shutil.copy("PIN_%s.vhd" % pinvhdl, p("PIN_%s.vhd") % pinvhdl)
-shutil.copy("%s.vhd" % cardvhdl, p("%s.vhd") % cardvhdl)
-subst("pinmaker.vhd.in", p("pinmaker_%s.vhd") % pinvhdl,
-    PIN=pinvhdl, CARD=cardvhdl)
+sources = [
+    'IDROMConst.vhd', 'idrom_tools.vhd', 'PIN_%s.vhd' % pinvhdl,
+    '%s.vhd' % cardvhdl, p("pinmaker.vhd")]
+sources = [os.path.abspath(s) for s in sources]
+subst(sys.argv[3], p("pinmaker.vhd"), PIN=pinvhdl, CARD=cardvhdl, OUT=os.path.abspath(sys.argv[4]))
 
-orgdir = os.getcwd()
+use_ise((13,10,9))
+
+with open(p("prj"), "wt") as f:
+    for s in sources:
+        print >>f, "vhdl work", s
+with open(p("scr"), "wt") as f:
+    print >>f, "run all\nexit"
+
 os.chdir(d)
-run("ghdl", "-a", "-fexplicit", "--ieee=synopsys",
-    "IDROMConst.vhd",
-    "idrom_tools.vhd",
-    "PIN_%s.vhd" % pinvhdl,
-    "%s.vhd" % cardvhdl,
-    "pinmaker_%s.vhd" % pinvhdl)
-run("ghdl", "-e", "-fexplicit", "--ieee=synopsys", "pinmaker_%s" % pinvhdl)
-run("ghdl", "-r", "pinmaker_%s" % pinvhdl)
+run("fuse", "-prj", "prj", "-o", "main", "pinmaker_%s" % pinvhdl)
+run("./main", "-tclbatch", "scr")

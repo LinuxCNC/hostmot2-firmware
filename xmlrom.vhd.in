@@ -10,7 +10,7 @@ use work.PIN_@PIN@.all;
 use work.@CARD@.all;
 use work.idrom_tools.all;
 
-entity xmlrom_@PIN@ is
+entity pinmaker_@PIN@ is
 
 function GetPinDesc(i: integer) return PinDescRecord is
 begin
@@ -69,10 +69,10 @@ begin
     if(v) then return 1; else return 0; end if;
 end function;
 
-end xmlrom_@PIN@;
+end pinmaker_@PIN@;
 
-architecture bbb of xmlrom_@PIN@ is
-    file output_file : TEXT open write_mode is in "/dev/stdout";
+architecture bbb of pinmaker_@PIN@ is
+    file output_file : TEXT open write_mode is in "@OUT@";
 begin
     process
         variable so: line;
