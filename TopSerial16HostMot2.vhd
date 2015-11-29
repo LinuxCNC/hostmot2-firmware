@@ -83,7 +83,7 @@ use work.@Card@.all;
 
 -------------------- select (or add) one pinout -----------------------
 
---use work.@Pin@.all;
+use work.@Pin@.all;
 
 -- 72 pin pinouts for 7I90HD
 --use work.PIN_JUSTIO_72.all;
