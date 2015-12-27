@@ -231,7 +231,7 @@ entity TopPCIHostMot2 is -- for 5I24,5I25, 5I26, 6I25 PCI target mode
 --		InstStride1: integer := 16;		-- instance stride 1 = 64 bytes = 16 x 32 bit registers !! UARTS need 0x10
 		RegStride0: integer := 256;		-- register stride 0 = 256 bytes = 64 x 32 bit registers
 		RegStride1: integer := 256;      -- register stride 1 = 256 bytes - 64 x 32 bit
-		FallBack: boolean := true			-- is this a fallback config?
+		FallBack: boolean := false			-- is this a fallback config?
 	);    
 	port 
 	( 
