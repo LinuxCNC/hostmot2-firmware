@@ -70,3 +70,19 @@ A representative firmware for each supported board type has been tested:
  * 3x20-1M (PCI-Express)
  * 4i65, 4i68 (PC104+)
 The 5i22-1.5M and 7i43-200 are not tested, but are expected to work.
+
+
+== Incorporating new upstream source ==
+
+Primary development of the hostmot2 fpga firmware is done by Mesa Electronics, who releases source in .zip format.
+This repository integrates that source with a Linux-centric build infrastructure to produce Debian packages.
+When incorporating upstream changes from Mesa, the following procedure should be used:
+ 1. Put the new source code release on the "upstream" branch as a single large commit
+ 1. Merge upstream and master into a (possibly local) testing branch
+ 1. Make additional commits to add new card support, adjust for changed filenames, etc
+ 1. Test on a representative set of boards
+ 1. When the result of testing is satisfactory, merge to master branch.  Push new master and upstream branches to git.linuxcnc.org.
+
+In the rare cases that we make a change to a .vhd, .pin, or other file that comes from Mesa, this strategy with an upstream branch lets us retain that change
+(or have it appear as a merge conflict, if it cannot be automatically applied),
+instead of losing it when we receive a new set of base source files.
