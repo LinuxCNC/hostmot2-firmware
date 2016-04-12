@@ -27,8 +27,10 @@ timing = []
 
 def run(*args):
     cmd = " ".join(sq(a) for a in args)
+    if settings_sh is None:
+        raise RuntimeError, "Must call use_ise() before run()"
     # xilinx 13.3's settings32.sh uses bashisms
-    if settings_sh: cmd = "bash -c '. %s; %s'" % (settings_sh, cmd)
+    cmd = "bash -c '. %s; %s'" % (settings_sh, cmd)
     print "#", cmd
     sys.stdout.flush()
     t0 = time.time()
@@ -54,40 +56,36 @@ def use_ise(iseversions):
     # into 10.1/ and 13.3/.
     # 10.1's settings are in ISE/settings32.sh
     # 13.3's settings are in ISE_DS/settings32.sh
-    if 'XILINX' in os.environ:
-        print "XILINX environment variable already set, not overriding"
-        ise = guess_ise_version()
+    for ise in iseversions:
+        localsettings = os.path.abspath("settings%d.sh" % ise)
+        if os.path.exists(localsettings):
+            if os.path.islink(localsettings): localsettings = os.readlink(localsettings)
+            settings_sh = localsettings
+            break
+
+        files = glob.glob('/opt/Xilinx/%s/*/settings32.sh' % ise)
+        if len(files) > 1:
+            print "multiple settings files found!", files
+            raise SystemExit, 1
+        if len(files) == 1:
+            settings_sh = files[0]
+            break
+
+        files = glob.glob('/opt/Xilinx/%s.*/*/settings32.sh' % ise)
+        if len(files) == 1:
+            settings_sh = files[0]
+            break
+        if len(files) > 1:
+            # use the newest one: sort by minor version since the major versions are all the same
+            files = sorted(files, key=lambda f: int((f.split('/')[3]).split('.')[1]))
+            settings_sh = files[-1]
+            break
+
     else:
-        for ise in iseversions:
-            localsettings = os.path.abspath("settings%d.sh" % ise)
-            if os.path.exists(localsettings):
-                if os.path.islink(localsettings): localsettings = os.readlink(localsettings)
-                settings_sh = localsettings
-                break
+        raise SystemExit("Firmware requires one of these ise major versions to build: %s"
+                % " ".join(map(str, iseversions)))
 
-            files = glob.glob('/opt/Xilinx/%s/*/settings32.sh' % ise)
-            if len(files) > 1:
-                print "multiple settings files found!", files
-                raise SystemExit, 1
-            if len(files) == 1:
-                settings_sh = files[0]
-                break
-
-            files = glob.glob('/opt/Xilinx/%s.*/*/settings32.sh' % ise)
-            if len(files) == 1:
-                settings_sh = files[0]
-                break
-            if len(files) > 1:
-                # use the newest one: sort by minor version since the major versions are all the same
-                files = sorted(files, key=lambda f: int((f.split('/')[3]).split('.')[1]))
-                settings_sh = files[-1]
-                break
-
-        else:
-            raise SystemExit("Firmware requires one of these ise major versions to build: %s"
-                    % " ".join(map(str, iseversions)))
-
-        print "using Xilinx Webpack settings '%s'" % settings_sh
+    print "using Xilinx Webpack settings '%s'" % settings_sh
 
 def report_timing():
     t =  m =  s = 0
