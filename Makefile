@@ -3,7 +3,7 @@ export XIL_PAR_DESIGN_CHECK_VERBOSE
 
 VERSION := $(shell ./DESCRIBE)
 
-COMMON_VHDL := IDROMConst.vhd \
+COMMON_VHDL := $(patsubst %, src/%, IDROMConst.vhd \
     atrans.vhd boutreg.vhd bufferedspi.vhd \
     PinExists.vhd CountPinsInRange.vhd d8o8.vhd dpll.vhd hostmotid.vhd \
     idrom.vhd irqlogic.vhd kubstepgenz.vhd MaxPinsPerModule.vhd \
@@ -13,21 +13,21 @@ COMMON_VHDL := IDROMConst.vhd \
     uartx.vhd ubrategen.vhd usbram.vhd usbrom.vhd watchdog.vhd wordpr.vhd \
     wordrb.vhd fixicap.vhd d16w.vhd etherhm2.vhd \
     parity.vhd decodedstrobe2.vhd \
-    hostmot2.vhd
+    hostmot2.vhd)
 
-TOP_i20 := Top9030HostMot2.vhd
-TOP_i22_1500 := Top9054HostMot2.vhd
-TOP_i22_1000 := Top9054HostMot2.vhd
-TOP_i23 := Top9054HostMot2.vhd
-TOP_i43_200 := TopEPPHostMot2.vhd
-TOP_i43_400 := TopEPPHostMot2.vhd
-TOP_i65 := Top9030HostMot2.vhd
-TOP_i68 := Top9054HostMot2.vhd
-TOP_x20_1000 := Top9054HostMot2.vhd
-TOP_x20_1500 := Top9054HostMot2.vhd
-TOP_x20_2000 := Top9054HostMot2.vhd
-TOP_i24 := TopPCIHostMot2.vhd
-TOP_i25 := TopPCIHostMot2.vhd
+TOP_i20 := src/Top9030HostMot2.vhd
+TOP_i22_1500 := src/Top9054HostMot2.vhd
+TOP_i22_1000 := src/Top9054HostMot2.vhd
+TOP_i23 := src/Top9054HostMot2.vhd
+TOP_i43_200 := src/TopEPPHostMot2.vhd
+TOP_i43_400 := src/TopEPPHostMot2.vhd
+TOP_i65 := src/Top9030HostMot2.vhd
+TOP_i68 := src/Top9054HostMot2.vhd
+TOP_x20_1000 := src/Top9054HostMot2.vhd
+TOP_x20_1500 := src/Top9054HostMot2.vhd
+TOP_x20_2000 := src/Top9054HostMot2.vhd
+TOP_i24 := src/TopPCIHostMot2.vhd
+TOP_i25 := src/TopPCIHostMot2.vhd
 
 .PHONY: dist dist-src dist-src-force dist-bin dist-bin-force default clean bitfiles pinfiles
 default: bitfiles pinfiles
@@ -72,16 +72,16 @@ clean:
 	rm -rf fw
 # No whitespace is acceptable in args to FIRMWARE_template
 define FIRMWARE_template
-$(1).BIT: $(TOP_$(2)) PIN_$(3).vhd $(COMMON_VHDL) build.py cards.py
+$(1).BIT: $(TOP_$(2)) src/PIN_$(3).vhd $(COMMON_VHDL) build.py cards.py
 	@mkdir -p $(dir $(1))
 	./build.py $(2) $(3) $(1).BIT
-$(1).PIN: PIN_$(3).vhd IDROMConst.vhd pinmaker.vhd.in idrom_tools.vhd pin.py
+$(1).PIN: src/PIN_$(3).vhd src/IDROMConst.vhd src/pinmaker.vhd.in src/idrom_tools.vhd pin.py
 	@mkdir -p $(dir $(1))
-	./pin.py $(2) $(3) pinmaker.vhd.in $(1).PIN.tmp
+	./pin.py $(2) $(3) src/pinmaker.vhd.in $(1).PIN.tmp
 	mv $(1).PIN.tmp $(1).PIN
-$(1).xml: PIN_$(3).vhd IDROMConst.vhd xmlrom.vhd.in idrom_tools.vhd pin.py
+$(1).xml: src/PIN_$(3).vhd src/IDROMConst.vhd src/xmlrom.vhd.in src/idrom_tools.vhd pin.py
 	@mkdir -p $(dir $(1))
-	./pin.py $(2) $(3) xmlrom.vhd.in $(1).xml.tmp
+	./pin.py $(2) $(3) src/xmlrom.vhd.in $(1).xml.tmp
 	mv $(1).xml.tmp $(1).xml
 bitfiles: $(1).BIT
 pinfiles: $(1).PIN $(1).xml
@@ -100,7 +100,7 @@ endef
 FIRMWARES_TXT := $(word 1,$(wildcard firmwares-local.txt) firmwares.txt)
 FIRMWARES_MK := ${FIRMWARES_TXT:.txt=.mk}
 ifneq ($(FIRMWARES_TXT),firmwares.txt)
-$(warning Note: Using firmwares listed in $(FIRMWARES_TXT))
+$(info Note: Using firmwares listed in $(FIRMWARES_TXT))
 endif
 -include $(FIRMWARES_MK)
 Makefile: $(FIRMWARES_MK)

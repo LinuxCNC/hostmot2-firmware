@@ -48,8 +48,8 @@ print >>sys.stderr, "# tempdir", sq(d)
 atexit.register(shutil.rmtree, d)
 
 sources = [
-    'IDROMConst.vhd', 'idrom_tools.vhd', 'PIN_%s.vhd' % pinvhdl,
-    '%s.vhd' % cardvhdl, p("pinmaker.vhd")]
+    'src/IDROMConst.vhd', 'src/idrom_tools.vhd', 'src/PIN_%s.vhd' % pinvhdl,
+    'src/%s.vhd' % cardvhdl, p("pinmaker.vhd")]
 sources = [os.path.abspath(s) for s in sources]
 subst(sys.argv[3], p("pinmaker.vhd"), PIN=pinvhdl, CARD=cardvhdl, OUT=os.path.abspath(sys.argv[4]))
 

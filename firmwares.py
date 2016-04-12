@@ -23,7 +23,7 @@ import cards
 
 def existing(*names):
     for n in names:
-        if os.path.isfile(n): return n
+        if os.path.isfile("src/" + n): return n
     raise IOError, "Could not find a candidate from %r" % (names,)
 
 def pin(card, fw):

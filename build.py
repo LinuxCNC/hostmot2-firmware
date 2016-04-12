@@ -134,7 +134,7 @@ def help_cards():
             subsequent_indent=" "*8)) + "\n"
 
 def help_pins(card):
-    available = sorted(s[4:-4] for s in glob.glob("PIN_*.vhd"))
+    available = sorted(s[8:-4] for s in glob.glob("src/PIN_*.vhd"))
     return "\n" + "\n".join(
         textwrap.wrap("Available pinouts: " + " ".join(available),
             subsequent_indent=" "*8)) + "\n"
@@ -160,7 +160,7 @@ except KeyError:
 
 use_ise(card.iseversions)
 
-if not os.path.exists("PIN_" + pin + ".vhd"):
+if not os.path.exists("src/PIN_" + pin + ".vhd"):
     usage("Unknown pin configuration %r" % pin, card)
 
 orgdir = os.getcwd()
@@ -174,20 +174,22 @@ d = os.path.splitext(outfile)[0] + "_work"
 print "# workdir", sq(d)
 if not os.path.isdir(d): os.makedirs(d)
 
-orgdir = os.getcwd()
-def s(*x): return os.path.join(orgdir, *x)
+srcdir = os.path.join(orgdir, 'src')
+def s(*x): return os.path.join(srcdir, *x)
 def p(*x): return os.path.join(d, *x)
 
 constraints = s("%s.ucf" % card.card)
 
 cardvhdl = card.name+"card"
 pinvhdl = "PIN_" + pin
-topfile_in = (getattr(card, 'topvhdl', '') or getattr(card, 'topmodule', '')) + ".vhd"
+topfile_in = s(getattr(card, 'topvhdl', '') or getattr(card, 'topmodule', '')) + ".vhd"
 topfile_out = os.path.splitext(outfile)[0] + ".vhd"
+print >>sys.stderr, topfile_in, topfile_out
 subst(topfile_in, topfile_out, CARD=cardvhdl, PIN=pinvhdl);
 
 all_vhdl = common_vhdl + [cardvhdl + '.vhd', pinvhdl + '.vhd', topfile_out]
 all_vhdl = [s(f) for f in all_vhdl]
+print all_vhdl
 
 # Run everything from the temporary directory
 os.chdir(d)
