@@ -47,7 +47,7 @@ ifeq ($(wildcard .git),)
 endif
 	@mkdir -p dist
 	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ $(shell git stash create) | \
-		./mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
+		scripts/mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
 		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz
 dist-bin:
 	$(error Use make dist-bin-force to make a distribution from a dirty tree)
@@ -63,7 +63,7 @@ ifeq ($(wildcard .git),)
 endif
 	@mkdir -p dist
 	(git archive --format=tar --prefix=hostmot2-firmware-$(VERSION)/ HEAD | \
-		./mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
+		scripts/mkvertar.py hostmot2-firmware-$(VERSION)/ $(VERSION) ) \
 		| gzip -9 > dist/hostmot2-firmware-$(VERSION).tar.gz
 dist-bin: dist-bin-force
 endif
@@ -72,16 +72,16 @@ clean:
 	rm -rf fw
 # No whitespace is acceptable in args to FIRMWARE_template
 define FIRMWARE_template
-$(1).BIT: $(TOP_$(2)) src/PIN_$(3).vhd $(COMMON_VHDL) build.py cards.py
+$(1).BIT: $(TOP_$(2)) src/PIN_$(3).vhd $(COMMON_VHDL) scripts/build.py scripts/cards.py
 	@mkdir -p $(dir $(1))
-	./build.py $(2) $(3) $(1).BIT
-$(1).PIN: src/PIN_$(3).vhd src/IDROMConst.vhd src/pinmaker.vhd.in src/idrom_tools.vhd pin.py
+	scripts/build.py $(2) $(3) $(1).BIT
+$(1).PIN: src/PIN_$(3).vhd src/IDROMConst.vhd src/pinmaker.vhd.in src/idrom_tools.vhd scripts/pin.py
 	@mkdir -p $(dir $(1))
-	./pin.py $(2) $(3) src/pinmaker.vhd.in $(1).PIN.tmp
+	scripts/pin.py $(2) $(3) src/pinmaker.vhd.in $(1).PIN.tmp
 	mv $(1).PIN.tmp $(1).PIN
-$(1).xml: src/PIN_$(3).vhd src/IDROMConst.vhd src/xmlrom.vhd.in src/idrom_tools.vhd pin.py
+$(1).xml: src/PIN_$(3).vhd src/IDROMConst.vhd src/xmlrom.vhd.in src/idrom_tools.vhd scripts/pin.py
 	@mkdir -p $(dir $(1))
-	./pin.py $(2) $(3) src/xmlrom.vhd.in $(1).xml.tmp
+	scripts/pin.py $(2) $(3) src/xmlrom.vhd.in $(1).xml.tmp
 	mv $(1).xml.tmp $(1).xml
 bitfiles: $(1).BIT
 pinfiles: $(1).PIN $(1).xml
@@ -93,7 +93,7 @@ dist-bin-force: dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz:
 	@mkdir -p $$(dir $$@)
 	@rm -f $$@
-	./mktar.py $$@ fw/ hostmot2-firmware-bin-$(1)-$(VERSION)/ $$^
+	scripts/mktar.py $$@ fw/ hostmot2-firmware-bin-$(1)-$(VERSION)/ $$^
 dist-force-$(1): dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 endef
 
@@ -104,6 +104,6 @@ $(info Note: Using firmwares listed in $(FIRMWARES_TXT))
 endif
 -include $(FIRMWARES_MK)
 Makefile: $(FIRMWARES_MK)
-$(FIRMWARES_MK): $(FIRMWARES_TXT) firmwares.py cards.py
-	./firmwares.py $< > $(FIRMWARES_MK).tmp
+$(FIRMWARES_MK): $(FIRMWARES_TXT) scripts/firmwares.py scripts/cards.py
+	scripts/firmwares.py $< > $(FIRMWARES_MK).tmp
 	mv -f $(FIRMWARES_MK).tmp $(FIRMWARES_MK)
