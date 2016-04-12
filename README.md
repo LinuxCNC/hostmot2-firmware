@@ -1,6 +1,6 @@
-hostmot2-firmware: build assorted hostmot2 FPGA firmwares automatically
+# hostmot2-firmware: build assorted hostmot2 FPGA firmwares automatically
 
-== Overview ==
+## Overview
 
 This package includes the hostmot2 source files along with Makefiles and
 other scripts to automatically build all the desired variants of the
@@ -10,7 +10,7 @@ The PIN file format is intended to be human readable (not machine readable) so
 it is not a requirement that it exactly match the format of existing PIN files.
 There is also an experimental xml description format.
 
-== ISE Version Requirements
+## ISE Version Requirements
 
 Refer to `cards.py` for information about required ISE versions for particular
 cards.  Currently, by installing ISE 13.4 and ISE 9.2, firmware can be built
@@ -19,11 +19,11 @@ except the venerable "5i20".
 
 Xilinx still offers older versions of ISE free of charge.  At the time
 of writing, the location is
-    http://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/design-tools/archive.html
+http://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/design-tools/archive.html
 and can also be reached from the xilinx.com front page by going to
 "Support", "Downloads & Licensing", "ISE", "Archive".
 
-== Building ==
+## Building
 
 Do not manually "source" or "." the settings.sh script into your shell before
 invoking "make" or "dpkg-buildpackage".  The build process automatically finds
@@ -31,8 +31,10 @@ the right "settings.sh" script for each card if Xilinx ISE is installed into
 the default location under /opt/Xilinx.
 
 If you did not install in a location that the build process autodetects, create a set of symlinks to the required versions of ise, e.g.,:
-    settings9.sh -> /opt/Xilinx19/settings32.sh
-    settings13.sh -> /opt/Xilinx13.4/settings32.sh
+~~~~
+settings9.sh -> /opt/Xilinx19/settings32.sh
+settings13.sh -> /opt/Xilinx13.4/settings32.sh
+~~~~
 
 To build all bitfiles, pinfiles, and xmlfiles:
     make -j4                   # -j setting depends on RAM and # CPU cores
@@ -57,17 +59,18 @@ To build tar packages (must be in a git checkout):
 
 
 
-== Testing ==
+## Testing
 
 A representative firmware for each supported board type has been tested:
  * 5i20, 5i22-1M, 5i23 (PCI)
  * 7i43-400 (EPP)
  * 3x20-1M (PCI-Express)
  * 4i65, 4i68 (PC104+)
+
 The 5i22-1.5M and 7i43-200 are not tested, but are expected to work.
 
 
-== Incorporating new upstream source ==
+## Incorporating new upstream source
 
 Primary development of the hostmot2 fpga firmware is done by Mesa Electronics, who releases source in .zip format.
 This repository integrates that source with a Linux-centric build infrastructure to produce Debian packages.
