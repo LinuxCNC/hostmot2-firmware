@@ -1,7 +1,7 @@
 XIL_PAR_DESIGN_CHECK_VERBOSE=1
 export XIL_PAR_DESIGN_CHECK_VERBOSE
 
-VERSION := $(shell ./DESCRIBE)
+VERSION := $(shell scripts/DESCRIBE)
 
 COMMON_VHDL := $(patsubst %, src/%, IDROMConst.vhd \
     atrans.vhd boutreg.vhd bufferedspi.vhd \
