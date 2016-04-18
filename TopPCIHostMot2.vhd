@@ -130,7 +130,8 @@ use work.@Pin@.all;
 --Non standard
 --use work.PIN_7I77_7I76_micges_34.all;  		-- 5i25/6 analog servo config+ 7i76 step/dir config for 7I77 and 7I76
 --use work.PIN_BISSTEST_34.all;			-- 8 channel BISS interface test  
---use work.PIN_UA2_34.all;					-- simple UART config for 7I76 SSERIAL device access
+--use work.PIN_UA2_34.all;			-- simple UART config for 7I76 SSERIAL device access
+--use work.PIN_PktUART1inst_34.all              -- example of one PktUART instance with other secondary functions
 --use work.PIN_7I76_34.all;  				-- 5i25/6 step config for 7I76 step/dir breakout
 --use work.PIN_7I78_34.all;				-- 5i25/6 step config for 7I78 step/dir breakout 
 --use work.PIN_SYIL1_34.all;				-- Syil stepper config	
