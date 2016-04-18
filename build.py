@@ -164,7 +164,7 @@ timing = []
 def run(*args):
     cmd = " ".join(sq(a) for a in args)
     # xilinx 13.3's settings32.sh uses bashisms
-    if settings_sh: cmd = "bash -c '. %s; %s'" % (settings_sh, cmd)
+    if 'settings_sh' in globals() : cmd = "bash -c '. %s; %s'" % (settings_sh, cmd)
     print "#", cmd
     sys.stdout.flush()
     t0 = time.time()
@@ -197,22 +197,13 @@ if len(sys.argv) == 4:
 else:
     outfile = os.path.join(orgdir, "%s_%s.BIT"% (card.card, pin))
 
-def guess_ise_version():
-    with os.popen("map -h | head -1") as p:
-        info = p.read()
-        info = info.split()[1].split(".")[0]
-        try:
-            return int(info)
-        except:
-            return None
 
 # Xilinx Webpack 10.1 and 13.3 both install into /opt/Xilinx/,
 # into 10.1/ and 13.3/.
 # 10.1's settings are in ISE/settings32.sh
 # 13.3's settings are in ISE_DS/settings32.sh
 if 'XILINX' in os.environ:
-    print "XILINX environment variable already set, not overriding"
-    ise = guess_ise_version()
+    sys.exit('\n Please unset the sourced Xilinx settings.\n')
 else:
     for ise in card.iseversions:
         localsettings = os.path.abspath("settings%d.sh" % ise)
@@ -290,6 +281,7 @@ prjf.close()
 
 def report_timing():
     t = 0
+    m, s = 0, 0
     for k, v in timing:
         t += v
         m, s = divmod(v, 60)
