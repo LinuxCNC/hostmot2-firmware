@@ -1,3 +1,7 @@
+ifeq ($(origin XILINX),environment)
+$(error Do not load Xilinx settings.sh into the shell before invoking make)
+endif
+
 XIL_PAR_DESIGN_CHECK_VERBOSE=1
 export XIL_PAR_DESIGN_CHECK_VERBOSE
 
