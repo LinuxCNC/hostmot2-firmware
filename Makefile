@@ -102,7 +102,8 @@ dist-force-$(1): dist/hostmot2-firmware-bin-$(1)-$(VERSION).tar.gz
 endef
 
 FIRMWARES_TXT := $(word 1,$(wildcard firmwares-local.txt) firmwares.txt)
-FIRMWARES_MK := ${FIRMWARES_TXT:.txt=.mk}
+FIRMWARES_MK := $(patsubst %.txt,fw/%.mk,$(FIRMWARES_TXT))
+$(info NOTE: FIRMWARES_MK = $(FIRMWARES_MK))
 ifneq ($(FIRMWARES_TXT),firmwares.txt)
 $(info Note: Using firmwares listed in $(FIRMWARES_TXT))
 endif
