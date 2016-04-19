@@ -168,6 +168,8 @@ begin
     if(tag = TPPWMTag)	    then return "TPPWM"; end if;
     if(tag = LEDTag)	    then return "LED"; end if;
     if(tag = SSerialTag)    then return "SSerial"; end if;
+    if(tag = PktUARTTTag)    then return "PktUARTTx"; end if;
+    if(tag = PktUARTRTag)    then return "PktUARTrx"; end if;
     return "unknown";
 end;
 
@@ -243,6 +245,12 @@ begin
         elsif(pin = SSerialRX3Pin)    then return "Serial Receive 3 (in)";
         elsif(pin = SSerialRX4Pin)    then return "Serial Receive 4 (in)";
         elsif(pin = SSerialRX5Pin)    then return "Serial Receive 5 (in)";
+        end if;
+    elsif(tag = PktUARTTTag) then
+        if(pin = PktUTDataPin)       then return "Packet Serial Transmit (out)";
+        end if;
+    elsif(tag = PktUARTRTag) then
+        if(pin = PktURDataPin)       then return "Packet Serial Receive (in)";
         end if;
     end if;
     return "???";
