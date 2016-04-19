@@ -62,8 +62,6 @@ begin
     return "unknown";
 end function;
 
--- XXX: this function must be kept in synch with the one in pinmaker
--- (someone should fix this)
 function Conn(vendor: std_logic_vector(31 downto 0); board: std_logic_vector(31 downto 0); idx: integer; portwidth: integer)
 return string is
     variable pp : integer;
