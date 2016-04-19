@@ -110,5 +110,6 @@ endif
 -include $(FIRMWARES_MK)
 Makefile: $(FIRMWARES_MK)
 $(FIRMWARES_MK): $(FIRMWARES_TXT) scripts/firmwares.py scripts/cards.py
+	@mkdir -p $(dir $@)
 	scripts/firmwares.py $< > $(FIRMWARES_MK).tmp
 	mv -f $(FIRMWARES_MK).tmp $(FIRMWARES_MK)
