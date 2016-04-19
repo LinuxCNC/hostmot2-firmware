@@ -103,7 +103,6 @@ endef
 
 FIRMWARES_TXT := $(word 1,$(wildcard firmwares-local.txt) firmwares.txt)
 FIRMWARES_MK := $(patsubst %.txt,fw/%.mk,$(FIRMWARES_TXT))
-$(info NOTE: FIRMWARES_MK = $(FIRMWARES_MK))
 ifneq ($(FIRMWARES_TXT),firmwares.txt)
 $(info Note: Using firmwares listed in $(FIRMWARES_TXT))
 endif
