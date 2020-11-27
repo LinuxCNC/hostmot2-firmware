@@ -166,6 +166,8 @@ constant PktUARTs: integer := NumberOfModules(TheModuleID,PktUARTRTag); -- assum
 constant WaveGens: integer := NumberOfModules(TheModuleID,WaveGenTag);
 constant ResolverMods: integer := NumberOfModules(TheModuleID,ResModTag);
 constant SSerials: integer := NumberOfModules(TheModuleID,SSerialTag);
+constant Sigma5Encs: integer := NumberOfModules(TheModuleID, Sigma5EncTag);
+
 type  SSerialType is array(0 to 3) of integer;
 constant UARTSPerSSerial: SSerialType :=( 
 (InputPinsPerModule(ThePinDesc,SSerialTag,0)),
@@ -212,7 +214,6 @@ constant UseStepgenProbe: boolean := PinExists(ThePinDesc,StepGenTag,StepGenProb
 	signal ROMAdd: std_logic_vector(7 downto 0);
 
 -- I/O port related signals
-
 	signal AltData :  std_logic_vector(IOWidth-1 downto 0) := (others => '0'); 
 	signal PortSel: std_logic;	
 	signal LoadPortCmd: std_logic_vector(IOPorts -1 downto 0);
@@ -2110,6 +2111,120 @@ constant UseStepgenProbe: boolean := PinExists(ThePinDesc,StepGenTag,StepGenProb
 			end loop;	
 		end process;
 	end generate;
+
+
+-----------------------Yaskawa Sigma 5 20-bit encoder--------------------------
+-------------------------------------------------------------------------------
+	makeSigma5Encmod: if Sigma5Encs >0 generate
+		signal Sigma5Enc_Bus_Load_Control : std_logic_vector(Sigma5Encs -1 downto 0);
+        signal Sigma5Enc_Bus_Store_Rx0 : std_logic_vector(Sigma5Encs -1 downto 0);
+        signal Sigma5Enc_Bus_Store_Rx1 : std_logic_vector(Sigma5Encs -1 downto 0);
+        signal Sigma5Enc_Bus_Store_Rx2 : std_logic_vector(Sigma5Encs -1 downto 0);
+        signal Sigma5Enc_Bus_Store_Status : std_logic_vector(Sigma5Encs -1 downto 0);
+
+        signal Sigma5Enc_Txdata : std_logic_vector(Sigma5Encs -1 downto 0);
+        signal Sigma5Enc_Txen : std_logic_vector(Sigma5Encs -1 downto 0);
+		signal Sigma5Enc_Rxdata : std_logic_vector(Sigma5Encs -1 downto 0);
+		
+        signal Sigma5Enc_Sel_Control : std_logic;
+        signal Sigma5Enc_Sel_Bitrate : std_logic;
+        signal Sigma5Enc_Sel_Rx0 : std_logic;
+        signal Sigma5Enc_Sel_Rx1 : std_logic;
+        signal Sigma5Enc_Sel_Rx2 : std_logic;
+        signal Sigma5Enc_Sel_Status : std_logic;
+	begin
+		makesigma5encmods: for i in 0 to Sigma5Encs -1 generate
+			Sigma5Enc: entity work.Sigma5Enc
+			generic map (
+				buswidth => BusWidth
+			)
+			port map (
+                clkmed => clkmed,
+                clklow => clklow,
+				ibus => ibus,
+				obus => obus,
+                timers => RateSources, -- DPLL timer channels
+				bus_load_control  =>  Sigma5Enc_Bus_Load_Control(i),
+                bus_store_rx0 =>      Sigma5Enc_Bus_Store_Rx0(i),
+                bus_store_rx1 =>      Sigma5Enc_Bus_Store_Rx1(i),
+                bus_store_rx2 =>      Sigma5Enc_Bus_Store_Rx2(i),
+                bus_store_status =>   Sigma5Enc_Bus_Store_Status(i),
+                txdata=>              Sigma5Enc_Txdata(i),
+                rxdata =>             Sigma5Enc_Rxdata(i),
+				txen =>               Sigma5Enc_Txen(i)
+			);
+		end generate;
+
+		Sigma5EncDecode : process(A, 
+                               writestb, 
+                               readstb, 
+                               Sigma5Enc_Sel_Control, 
+                               Sigma5Enc_Sel_Rx0,
+                               Sigma5Enc_Sel_Rx1,
+                               Sigma5Enc_Sel_Rx2,
+                               Sigma5Enc_Sel_Status)
+		begin
+	        if A(15 downto 8) = Sigma5EncControlAddr then
+	    		Sigma5Enc_Sel_Control <= '1';
+			else
+				Sigma5Enc_Sel_Control <= '0';
+			end if;
+
+            if A(15 downto 8) = Sigma5EncRx0Addr then
+				Sigma5Enc_Sel_Rx0 <= '1';
+			else
+				Sigma5Enc_Sel_Rx0 <= '0';
+			end if;
+
+            if A(15 downto 8) = Sigma5EncRx1Addr then
+				Sigma5Enc_Sel_Rx1 <= '1';
+			else
+				Sigma5Enc_Sel_Rx1 <= '0';
+			end if;
+
+            if A(15 downto 8) = Sigma5EncRx2Addr then
+				Sigma5Enc_Sel_Rx2 <= '1';
+			else
+				Sigma5Enc_Sel_Rx2 <= '0';
+			end if;
+
+            if A(15 downto 8) = Sigma5EncStatusAddr then
+				Sigma5Enc_Sel_Status <= '1';
+			else
+				Sigma5Enc_Sel_Status <= '0';
+			end if;
+
+			Sigma5Enc_Bus_Load_Control <= OneOfNDecode(Sigma5Encs, Sigma5Enc_Sel_Control, writestb, A(7 downto 2));
+            Sigma5Enc_Bus_Store_Rx0 <= OneOfNDecode(Sigma5Encs, Sigma5Enc_Sel_Rx0, readstb, A(7 downto 2));
+            Sigma5Enc_Bus_Store_Rx1 <= OneOfNDecode(Sigma5Encs, Sigma5Enc_Sel_Rx1, readstb, A(7 downto 2));
+            Sigma5Enc_Bus_Store_Rx2 <= OneOfNDecode(Sigma5Encs, Sigma5Enc_Sel_Rx2, readstb, A(7 downto 2));
+            Sigma5Enc_Bus_Store_Status <= OneOfNDecode(Sigma5Encs, Sigma5Enc_Sel_Status, readstb, a(7 downto 2));
+
+		end process;
+
+		doSigma5Encpins: process(clklow, IOBits, Sigma5Enc_Txdata, Sigma5Enc_Txen, Sigma5Enc_Rxdata)
+		begin
+			for i in 0 to IOWidth - 1 loop
+				if ThePinDesc(i)(15 downto 8) = Sigma5EncTag then
+					case (ThePinDesc(i)(7 downto 0)) is
+						when Sigma5EncTxdataPin =>
+                                                    AltData(i) <= Sigma5Enc_Txdata(conv_integer(ThePinDesc(i)(23 downto 16)));
+
+						when Sigma5EncTxenPin =>
+                                                    AltData(i) <= Sigma5Enc_Txen(conv_integer(ThePinDesc(i)(23 downto 16)));
+ 
+                                                
+
+						when Sigma5EncRxdataPin =>
+                                                    Sigma5Enc_Rxdata(conv_integer(ThePinDesc(i)(23 downto 16))) <= IOBits(i);
+
+						when others => null;
+					end case;
+				end if;
+			end loop;
+		end process;
+	end generate;
+	
 
 	makedaqfifomod:  if DAQFIFOs >0  generate	
 	signal ReadDAQFIFO: std_logic_vector(DAQFIFOs-1 downto 0);

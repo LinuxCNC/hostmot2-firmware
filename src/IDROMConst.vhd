@@ -286,7 +286,7 @@ package IDROMConst is
 	constant PktUARTRModeRegAddr : std_logic_vector(7 downto 0) := x"67";
 	constant PktUARTRNumRegs : std_logic_vector(7 downto 0) := x"04";
 	constant PktUARTRMPBitMask : std_logic_vector(31 downto 0) := x"0000000F";
-
+	
 	constant SSSIDataAddr0 : std_logic_vector(7 downto 0) := x"68";
 	constant SSSIDataAddr1 : std_logic_vector(7 downto 0) := x"69";
 	constant SSSIControlAddr : std_logic_vector(7 downto 0) := x"6A";
@@ -334,6 +334,20 @@ package IDROMConst is
 	constant TranslateNumRegs : std_logic_vector(7 downto 0) := x"04";
 	constant TranslateMPBitMask : std_logic_vector(31 downto 0) := x"00000000";
 
+
+
+	--Sigma5 encoder - Interfaces with Yaskawa Sigama V encoders
+	constant Sigma5EncControlAddr  : std_logic_vector(7 downto 0)  := x"80";
+    constant Sigma5EncRx0Addr      : std_logic_vector(7 downto 0)  := X"81";
+    constant Sigma5EncRx1Addr      : std_logic_vector(7 downto 0)  := X"82";
+    constant Sigma5EncRx2Addr      : std_logic_vector(7 downto 0)  := X"83";
+    constant Sigma5EncStatusAddr   : std_logic_vector(7 downto 0)  := X"84";
+	constant Sigma5EncNumRegs      : std_logic_vector(7 downto 0)  := x"05";
+	constant Sigma5EncMPBitMask    : std_logic_vector(31 downto 0) := x"0000001F";
+
+
+	
+	
 	constant ClockLow20: integer :=  33333333;  		-- 5I20/4I65 low speed clock
 	constant ClockLow22: integer :=  48000000;		-- 5I22/5I23 low speed clock
 	constant ClockLow23: integer :=  48000000;		-- 5I22/5I23 low speed clock
@@ -621,6 +635,13 @@ package IDROMConst is
 	constant ScalerCounterTag : std_logic_vector(7 downto 0)   	:= x"1D";
 		constant ScalerCounterInA : std_logic_vector(7 downto 0)	:= x"01";
 		constant ScalerCounterInB : std_logic_vector(7 downto 0)	:= x"02";
+		
+		
+	constant Sigma5EncTag         : std_logic_vector(7 downto 0)      := x"1F";
+		constant Sigma5EncTxdataPin   : std_logic_vector(7 downto 0)  := x"81";
+		constant Sigma5EncRxdataPin   : std_logic_vector(7 downto 0)  := x"02";
+        constant Sigma5EncTxenPin : std_logic_vector(7 downto 0)      := x"83";
+		
 		
 	constant LIOPortTag : std_logic_vector(7 downto 0) := x"40";
 

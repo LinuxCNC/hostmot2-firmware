@@ -168,6 +168,7 @@ begin
     if(tag = SSerialTag)    then return "SSerial"; end if;
     if(tag = PktUARTTTag)    then return "PktUARTTx"; end if;
     if(tag = PktUARTRTag)    then return "PktUARTrx"; end if;
+    if(tag = Sigma5EncTag)     then return "Sigma5Enc"; end if;
     return "unknown";
 end;
 
@@ -250,6 +251,11 @@ begin
     elsif(tag = PktUARTRTag) then
         if(pin = PktURDataPin)       then return "Packet Serial Receive (in)";
         end if;
+    elsif(tag = Sigma5EncTag) then
+	if(pin = Sigma5EncTxdataPin)      then  return "Sigma5 Encoder Txdata";
+	elsif(pin = Sigma5EncRxdataPin)   then  return "Sigma5 Encoder Rxdata";
+    elsif(pin = Sigma5EncTxenPin)   then  return "Sigma5 Encoder Tx Enable";
+	end if;
     end if;
     return "???";
 end function;
