@@ -337,11 +337,11 @@ package IDROMConst is
 
 
 	--Sigma5 encoder - Interfaces with Yaskawa Sigama V encoders
-	constant Sigma5EncControlAddr  : std_logic_vector(7 downto 0)  := x"80";
-    constant Sigma5EncRx0Addr      : std_logic_vector(7 downto 0)  := X"81";
-    constant Sigma5EncRx1Addr      : std_logic_vector(7 downto 0)  := X"82";
-    constant Sigma5EncRx2Addr      : std_logic_vector(7 downto 0)  := X"83";
-    constant Sigma5EncStatusAddr   : std_logic_vector(7 downto 0)  := X"84";
+	constant Sigma5EncControlAddr  : std_logic_vector(7 downto 0)  := x"E0";
+    constant Sigma5EncRx0Addr      : std_logic_vector(7 downto 0)  := X"E1";
+    constant Sigma5EncRx1Addr      : std_logic_vector(7 downto 0)  := X"E2";
+    constant Sigma5EncRx2Addr      : std_logic_vector(7 downto 0)  := X"E3";
+    constant Sigma5EncStatusAddr   : std_logic_vector(7 downto 0)  := X"E4";
 	constant Sigma5EncNumRegs      : std_logic_vector(7 downto 0)  := x"05";
 	constant Sigma5EncMPBitMask    : std_logic_vector(31 downto 0) := x"0000001F";
 
