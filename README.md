@@ -1,5 +1,30 @@
 # hostmot2-firmware: build assorted hostmot2 FPGA firmwares automatically
 
+# Note: This package is no longer maintained
+
+In 2021, it became clear that the existing CI system that had built
+hostmot2-firmware was no longer viable, and LinuxCNC project did not have the
+developer time to rehabilitate it.  Because of this, and because we believe
+that officially ending the maintanence of this project under the LinuxCNC
+banner won't hamper users of LinuxCNC (including users of older cards such as
+the 5i20, as it will remain possible to install old binary packages of
+hostmot2-firmware), we have chosen to mark this package as unmaintained.
+
+Mesa Electronics, the manufacturer of these FPGA cards, provide firmware in
+source and binary format, under the GPL and other licenses, for their whole
+range of LinuxCNC-compatible cards.
+
+Back when Mesa's products typically did not include Flash chips to store
+the FPGA configuration data, it was important to the LinuxCNC Project to
+be able to offer these files as Debian packages and from their installation
+media.  To that end, we created this system to build the firmware.
+
+For recent Mesa cards that store their own firmware in non-volatile storage
+(i.e., on an SPI Flash chip), there is no such requirement; a user can obtain
+the firmware files from Mesa Electronics, load them once with mesaflash, and go
+on their way.
+
+
 ## Overview
 
 This package includes the hostmot2 source files along with Makefiles and
