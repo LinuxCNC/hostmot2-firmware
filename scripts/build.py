@@ -68,6 +68,7 @@ common_vhdl = [
     'qcounteratesk.vhd',
     'scalercounter.vhd',
     'scalertimer.vhd',
+    'sigma5enc.vhd',
     'simplespi8.vhd',
     'simplespix.vhd',
     'simplessi.vhd',

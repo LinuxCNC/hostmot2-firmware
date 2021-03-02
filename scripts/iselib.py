@@ -63,7 +63,7 @@ def use_ise(iseversions):
             settings_sh = localsettings
             break
 
-        files = glob.glob('/opt/Xilinx/%s/*/settings32.sh' % ise)
+        files = glob.glob('/opt/Xilinx/%s/*/settings64.sh' % ise)
         if len(files) > 1:
             print "multiple settings files found!", files
             raise SystemExit, 1
@@ -71,7 +71,7 @@ def use_ise(iseversions):
             settings_sh = files[0]
             break
 
-        files = glob.glob('/opt/Xilinx/%s.*/*/settings32.sh' % ise)
+        files = glob.glob('/opt/Xilinx/%s.*/*/settings64.sh' % ise)
         if len(files) == 1:
             settings_sh = files[0]
             break

@@ -16,7 +16,7 @@ COMMON_VHDL := $(patsubst %, src/%, IDROMConst.vhd \
     testrom.vhd threephasepwm.vhd timestamp.vhd uartr8.vhd uartr.vhd uartx8.vhd \
     uartx.vhd ubrategen.vhd usbram.vhd usbrom.vhd watchdog.vhd wordpr.vhd \
     wordrb.vhd fixicap.vhd d16w.vhd etherhm2.vhd \
-    parity.vhd decodedstrobe2.vhd \
+    parity.vhd decodedstrobe2.vhd sigma5enc.vhd \
     hostmot2.vhd)
 
 TOP_i20 := src/Top9030HostMot2.vhd
